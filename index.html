@@ -1251,6 +1251,7 @@
             if(!confirm('هل أنت متأكد من إزالة هذا العضو من المجتمع؟')) return;
             try {
                 await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayRemove(uid) });
+                renderCommunitiesTab();
             } catch(e) { alert('حدث خطأ أثناء الإزالة'); }
         }
 
@@ -1342,7 +1343,7 @@
                 let membersHtml = '';
                 if (isMember) {
                     membersHtml = `
-                    <div class="mb-8 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-700">
+                    <div class="mb-8 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-700 transition-all">
                         <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('comm-members-grid').classList.toggle('hidden'); document.getElementById('comm-members-icon').classList.toggle('rotate-180');">
                             <h3 class="font-bold text-slate-700 dark:text-slate-200 border-r-4 border-emerald-500 pr-2">أعضاء المجتمع (${comm.members.length})</h3>
                             <i data-lucide="chevron-down" id="comm-members-icon" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
@@ -1435,7 +1436,6 @@
         // --- View Renders continued ---
         function renderFeedTab() {
             const friends = userData.friends || [];
-            // تصفية المنشورات لاستبعاد منشورات المجتمعات الخاصة وعرضها فقط في الحائط العام
             const posts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
             document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-emerald-200 dark:border-emerald-900/50 transition-colors"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 dark:text-emerald-900/50 mx-auto mb-4"></i><p class="text-slate-500 dark:text-slate-400 text-sm">لا توجد منشورات حالياً.</p></div>`;
             setPostColor('white', 'color-picker-container', 'create-post-container');
@@ -1677,303 +1677,99 @@
             const container = document.getElementById('search-result-container');
             msg.innerText = '';
             container.innerHTML = '';
-
-            if (!input) {
-                msg.innerText = 'يرجى إدخال معرف للبحث';
-                msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3';
-                return;
-            }
-
-            if (input === userData.myTabId) {
-                msg.innerText = 'هذا هو المعرف الخاص بك!';
-                msg.className = 'text-sm text-emerald-600 dark:text-emerald-400 mt-3';
-                return;
-            }
-
+            if (!input) { msg.innerText = 'يرجى إدخال معرف للبحث'; msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; return; }
+            if (input === userData.myTabId) { msg.innerText = 'هذا هو المعرف الخاص بك!'; msg.className = 'text-sm text-emerald-600 dark:text-emerald-400 mt-3'; return; }
             const foundUser = allUsers.find(u => u.myTabId === input);
-            if (!foundUser) {
-                msg.innerText = 'لم يتم العثور على أي شخص بهذا المعرف.';
-                msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3';
-                return;
-            }
-
+            if (!foundUser) { msg.innerText = 'لم يتم العثور على أي شخص بهذا المعرف.'; msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; return; }
             const isFriend = (userData.friends || []).includes(foundUser.uid);
             const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === foundUser.uid);
-
-            let btnHtml = '';
-            if (isFriend) {
-                btnHtml = `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">صديق بالمساحة</button>`;
-            } else if (isPending) {
-                btnHtml = `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">تم إرسال الطلب</button>`;
-            } else {
-                btnHtml = `<button onclick="sendFriendReq('${foundUser.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة صديق</button>`;
-            }
-
-            container.innerHTML = `
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors">
-                    <div class="flex items-center gap-4 cursor-pointer" onclick="viewProfile('${foundUser.uid}')">
-                        <img src="${foundUser.photoUrl}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800">
-                        <div>
-                            <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">${foundUser.displayName}</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">${foundUser.myTabId}</p>
-                        </div>
-                    </div>
-                    ${btnHtml}
-                </div>
-            `;
+            let btnHtml = isFriend ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">صديق بالمساحة</button>` : (isPending ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">تم إرسال الطلب</button>` : `<button onclick="sendFriendReq('${foundUser.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة صديق</button>`);
+            container.innerHTML = `<div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer" onclick="viewProfile('${foundUser.uid}')"><img src="${foundUser.photoUrl}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800"><div><h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">${foundUser.displayName}</h3><p class="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">${foundUser.myTabId}</p></div></div>${btnHtml}</div>`;
             lucide.createIcons();
         }
 
         window.sendFriendReq = async (uid) => {
-            try {
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), {
-                    from: currentUser.uid,
-                    to: uid,
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                });
-                alert('تم إرسال طلب الصداقة بنجاح!');
-                if (activeTabStr === 'search') performSearch();
-                if (activeTabStr === 'profile') renderProfileTab();
-            } catch (e) {
-                alert('حدث خطأ أثناء الإرسال.');
-            }
+            try { await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), { from: currentUser.uid, to: uid, status: 'pending', createdAt: new Date().toISOString() }); alert('تم إرسال طلب الصداقة بنجاح!'); if (activeTabStr === 'search') performSearch(); if (activeTabStr === 'profile') renderProfileTab(); } catch (e) { alert('حدث خطأ أثناء الإرسال.'); }
         }
 
         function renderRequestsTab() {
             const list = document.getElementById('requests-list');
             const incReqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending');
-            
-            if (!incReqs.length) {
-                list.innerHTML = '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد طلبات صداقة معلقة.</p></div>';
-                return;
-            }
-
-            list.innerHTML = incReqs.map(req => {
-                const u = allUsers.find(x => x.uid === req.from);
-                if (!u) return '';
-                return `
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-                        <div class="flex items-center gap-4 cursor-pointer w-full sm:w-auto" onclick="viewProfile('${u.uid}')">
-                            <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">
-                            <div>
-                                <h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h4>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <button onclick="acceptFriendReq('${req.id}', '${u.uid}')" class="flex-1 sm:flex-none bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">قبول</button>
-                            <button onclick="rejectFriendReq('${req.id}')" class="flex-1 sm:flex-none bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">رفض</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            if (!incReqs.length) { list.innerHTML = '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد طلبات صداقة معلقة.</p></div>'; return; }
+            list.innerHTML = incReqs.map(req => { const u = allUsers.find(x => x.uid === req.from); if (!u) return ''; return `<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer w-full sm:w-auto" onclick="viewProfile('${u.uid}')"><img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800"><div><h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h4><p class="text-xs text-slate-500 dark:text-slate-400">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</p></div></div><div class="flex gap-2 w-full sm:w-auto"><button onclick="acceptFriendReq('${req.id}', '${u.uid}')" class="flex-1 sm:flex-none bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">قبول</button><button onclick="rejectFriendReq('${req.id}')" class="flex-1 sm:flex-none bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">رفض</button></div></div>`; }).join('');
             lucide.createIcons();
         }
 
         window.acceptFriendReq = async (reqId, fromUid) => {
-            try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayUnion(fromUid) });
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) });
-                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
-            } catch(e) { alert('حدث خطأ'); }
+            try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayUnion(fromUid) }); await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) }); await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); } catch(e) { alert('حدث خطأ'); }
         }
 
-        window.rejectFriendReq = async (reqId) => {
-            try {
-                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
-            } catch(e) { alert('حدث خطأ'); }
-        }
+        window.rejectFriendReq = async (reqId) => { try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); } catch(e) { alert('حدث خطأ'); } }
 
-        // --- Chat Functions ---
         function renderMessagesList() {
             const list = document.getElementById('chat-friends-list');
             const friends = userData.friends || [];
-            
-            if (!friends.length) {
-                list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء للمراسلة بعد.</p></div>';
-                return;
-            }
-
-            const chats = friends.map(fUid => {
-                const fInfo = allUsers.find(u => u.uid === fUid);
-                if (!fInfo) return null;
-                
-                const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid))
-                    .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                const lastMsg = fMsgs[0];
-                const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length;
-                
-                return {
-                    uid: fUid,
-                    info: fInfo,
-                    lastMsg: lastMsg,
-                    unreadCount: unreadCount,
-                    lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0
-                };
-            }).filter(Boolean).sort((a,b) => b.lastTime - a.lastTime);
-
-            list.innerHTML = chats.map(c => `
-                <div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')">
-                    <div class="relative">
-                        <img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">
-                        ${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4>
-                            ${c.lastMsg ? `<span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span>` : ''}
-                        </div>
-                        <p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">
-                            ${c.lastMsg ? (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)) : 'ابدأ المحادثة الآن...'}
-                        </p>
-                    </div>
-                </div>
-            `).join('');
+            if (!friends.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء للمراسلة بعد.</p></div>'; return; }
+            const chats = friends.map(fUid => { const fInfo = allUsers.find(u => u.uid === fUid); if (!fInfo) return null; const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); const lastMsg = fMsgs[0]; const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length; return { uid: fUid, info: fInfo, lastMsg: lastMsg, unreadCount: unreadCount, lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 }; }).filter(Boolean).sort((a,b) => b.lastTime - a.lastTime);
+            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4>${c.lastMsg ? `<span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span>` : ''}</div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg ? (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)) : 'ابدأ المحادثة الآن...'}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
-        window.openChatRoom = (uid) => {
-            document.getElementById('messages-list-view').classList.add('hidden');
-            document.getElementById('chat-room-view').classList.remove('hidden');
-            renderChatRoom();
-        }
-
-        window.closeChatRoom = () => {
-            activeChatFriendId = null;
-            document.getElementById('chat-room-view').classList.add('hidden');
-            document.getElementById('messages-list-view').classList.remove('hidden');
-            renderMessagesList();
-        }
+        window.openChatRoom = (uid) => { document.getElementById('messages-list-view').classList.add('hidden'); document.getElementById('chat-room-view').classList.remove('hidden'); renderChatRoom(); }
+        window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); }
 
         function renderChatRoom() {
             if (!activeChatFriendId) return;
             const friend = allUsers.find(u => u.uid === activeChatFriendId);
             if (!friend) return;
-
             document.getElementById('chat-room-avatar').src = friend.photoUrl;
             document.getElementById('chat-room-name').innerText = friend.displayName;
-
             const msgsArea = document.getElementById('chat-messages-area');
-            const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid))
-                .sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-            // Mark unread as read
-            fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => {
-                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true }); } catch(e) {}
-            });
-
-            let html = '';
-            let lastDate = '';
-
+            const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+            fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => { try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true }); } catch(e) {} });
+            let html = '', lastDate = '';
             fMsgs.forEach(m => {
                 const d = new Date(m.createdAt);
                 const dateStr = d.toLocaleDateString('ar-EG');
                 const timeStr = d.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-                
-                if (dateStr !== lastDate) {
-                    html += `<div class="flex justify-center my-4"><span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs px-3 py-1 rounded-full font-medium shadow-sm">${dateStr}</span></div>`;
-                    lastDate = dateStr;
-                }
-
+                if (dateStr !== lastDate) { html += `<div class="flex justify-center my-4"><span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs px-3 py-1 rounded-full font-medium shadow-sm">${dateStr}</span></div>`; lastDate = dateStr; }
                 const isMe = m.senderId === currentUser.uid;
+                const readIcon = isMe ? `<i data-lucide="check-check" class="w-4 h-4 inline-block mr-1 transition-colors ${m.read ? 'text-blue-400 dark:text-blue-500' : 'text-slate-400 dark:text-slate-500'}"></i>` : '';
+                const delBtn = isMe ? `<button onclick="deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100 mx-1" title="حذف الرسالة"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : '';
                 
                 if (m.type === 'sticker') {
-                    html += `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2 group relative">
-                        <div class="text-[40px] leading-none mb-1 cursor-default hover:scale-110 transition-transform">${m.content}</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity px-1">${timeStr}</span>
-                            ${isMe ? `<button onclick="deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : ''}
-                        </div>
-                    </div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2 group relative"><div class="text-[40px] leading-none mb-1 cursor-default hover:scale-110 transition-transform">${m.content}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity px-1" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
-                    html += `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2 group relative">
-                        <div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${m.content}</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity px-1">${timeStr}</span>
-                            ${isMe ? `<button onclick="deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : ''}
-                        </div>
-                    </div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2 group relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${m.content}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity px-1" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 }
             });
-
-            if (!fMsgs.length) {
-                html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
-            }
-
+            if (!fMsgs.length) html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
             const isAtBottom = msgsArea.scrollHeight - msgsArea.scrollTop <= msgsArea.clientHeight + 100;
-            msgsArea.innerHTML = html;
-            lucide.createIcons();
-            
-            // Auto scroll if was at bottom or first render
-            if (isAtBottom || html.includes('hand')) {
-                msgsArea.scrollTop = msgsArea.scrollHeight;
-            }
+            msgsArea.innerHTML = html; lucide.createIcons();
+            if (isAtBottom || html.includes('hand')) msgsArea.scrollTop = msgsArea.scrollHeight;
         }
 
         window.clearChat = async () => {
             if (!activeChatFriendId) return;
-            if (!confirm('هل أنت متأكد من حذف جميع الرسائل بينك وبين هذا الصديق؟ (سيتم الحذف نهائياً)')) return;
+            if (!confirm('هل أنت متأكد من مسح جميع الرسائل بينك وبين هذا الصديق؟ (سيتم الحذف نهائياً)')) return;
             const msgsToDelete = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === activeChatFriendId) || (m.senderId === activeChatFriendId && m.receiverId === currentUser.uid));
-            try {
-                await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id))));
-            } catch(e) { alert('حدث خطأ أثناء مسح المحادثة'); }
+            try { await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)))); } catch(e) { alert('حدث خطأ أثناء مسح المحادثة'); }
         }
 
         window.deleteMessage = async (msgId) => {
             if(!confirm('هل تريد حذف هذه الرسالة؟')) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId));
-            } catch(e) {
-                alert('حدث خطأ أثناء حذف الرسالة');
-            }
+            try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId)); } catch(e) { alert('حدث خطأ أثناء حذف الرسالة'); }
         }
 
         window.sendMessage = async (type, content = null) => {
             if (!activeChatFriendId) return;
             let text = content;
-            if (type === 'text') {
-                const input = document.getElementById('chat-input');
-                text = input.value.trim();
-                if (!text) return;
-                input.value = '';
-            }
-            
-            if (type === 'sticker') {
-                toggleStickerPicker();
-            }
-
-            try {
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), {
-                    senderId: currentUser.uid,
-                    receiverId: activeChatFriendId,
-                    content: text,
-                    type: type,
-                    read: false,
-                    createdAt: new Date().toISOString()
-                });
-                
-                setTimeout(() => {
-                    const msgsArea = document.getElementById('chat-messages-area');
-                    msgsArea.scrollTop = msgsArea.scrollHeight;
-                }, 100);
-            } catch(e) {
-                alert('فشل إرسال الرسالة');
-            }
+            if (type === 'text') { const input = document.getElementById('chat-input'); text = input.value.trim(); if (!text) return; input.value = ''; }
+            if (type === 'sticker') toggleStickerPicker();
+            try { await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), { senderId: currentUser.uid, receiverId: activeChatFriendId, content: text, type: type, read: false, createdAt: new Date().toISOString() }); setTimeout(() => { const msgsArea = document.getElementById('chat-messages-area'); msgsArea.scrollTop = msgsArea.scrollHeight; }, 100); } catch(e) { alert('فشل إرسال الرسالة'); }
         }
 
-        window.toggleStickerPicker = () => {
-            const picker = document.getElementById('sticker-picker');
-            picker.classList.toggle('hidden');
-            if (!picker.classList.contains('hidden') && picker.innerHTML === '') {
-                const stickers = ['😀','😂','🥰','😎','😭','😡','👍','👎','❤️','💔','🔥','✨','🎉','👋','🙏','🤔','🤐','😴','🤢','🤮','🤠','🥳','🥸','👀'];
-                picker.innerHTML = stickers.map(s => `<button onclick="sendMessage('sticker', '${s}')" class="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors hover:scale-125">${s}</button>`).join('');
-            }
-        }
-
+        window.toggleStickerPicker = () => { const picker = document.getElementById('sticker-picker'); picker.classList.toggle('hidden'); if (!picker.classList.contains('hidden') && picker.innerHTML === '') { const stickers = ['😀','😂','🥰','😎','😭','😡','👍','👎','❤️','💔','🔥','✨','🎉','👋','🙏','🤔','🤐','😴','🤢','🤮','🤠','🥳','🥸','👀']; picker.innerHTML = stickers.map(s => `<button onclick="sendMessage('sticker', '${s}')" class="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors hover:scale-125">${s}</button>`).join(''); } }
     </script>
 </body>
 </html>
