@@ -265,6 +265,20 @@
                 <!-- Feed Tab -->
                 <div id="tab-content-feed" class="tab-content space-y-6">
                     <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">الرئيسية</h2>
+                    
+                    <!-- Feed Cover -->
+                    <div class="w-full h-32 md:h-48 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200 dark:border-slate-700 mb-6 group transition-colors">
+                        <img id="feed-cover-image" src="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent pointer-events-none"></div>
+                        <div class="absolute bottom-4 right-6 text-white z-10 flex items-center gap-3">
+                            <img id="feed-cover-avatar" src="" class="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white/40 object-cover shadow-md hidden sm:block bg-slate-800">
+                            <div>
+                                <h3 id="feed-welcome-name" class="text-xl md:text-2xl font-bold drop-shadow-md">مرحباً بك</h3>
+                                <p class="text-xs md:text-sm text-slate-200 drop-shadow-md mt-1">ماذا تود أن تشارك في مساحتك اليوم؟</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Create Post Box -->
                     <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors">
                         <div class="flex gap-4">
@@ -903,6 +917,13 @@
             document.getElementById('sidebar-avatar').src = userData.photoUrl;
             document.getElementById('sidebar-name').innerText = userData.displayName;
             document.getElementById('create-post-avatar').src = userData.photoUrl;
+            
+            const feedCover = document.getElementById('feed-cover-image');
+            const feedAvatar = document.getElementById('feed-cover-avatar');
+            const feedWelcome = document.getElementById('feed-welcome-name');
+            if (feedCover && userData.coverUrl) feedCover.src = userData.coverUrl;
+            if (feedAvatar && userData.photoUrl) feedAvatar.src = userData.photoUrl;
+            if (feedWelcome && userData.displayName) feedWelcome.innerText = 'مرحباً، ' + userData.displayName.split(' ')[0];
             
             const picker = document.getElementById('color-picker-container');
             if(picker) {
