@@ -159,6 +159,7 @@
                 </div>
                 <div class="flex flex-col w-full gap-2">
                     <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">المساحة</span></button>
+                    <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات الخاصة</span></button>
                     <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">لوحة التحكم (حسابي)</span></button>
                     <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث بمعرف</span></button>
@@ -218,12 +219,12 @@
                                 
                                 <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block">
                                     <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 shadow-sm">
-                                    <button onclick="removePostImage()" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <button onclick="removePostImage('post-image-preview-container', 'post-image-preview', 'post-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                                 </div>
 
                                 <div class="flex items-center justify-between mt-4 border-t border-black/5 pt-4">
                                     <div class="flex items-center gap-3">
-                                        <input type="file" id="post-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event)">
+                                        <input type="file" id="post-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event, 'post-image-preview-container', 'post-image-preview')">
                                         <button onclick="document.getElementById('post-image-input').click()" class="text-slate-500 hover:text-emerald-600 bg-black/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
                                         <div class="w-px h-6 bg-black/10 mx-1"></div>
                                         <div id="color-picker-container" class="flex gap-2"></div>
@@ -238,6 +239,9 @@
                     <!-- Feed Posts list -->
                     <div id="feed-posts-list" class="space-y-6 mt-8"></div>
                 </div>
+
+                <!-- Communities Tab -->
+                <div id="tab-content-communities" class="tab-content hidden pb-10"></div>
 
                 <!-- Friends Tab -->
                 <div id="tab-content-friends" class="tab-content hidden space-y-6">
@@ -280,6 +284,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مستخدمين</p><h3 id="admin-users-count" class="text-2xl font-bold">0</h3></div>
                         <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">منشورات</p><h3 id="admin-posts-count" class="text-2xl font-bold">0</h3></div>
+                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مجتمعات</p><h3 id="admin-comms-count" class="text-2xl font-bold">0</h3></div>
                     </div>
                 </div>
 
@@ -288,13 +293,13 @@
     </div>
 
     <!-- Lightbox -->
-    <div id="lightbox" class="hidden fixed inset-0 z-60 flex items-center justify-center bg-black/95 p-4 cursor-zoom-out" onclick="closeLightbox()">
+    <div id="lightbox" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/95 p-4 cursor-zoom-out" onclick="closeLightbox()">
         <button class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors p-2 bg-white/10 rounded-full" onclick="closeLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
         <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm" onclick="event.stopPropagation()">
     </div>
 
     <!-- Reactors Modal -->
-    <div id="reactors-modal" class="hidden fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeReactorsModal()">
+    <div id="reactors-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeReactorsModal()">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4 border-b pb-3">
                 <h3 class="font-bold text-lg text-slate-800">قائمة المتفاعلين</h3>
@@ -304,12 +309,65 @@
         </div>
     </div>
 
+    <!-- Create Community Modal -->
+    <div id="create-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeCreateCommModal()">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h3 class="font-bold text-xl text-slate-800 flex items-center gap-2"><i data-lucide="plus-circle" class="w-6 h-6 text-emerald-600"></i> إنشاء مجتمع خاص</h3>
+                <button onclick="closeCreateCommModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="flex flex-col items-center mb-4">
+                    <div class="relative group">
+                        <img id="comm-icon-preview" src="https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128" class="w-20 h-20 rounded-2xl object-cover shadow-sm bg-emerald-100">
+                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('comm-icon-input').click()"><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                    </div>
+                    <input type="file" id="comm-icon-input" accept="image/*" class="hidden" onchange="handleCommIconSelect(event)">
+                    <span class="text-xs text-slate-500 mt-2">أيقونة المجتمع</span>
+                </div>
+                <div><label class="text-sm text-slate-700 mb-1 block">اسم المجتمع</label><input type="text" id="comm-name" placeholder="مثال: مجتمع البرمجيات" class="w-full border rounded-xl px-4 py-2 outline-none focus:border-emerald-500"></div>
+                <div><label class="text-sm text-slate-700 mb-1 block">التفاصيل / الوصف</label><textarea id="comm-desc" rows="2" placeholder="أضف وصفاً لمجتمعك..." class="w-full border rounded-xl px-4 py-2 outline-none resize-none focus:border-emerald-500"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm text-slate-700 mb-1 block">الخصوصية</label>
+                        <select id="comm-privacy" class="w-full border rounded-xl px-4 py-2 outline-none bg-white">
+                            <option value="public">عام (يظهر بالبروفايل)</option>
+                            <option value="private">خاص (مخفي)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-700 mb-1 block">لون المجتمع</label>
+                        <select id="comm-color" class="w-full border rounded-xl px-4 py-2 outline-none bg-white">
+                            <option value="bg-emerald-100">أخضر</option>
+                            <option value="bg-blue-100">أزرق</option>
+                            <option value="bg-purple-100">بنفسجي</option>
+                            <option value="bg-amber-100">أصفر</option>
+                            <option value="bg-rose-100">أحمر</option>
+                            <option value="bg-slate-100">رمادي</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="create-comm-btn" onclick="submitCreateComm()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors mt-4 flex items-center justify-center gap-2">إنشاء المجتمع</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Members Modal -->
+    <div id="add-member-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeAddMemberModal()">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-lg text-slate-800">إضافة أصدقاء للمجتمع</h3>
+                <button onclick="closeAddMemberModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="comm-friends-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+    </div>
 
     <!-- ==================== LOGIC ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configs ---
         const IMGBB_API_KEY = "8ef1d841b117d4d6bc14f2cf8bb82bdb";
@@ -334,8 +392,10 @@
         let allUsers = [];
         let allPosts = [];
         let friendRequests = [];
+        let allCommunities = [];
         let activeTabStr = 'feed';
         let viewingUid = null;
+        let activeCommunityId = null;
         let isAuthLoginMode = true;
         let postSelectedColor = 'white';
         let postImageFile = null;
@@ -402,7 +462,12 @@
                 updateBadge();
                 if(activeTabStr === 'requests') renderRequestsTab();
             });
-            unsubs.push(u1, u2, u3);
+            const u4 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities'), (snap) => {
+                allCommunities = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if(activeTabStr === 'communities') renderCommunitiesTab();
+                if(activeTabStr === 'profile') renderProfileTab();
+            });
+            unsubs.push(u1, u2, u3, u4);
         }
 
         // --- View Management ---
@@ -421,11 +486,11 @@
         }
 
         window.switchTab = (tab) => {
-            if (tab !== 'profile') {
-                viewingUid = currentUser.uid;
-            }
+            if (tab === 'communities') activeCommunityId = null;
+            if (tab !== 'profile') viewingUid = currentUser.uid;
+            
             activeTabStr = tab;
-            ['feed', 'profile', 'search', 'requests', 'admin', 'friends'].forEach(t => {
+            ['feed', 'profile', 'search', 'requests', 'admin', 'friends', 'communities'].forEach(t => {
                 const tc = document.getElementById(`tab-content-${t}`);
                 if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -576,11 +641,13 @@
             document.getElementById('create-post-avatar').src = userData.photoUrl;
             
             const picker = document.getElementById('color-picker-container');
-            picker.innerHTML = Object.keys(POST_COLORS).map(id => {
-                const c = POST_COLORS[id];
-                const selectedClass = postSelectedColor === id ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
-                return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
-            }).join('');
+            if(picker) {
+                picker.innerHTML = Object.keys(POST_COLORS).map(id => {
+                    const c = POST_COLORS[id];
+                    const selectedClass = postSelectedColor === id ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
+                    return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
+                }).join('');
+            }
         }
         function updateBadge() {
             if(!currentUser) return;
@@ -590,32 +657,42 @@
         }
 
         window.copyMyId = () => { navigator.clipboard.writeText(userData.myTabId).then(()=>alert('تم نسخ المعرف!')).catch(()=>{}); }
-        window.setPostColor = (id) => { postSelectedColor = id; updateSidebar(); updateCreatePostBox(); }
-        window.handlePostImageSelect = (e) => {
+        window.setPostColor = (id, pickerId = 'color-picker-container', containerId = 'create-post-container') => { 
+            postSelectedColor = id; 
+            const picker = document.getElementById(pickerId);
+            if(picker) {
+                picker.innerHTML = Object.keys(POST_COLORS).map(colorId => {
+                    const c = POST_COLORS[colorId];
+                    const selectedClass = postSelectedColor === colorId ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
+                    return `<button onclick="setPostColor('${colorId}', '${pickerId}', '${containerId}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
+                }).join('');
+            }
+            const c = POST_COLORS[postSelectedColor];
+            const box = document.getElementById(containerId);
+            if(box) box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
+        }
+
+        window.handlePostImageSelect = (e, previewContId, previewImgId) => {
             const file = e.target.files[0];
             if(file) {
                 postImageFile = file;
-                document.getElementById('post-image-preview-container').classList.remove('hidden');
-                document.getElementById('post-image-preview').src = URL.createObjectURL(file);
-                setPostColor('white');
+                document.getElementById(previewContId).classList.remove('hidden');
+                document.getElementById(previewImgId).src = URL.createObjectURL(file);
+                // force white color when image selected
+                setPostColor('white', previewContId.includes('comm') ? 'comm-color-picker' : 'color-picker-container', previewContId.includes('comm') ? 'create-comm-post-container' : 'create-post-container');
             }
         }
-        window.removePostImage = () => {
+        window.removePostImage = (previewContId, previewImgId, inputId) => {
             postImageFile = null;
-            document.getElementById('post-image-preview-container').classList.add('hidden');
-            document.getElementById('post-image-preview').src = '';
-            document.getElementById('post-image-input').value = '';
-        }
-        function updateCreatePostBox() {
-            const c = POST_COLORS[postSelectedColor];
-            const box = document.getElementById('create-post-container');
-            box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
+            document.getElementById(previewContId).classList.add('hidden');
+            document.getElementById(previewImgId).src = '';
+            document.getElementById(inputId).value = '';
         }
 
-        window.submitPost = async () => {
-            const content = document.getElementById('post-content').value;
+        window.submitPost = async (commId = null, contentId = 'post-content', btnId = 'submit-post-btn', imgContId = 'post-image-preview-container', imgPreviewId = 'post-image-preview', imgInputId = 'post-image-input') => {
+            const content = document.getElementById(contentId).value;
             if(!content.trim() && !postImageFile) return;
-            const btn = document.getElementById('submit-post-btn');
+            const btn = document.getElementById(btnId);
             btn.disabled=true; btn.innerHTML='<i class="loader"></i> جاري...';
             
             try {
@@ -625,10 +702,11 @@
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
                     authorId: currentUser.uid, authorName: userData.displayName, authorPhoto: userData.photoUrl,
                     content: content, imageUrl: imgUrl, colorId: postSelectedColor,
+                    communityId: commId,
                     createdAt: new Date().toISOString(), reactions: {}, comments: []
                 });
-                document.getElementById('post-content').value = '';
-                removePostImage();
+                document.getElementById(contentId).value = '';
+                removePostImage(imgContId, imgPreviewId, imgInputId);
             } catch(e) { alert('حدث خطأ'); }
             btn.disabled=false; btn.innerHTML='<i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
             lucide.createIcons();
@@ -645,6 +723,7 @@
         // --- Renderers ---
         function renderAll() {
             if(activeTabStr==='feed') renderFeedTab();
+            if(activeTabStr==='communities') renderCommunitiesTab();
             if(activeTabStr==='profile') renderProfileTab();
             if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
@@ -689,7 +768,7 @@
             let commentsHTML = comments.map(cm => generateCommentHTML(cm, post.id)).join('');
 
             return `
-            <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border}">
+            <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border} mb-6">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3 cursor-pointer group" onclick="viewProfile('${post.authorId}')">
                         <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover bg-white group-hover:opacity-80 transition-opacity">
@@ -717,8 +796,8 @@
                         <i data-lucide="message-square" class="w-5 h-5"></i> <span>${comments.length} تعليق</span>
                     </button>
                 </div>
-                <div id="comments-${post.id}" class="mt-4 pt-4 border-t border-black/5">
-                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">${commentsHTML || '<p class="text-xs text-center text-slate-500 py-2">لا توجد تعليقات.</p>'}</div>
+                <div class="mt-4 pt-4 border-t border-black/5">
+                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">${commentsHTML}</div>
                     <div class="flex gap-2">
                         <input type="text" id="c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 border border-black/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400">
                         <button onclick="addComment('${post.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 rounded-xl"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
@@ -816,11 +895,162 @@
 
         window.closeReactorsModal = () => document.getElementById('reactors-modal').classList.add('hidden');
 
-        // --- View Renders ---
+        // --- Communities Logic ---
+        window.showCreateCommModal = () => document.getElementById('create-comm-modal').classList.remove('hidden');
+        window.closeCreateCommModal = () => { document.getElementById('create-comm-modal').classList.add('hidden'); window.tmpCommImgFile = null; document.getElementById('comm-icon-preview').src='https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128'; }
+        
+        window.handleCommIconSelect = (e) => {
+            const file = e.target.files[0];
+            if(file) { window.tmpCommImgFile = file; document.getElementById('comm-icon-preview').src = URL.createObjectURL(file); }
+        }
+
+        window.submitCreateComm = async () => {
+            const name = document.getElementById('comm-name').value;
+            const desc = document.getElementById('comm-desc').value;
+            if(!name.trim()) return alert('يرجى إدخال اسم المجتمع');
+            const btn = document.getElementById('create-comm-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
+            try {
+                let iconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=fff&rounded=true&size=128`;
+                if(window.tmpCommImgFile) iconUrl = await uploadToImgbb(window.tmpCommImgFile);
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities')), {
+                    name, description: desc, iconUrl, color: document.getElementById('comm-color').value,
+                    isPrivate: document.getElementById('comm-privacy').value === 'private',
+                    creatorId: currentUser.uid, members: [currentUser.uid], createdAt: new Date().toISOString()
+                });
+                closeCreateCommModal();
+                document.getElementById('comm-name').value=''; document.getElementById('comm-desc').value='';
+            } catch(e) { alert('خطأ في الإنشاء'); }
+            btn.disabled = false; btn.innerHTML = 'إنشاء المجتمع';
+        }
+
+        window.viewCommunity = (id) => { activeCommunityId = id; renderCommunitiesTab(); }
+        window.closeCommunityView = () => { activeCommunityId = null; renderCommunitiesTab(); }
+
+        window.deleteCommunity = async (id) => {
+            if(!confirm('هل أنت متأكد من حذف المجتمع بكل محتوياته نهائياً؟')) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id));
+                const commPosts = allPosts.filter(p => p.communityId === id);
+                for(let p of commPosts) await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id));
+                closeCommunityView();
+            } catch(e) { alert('حدث خطأ'); }
+        }
+
+        window.showAddMemberModal = (commId) => {
+            const comm = allCommunities.find(c => c.id === commId); if(!comm) return;
+            const list = document.getElementById('comm-friends-list');
+            const friends = userData.friends || [];
+            const availableFriends = friends.filter(uid => !comm.members.includes(uid));
+            
+            list.innerHTML = availableFriends.map(uid => {
+                const u = allUsers.find(x => x.uid === uid); if(!u) return '';
+                return `
+                <div class="flex items-center justify-between p-3 border-b border-slate-50 last:border-0 hover:bg-emerald-50 rounded-xl transition-colors">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 bg-white">
+                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                    </div>
+                    <button onclick="addMemberToComm('${uid}', '${commId}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">إضافة</button>
+                </div>`;
+            }).join('');
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">جميع أصدقائك موجودون بالفعل في هذا المجتمع.</p>';
+            document.getElementById('add-member-modal').classList.remove('hidden'); lucide.createIcons();
+        }
+        window.closeAddMemberModal = () => document.getElementById('add-member-modal').classList.add('hidden');
+        
+        window.addMemberToComm = async (uid, commId) => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayUnion(uid) });
+                showAddMemberModal(commId); // refresh list
+            } catch(e) { alert('خطأ'); }
+        }
+
+        function renderCommunitiesTab() {
+            const container = document.getElementById('tab-content-communities');
+            if (activeCommunityId) {
+                const comm = allCommunities.find(c => c.id === activeCommunityId);
+                if (!comm) { activeCommunityId = null; renderCommunitiesTab(); return; }
+                const isAdmin = comm.creatorId === currentUser.uid;
+                const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                
+                container.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="closeCommunityView()" class="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-bold transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i> عودة للمجتمعات</button>
+                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> حذف المجتمع</button>` : ''}
+                </div>
+                <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden">
+                    <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white border border-white/50 relative z-10">
+                    <div class="flex-1 text-center md:text-right relative z-10">
+                        <h2 class="text-2xl font-bold text-slate-800">${comm.name}</h2>
+                        <p class="text-slate-600 mt-2 max-w-xl">${comm.description || 'لا يوجد وصف.'}</p>
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                            <span class="bg-white/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
+                            <span class="bg-white/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
+                            ${isAdmin ? `<button onclick="showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="font-bold text-slate-700 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
+                    <div id="create-comm-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors mb-6">
+                        <div class="flex gap-4">
+                            <img src="${userData.photoUrl}" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white">
+                            <div class="flex-1">
+                                <textarea id="comm-post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="شارك شيئاً مع أعضاء هذا المجتمع..."></textarea>
+                                <div id="comm-image-preview-container" class="hidden relative mt-2 mb-4 inline-block">
+                                    <img id="comm-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 shadow-sm">
+                                    <button onclick="removePostImage('comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center justify-between mt-4 border-t border-black/5 pt-4">
+                                    <div class="flex items-center gap-3">
+                                        <input type="file" id="comm-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event, 'comm-image-preview-container', 'comm-image-preview')">
+                                        <button onclick="document.getElementById('comm-image-input').click()" class="text-slate-500 hover:text-emerald-600 bg-black/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
+                                        <div class="w-px h-6 bg-black/10 mx-1"></div>
+                                        <div id="comm-color-picker" class="flex gap-2"></div>
+                                    </div>
+                                    <button onclick="submitPost('${comm.id}', 'comm-post-content', 'submit-comm-post-btn', 'comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" id="submit-comm-post-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl font-medium flex items-center gap-2">
+                                        <i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i> نشر
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>${cPosts.length ? cPosts.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border border-dashed border-slate-200">لا توجد منشورات في هذا المجتمع بعد.</p>'}</div>
+                </div>`;
+                setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
+            } else {
+                const myComms = allCommunities.filter(c => c.members.includes(currentUser.uid));
+                container.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="layers" class="w-6 h-6 text-emerald-600"></i> المجتمعات الخاصة</h2>
+                    <button onclick="showCreateCommModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i> إنشاء مجتمع</button>
+                </div>
+                ${myComms.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${myComms.map(c => `
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5">
+                                <img src="${c.iconUrl}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">${c.name}</h4>
+                                <p class="text-xs text-slate-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو &bull; <i data-lucide="${c.isPrivate?'lock':'globe'}" class="w-3 h-3"></i> ${c.isPrivate?'خاص':'عام'}</p>
+                            </div>
+                        </div>
+                    </div>`).join('')}</div>` : '<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="layers" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا تنتمي لأي مجتمعات حالياً.</p></div>'}
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // --- View Renders continued ---
         function renderFeedTab() {
             const friends = userData.friends || [];
-            const posts = allPosts.filter(p => p.authorId === currentUser.uid || friends.includes(p.authorId)).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            // تصفية المنشورات لاستبعاد منشورات المجتمعات الخاصة وعرضها فقط في الحائط العام
+            const posts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
             document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا توجد منشورات حالياً.</p></div>`;
+            setPostColor('white', 'color-picker-container', 'create-post-container');
         }
 
         function renderFriendsTab() {
@@ -850,7 +1080,7 @@
         let isEditingProfile = false;
         window.toggleEditProfile = () => { 
             isEditingProfile = !isEditingProfile; 
-            if (!isEditingProfile) window.tmpProfImgFile = null;
+            if (!isEditingProfile) { window.tmpProfImgFile = null; window.removeProfImg = false; }
             renderAll(); 
         }
 
@@ -858,8 +1088,16 @@
             const file = e.target.files[0];
             if (file) {
                 window.tmpProfImgFile = file;
+                window.removeProfImg = false;
                 document.getElementById('edit-profile-avatar-preview').src = URL.createObjectURL(file);
             }
+        }
+        
+        window.removeProfilePhoto = () => {
+            window.tmpProfImgFile = null;
+            window.removeProfImg = true;
+            const gender = document.getElementById('ep-gender') ? document.getElementById('ep-gender').value : userData.gender;
+            document.getElementById('edit-profile-avatar-preview').src = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
         }
 
         window.saveProfile = async () => {
@@ -867,7 +1105,12 @@
             btn.disabled=true; btn.innerHTML='جاري...';
             try {
                 let pUrl = userData.photoUrl;
-                if(window.tmpProfImgFile) pUrl = await uploadToImgbb(window.tmpProfImgFile);
+                if (window.tmpProfImgFile) {
+                    pUrl = await uploadToImgbb(window.tmpProfImgFile);
+                } else if (window.removeProfImg) {
+                    const gender = document.getElementById('ep-gender').value;
+                    pUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
+                }
                 
                 const sLinksRaw = Array.from(document.querySelectorAll('.edit-social-row')).map(row => ({
                     platform: row.querySelector('.s-plat').value,
@@ -885,6 +1128,7 @@
                 });
                 isEditingProfile = false;
                 window.tmpProfImgFile = null;
+                window.removeProfImg = false;
             } catch(e) { alert('خطأ في الحفظ'); }
             renderAll();
         }
@@ -900,8 +1144,8 @@
             const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
 
             if (isMe || isFriend) {
-                const myP = allPosts.filter(p => p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-                postsContainer.innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border">لا توجد منشورات.</p>';
+                const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                postsContainer.innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border border-dashed border-slate-200">لا توجد منشورات.</p>';
                 postsSectionHeader.classList.remove('hidden');
             } else {
                 postsContainer.innerHTML = '';
@@ -928,12 +1172,14 @@
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600"></i> المعلومات الشخصية</h4>
                             <div class="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div class="relative group">
-                                    <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : userData.photoUrl}" class="w-16 h-16 rounded-full border-2 border-emerald-200 object-cover bg-white">
-                                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('profile-image-input').click()"><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                                    <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : (window.removeProfImg ? `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${userData.gender}&backgroundColor=10b981` : userData.photoUrl)}" class="w-16 h-16 rounded-full border-2 border-emerald-200 object-cover bg-white">
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-slate-700">الصورة الشخصية</p>
-                                    <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600 mt-2">تغيير الصورة</button>
+                                    <div class="flex gap-2 mt-2">
+                                        <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600">تغيير الصورة</button>
+                                        <button onclick="removeProfilePhoto()" class="text-xs bg-rose-50 text-rose-600 border border-rose-100 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors font-bold flex items-center gap-1"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف</button>
+                                    </div>
                                     <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="handleProfileImageSelect(event)">
                                 </div>
                             </div>
@@ -982,6 +1228,8 @@
                 } else {
                     statsHtml = `<div class="mt-6 border-t border-slate-100 pt-6 text-center md:text-right text-sm text-slate-500 flex items-center justify-center md:justify-start gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600"></i> هذا الحساب خاص، المحتوى غير متاح للغرباء.</div>`;
                 }
+                
+                const publicComms = allCommunities.filter(c => c.creatorId === tUser.uid && !c.isPrivate);
 
                 container.innerHTML = `
                 <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200">
@@ -1000,7 +1248,27 @@
                             ${statsHtml}
                         </div>
                     </div>
-                </div>`;
+                </div>
+                ${publicComms.length > 0 ? `
+                <div class="mt-8 mx-4">
+                    <h3 class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2 mb-4">المجتمعات العامة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${publicComms.map(c => `
+                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5">
+                                    <img src="${c.iconUrl}" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">${c.name}</h4>
+                                    <p class="text-xs text-slate-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو</p>
+                                </div>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                `;
             }
         }
         window.addEPSocial = () => {
@@ -1035,7 +1303,7 @@
         function renderRequestsTab() {
             const reqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending');
             const cont = document.getElementById('requests-list');
-            if(!reqs.length) cont.innerHTML = '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl">لا توجد طلبات</p>';
+            if(!reqs.length) cont.innerHTML = '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border border-dashed border-slate-200">لا توجد طلبات</p>';
             else cont.innerHTML = reqs.map(r => {
                 const u = allUsers.find(x => x.uid === r.from);
                 if(!u) return '';
@@ -1052,38 +1320,8 @@
         function renderAdminTab() {
             document.getElementById('admin-users-count').innerText = allUsers.length;
             document.getElementById('admin-posts-count').innerText = allPosts.length;
+            document.getElementById('admin-comms-count').innerText = allCommunities.length;
         }
-
-        // --- Post/Comment Interactions ---
-        window.deletePost = async (id) => { if(confirm('متأكد؟')) await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', id)); }
-        window.togglePicker = (id) => { document.getElementById('picker-'+id).classList.toggle('show'); }
-        window.handleReact = async (pId, type) => {
-            const p = allPosts.find(x=>x.id===pId); if(!p) return;
-            const r = {...(p.reactions||{})};
-            if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
-            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {reactions: r});
-        }
-        window.addComment = async (pId) => {
-            const val = document.getElementById('c-input-'+pId).value; if(!val.trim()) return;
-            const p = allPosts.find(x=>x.id===pId); if(!p) return;
-            const nc = { id: Date.now().toString(), authorId: currentUser.uid, text: val, createdAt: new Date().toISOString(), reactions: {} };
-            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: arrayUnion(nc)});
-        }
-        window.handleCReact = async (pId, cId, type) => {
-            const p = allPosts.find(x=>x.id===pId); if(!p) return;
-            const comments = p.comments.map(c => {
-                if(c.id===cId) {
-                    const r = {...(c.reactions||{})};
-                    if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
-                    return {...c, reactions: r};
-                } return c;
-            });
-            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: comments});
-        }
-
-        // --- Lightbox ---
-        window.openLightbox = (url) => { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.remove('hidden'); }
-        window.closeLightbox = (e) => { if(e) e.stopPropagation(); document.getElementById('lightbox').classList.add('hidden'); document.getElementById('lightbox-img').src = ''; }
 
     </script>
 </body>
