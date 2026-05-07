@@ -727,8 +727,8 @@
             document.getElementById('auth-submit-text').innerText = isAuthLoginMode ? 'دخول' : 'إنشاء حساب';
         }
 
-        window.switchTab = (tab) => {
-            if (tab === 'communities') activeCommunityId = null;
+        window.switchTab = (tab, preserveState = false) => {
+            if (tab === 'communities' && !preserveState) activeCommunityId = null;
             if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null; 
             if (tab !== 'profile') viewingUid = currentUser.uid;
             
@@ -1343,7 +1343,7 @@
         window.requestJoinComm = async (id) => {
             try {
                 await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), { joinRequests: arrayUnion(currentUser.uid) });
-                showToast('تم إرسال الطلب', 'success');
+                showToast('تم إرسال الطلب، في انتظار موافقة صاحب المجتمع', 'success');
             } catch(e) { showToast('حدث خطأ أثناء إرسال الطلب', 'error'); }
         }
 
@@ -1359,7 +1359,7 @@
             } catch(e) { showToast('حدث خطأ', 'error'); }
         }
 
-        window.viewCommunity = (id) => { activeCommunityId = id; renderCommunitiesTab(); }
+        window.viewCommunity = (id) => { activeCommunityId = id; switchTab('communities', true); }
         window.closeCommunityView = () => { activeCommunityId = null; renderCommunitiesTab(); }
 
         window.deleteCommunity = async (id) => {
