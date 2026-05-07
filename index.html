@@ -1433,10 +1433,13 @@
         }
 
         function generateCommunityCardHtml(c, isPublicList) {
+            let cardColor = c.color || 'bg-emerald-100 dark:bg-emerald-900/40';
+            if (!cardColor.includes('dark:')) cardColor += ' dark:bg-slate-700';
+            
             return `
             <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
                 <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${cardColor} overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
                         <img src="${c.iconUrl}" class="w-full h-full object-cover">
                     </div>
                     <div>
@@ -1517,20 +1520,23 @@
                     </div>`;
                 }
 
+                let commColorClass = comm.color || 'bg-slate-100 dark:bg-slate-800';
+                if (!commColorClass.includes('dark:')) commColorClass += ' dark:bg-slate-800';
+
                 container.innerHTML = `
                 <div class="flex items-center justify-between gap-2 mb-6">
                     <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
                     ${topActionBtn}
                 </div>
-                <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden transition-colors">
-                    <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white dark:bg-slate-800 border border-white/50 relative z-10">
+                <div class="${commColorClass} p-6 md:p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden transition-colors">
+                    <img src="${comm.iconUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover shadow-md bg-white dark:bg-slate-800 border border-white/50 relative z-10">
                     <div class="flex-1 text-center md:text-right relative z-10">
-                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">${comm.name}</h2>
-                        <p class="text-slate-600 dark:text-slate-300 mt-2 max-w-xl">${comm.description || 'لا يوجد وصف.'}</p>
+                        <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white drop-shadow-sm">${comm.name}</h2>
+                        <p class="text-slate-700 dark:text-slate-200 mt-2 max-w-xl font-medium">${comm.description || 'لا يوجد وصف.'}</p>
                         <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                            <span class="bg-white/60 dark:bg-slate-900/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
-                            <span class="bg-white/60 dark:bg-slate-900/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
-                            ${isAdmin ? `<button onclick="showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
+                            <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
+                            <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
+                            ${isAdmin ? `<button onclick="showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
                         </div>
                     </div>
                 </div>
