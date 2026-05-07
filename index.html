@@ -751,7 +751,20 @@
         }
 
         let isEditingProfile = false;
-        window.toggleEditProfile = () => { isEditingProfile = !isEditingProfile; renderProfileTab(); }
+        window.toggleEditProfile = () => { 
+            isEditingProfile = !isEditingProfile; 
+            if (!isEditingProfile) window.tmpProfImgFile = null;
+            renderAll(); 
+        }
+
+        window.handleProfileImageSelect = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                window.tmpProfImgFile = file;
+                document.getElementById('edit-profile-avatar-preview').src = URL.createObjectURL(file);
+            }
+        }
+
         window.saveProfile = async () => {
             const btn = document.getElementById('save-prof-btn');
             btn.disabled=true; btn.innerHTML='جاري...';
@@ -776,7 +789,7 @@
                 isEditingProfile = false;
                 window.tmpProfImgFile = null;
             } catch(e) { alert('خطأ في الحفظ'); }
-            renderProfileTab();
+            renderAll();
         }
 
         function renderProfileTab() {
@@ -833,6 +846,22 @@
                         <!-- Personal Data -->
                         <div>
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600"></i> المعلومات الشخصية</h4>
+                            
+                            <div class="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div class="relative group">
+                                    <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : userData.photoUrl}" class="w-16 h-16 rounded-full border-2 border-emerald-200 object-cover bg-white">
+                                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('profile-image-input').click()">
+                                        <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700">الصورة الشخصية</p>
+                                    <p class="text-xs text-slate-500 mb-2">يمكنك اختيار صورة جديدة لملفك الشخصي.</p>
+                                    <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600">تغيير الصورة</button>
+                                    <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="handleProfileImageSelect(event)">
+                                </div>
+                            </div>
+
                             <div class="space-y-4">
                                 <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
                                 <div><label class="text-xs text-slate-500 mb-1">النبذة (Bio)</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none focus:border-emerald-500">${userData.bio}</textarea></div>
