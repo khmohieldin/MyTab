@@ -12,13 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
-        /* Custom scrollbar for better look */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Loading Spinner */
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #059669;
@@ -161,7 +159,8 @@
                 </div>
                 <div class="flex flex-col w-full gap-2">
                     <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">المساحة</span></button>
-                    <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">لوحة التحكم (حسابي)</span></button>
+                    <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
+                    <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">لوحة التحكم (حسابي)</span></button>
                     <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث بمعرف</span></button>
                     <div class="relative w-full">
                         <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
@@ -183,7 +182,7 @@
                         <i data-lucide="copy" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500"></i>
                     </button>
                 </div>
-                <div class="flex items-center gap-3 hover:bg-emerald-50 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="switchTab('profile')">
+                <div class="flex items-center gap-3 hover:bg-emerald-50 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="viewMyProfile()">
                     <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 object-cover bg-white">
                     <div class="hidden md:flex flex-col items-start overflow-hidden">
                         <span id="sidebar-name" class="font-medium text-sm text-slate-700 truncate w-32"></span>
@@ -213,7 +212,7 @@
                     <!-- Create Post Box -->
                     <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors">
                         <div class="flex gap-4">
-                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white">
+                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white cursor-pointer hover:opacity-80 transition-opacity" onclick="viewMyProfile()">
                             <div class="flex-1">
                                 <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
                                 
@@ -240,11 +239,17 @@
                     <div id="feed-posts-list" class="space-y-6 mt-8"></div>
                 </div>
 
+                <!-- Friends Tab -->
+                <div id="tab-content-friends" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="users" class="w-6 h-6 text-emerald-600"></i> أصدقائي بالمساحة</h2>
+                    <div id="friends-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
                 <!-- Profile Tab -->
                 <div id="tab-content-profile" class="tab-content hidden pb-10">
                     <div id="profile-view-container"></div>
                     <div class="mt-8 space-y-6">
-                        <h3 class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2">منشوراتي</h3>
+                        <h3 id="profile-posts-header" class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2">المنشورات</h3>
                         <div id="profile-posts-list" class="space-y-6"></div>
                     </div>
                 </div>
@@ -283,9 +288,20 @@
     </div>
 
     <!-- Lightbox -->
-    <div id="lightbox" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 cursor-zoom-out" onclick="closeLightbox()">
+    <div id="lightbox" class="hidden fixed inset-0 z-60 flex items-center justify-center bg-black/95 p-4 cursor-zoom-out" onclick="closeLightbox()">
         <button class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors p-2 bg-white/10 rounded-full" onclick="closeLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
         <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- Reactors Modal -->
+    <div id="reactors-modal" class="hidden fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeReactorsModal()">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-lg text-slate-800">قائمة المتفاعلين</h3>
+                <button onclick="closeReactorsModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="reactors-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
     </div>
 
 
@@ -319,6 +335,7 @@
         let allPosts = [];
         let friendRequests = [];
         let activeTabStr = 'feed';
+        let viewingUid = null;
         let isAuthLoginMode = true;
         let postSelectedColor = 'white';
         let postImageFile = null;
@@ -333,7 +350,6 @@
             'rose': { bg: 'bg-rose-100', border: 'border-rose-300', text: 'text-rose-900' },
         };
 
-        // --- Init Icons ---
         lucide.createIcons();
 
         // --- Auth Observer ---
@@ -352,6 +368,7 @@
                     renderRegSocials();
                 } else {
                     userData = userSnap.data();
+                    viewingUid = currentUser.uid;
                     setupDataListeners();
                     showView('main-layout');
                     updateSidebar();
@@ -359,6 +376,7 @@
                 }
             } else {
                 userData = null;
+                viewingUid = null;
                 showView('auth-view');
             }
         });
@@ -403,15 +421,27 @@
         }
 
         window.switchTab = (tab) => {
+            if (tab !== 'profile') {
+                viewingUid = currentUser.uid;
+            }
             activeTabStr = tab;
-            ['feed', 'profile', 'search', 'requests', 'admin'].forEach(t => {
-                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+            ['feed', 'profile', 'search', 'requests', 'admin', 'friends'].forEach(t => {
+                const tc = document.getElementById(`tab-content-${t}`);
+                if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
                 if(navBtn) navBtn.className = `nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-slate-500 hover:bg-slate-100'}`;
             });
-            document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+            const tcAct = document.getElementById(`tab-content-${tab}`);
+            if(tcAct) tcAct.classList.remove('hidden');
             renderAll();
         }
+
+        window.viewProfile = (uid) => {
+            viewingUid = uid;
+            isEditingProfile = false;
+            switchTab('profile');
+        }
+        window.viewMyProfile = () => viewProfile(currentUser.uid);
 
         // --- Authentication Functions ---
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
@@ -448,18 +478,11 @@
             const errDiv = document.getElementById('auth-error');
             const errText = document.getElementById('auth-error-text');
             errDiv.classList.add('hidden');
-
-            try {
-                await signInWithPopup(auth, new GoogleAuthProvider());
-            } catch (error) { 
-                console.error(error); 
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { 
                 if (error.code !== 'auth/popup-closed-by-user') {
                     errDiv.classList.remove('hidden');
-                    if (error.code === 'auth/unauthorized-domain') {
-                        errText.innerText = 'النطاق الحالي غير مصرح به لاستخدام تسجيل الدخول بجوجل. يجب إضافة رابط هذا الموقع إلى "Authorized domains" في إعدادات Firebase.';
-                    } else {
-                        errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
-                    }
+                    if (error.code === 'auth/unauthorized-domain') errText.innerText = 'النطاق الحالي غير مصرح به لاستخدام جوجل.';
+                    else errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
                 }
             }
         }
@@ -475,14 +498,11 @@
                 await sendPasswordResetEmail(auth, currentUser.email);
                 msg.innerText = 'تم إرسال رابط تغيير كلمة المرور إلى بريدك.';
                 msg.classList.remove('hidden');
-            } catch(e) {
-                alert('حدث خطأ أثناء محاولة إرسال الرابط.');
-            }
+            } catch(e) { alert('حدث خطأ أثناء محاولة إرسال الرابط.'); }
             btn.disabled = false; btn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور';
             lucide.createIcons();
         }
 
-        // --- Verify Functions ---
         window.resendVerification = async () => {
             try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600'; } 
             catch(e) { document.getElementById('verify-msg').innerText='حدث خطأ.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
@@ -493,7 +513,6 @@
             else { document.getElementById('verify-msg').innerText='لم يتم التأكيد بعد.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
         }
 
-        // --- Registration ---
         window.addRegSocialLink = () => { regSocialLinks.push({platform:'facebook', url:''}); renderRegSocials(); }
         window.removeRegSocial = (idx) => { regSocialLinks.splice(idx, 1); renderRegSocials(); }
         window.updateRegSocial = (idx, field, val) => { regSocialLinks[idx][field] = val; }
@@ -522,7 +541,6 @@
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             
             const gender = document.getElementById('reg-gender').value;
-            // تحديث رابط الصورة الافتراضية (Notionists style with green background)
             const avatarUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
 
             const newUserData = {
@@ -542,6 +560,7 @@
             try {
                 await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), newUserData);
                 userData = newUserData;
+                viewingUid = currentUser.uid;
                 showView('main-layout');
                 setupDataListeners();
             } catch(e) { alert('خطأ أثناء الإنشاء'); btn.disabled=false; btn.innerHTML='دخول المساحة'; }
@@ -570,9 +589,7 @@
             if(inc>0) { badge.classList.remove('hidden'); badge.innerText=inc; } else badge.classList.add('hidden');
         }
 
-        window.copyMyId = () => {
-            navigator.clipboard.writeText(userData.myTabId).then(()=>alert('تم نسخ المعرف!')).catch(()=>{});
-        }
+        window.copyMyId = () => { navigator.clipboard.writeText(userData.myTabId).then(()=>alert('تم نسخ المعرف!')).catch(()=>{}); }
         window.setPostColor = (id) => { postSelectedColor = id; updateSidebar(); updateCreatePostBox(); }
         window.handlePostImageSelect = (e) => {
             const file = e.target.files[0];
@@ -629,6 +646,7 @@
         function renderAll() {
             if(activeTabStr==='feed') renderFeedTab();
             if(activeTabStr==='profile') renderProfileTab();
+            if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
             if(activeTabStr==='admin') renderAdminTab();
             lucide.createIcons();
@@ -657,10 +675,14 @@
 
             let statsHTML = '';
             if(tReact > 0) {
-                statsHTML = `<div class="flex items-center gap-2 mb-3 px-2 border-b border-black/5 pb-2 mt-2"><div class="flex -space-x-1 rtl:space-x-reverse">
-                    ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current bg-white rounded-full p-0.5"></i>` : ''}
-                    ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5"></i>` : ''}
-                </div><span class="text-xs text-slate-500">${tReact} &bull; ${reactNames} تفاعلوا</span></div>`;
+                statsHTML = `<div onclick="showReactors('${post.id}')" class="flex items-center gap-2 mb-3 px-2 border-b border-black/5 pb-2 mt-2 cursor-pointer hover:bg-black/5 p-1.5 rounded-lg transition-colors w-fit">
+                    <div class="flex -space-x-1 rtl:space-x-reverse">
+                        ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
+                        ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
+                        ${Object.values(reactions).includes('sad') ? `<i data-lucide="frown" class="w-4 h-4 text-amber-500 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
+                        ${Object.values(reactions).includes('angry') ? `<i data-lucide="angry" class="w-4 h-4 text-red-600 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
+                    </div><span class="text-xs text-slate-600 font-medium">${tReact} &bull; ${reactNames} تفاعلوا</span>
+                </div>`;
             }
 
             const comments = post.comments || [];
@@ -669,10 +691,10 @@
             return `
             <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border}">
                 <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-3">
-                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover bg-white">
+                    <div class="flex items-center gap-3 cursor-pointer group" onclick="viewProfile('${post.authorId}')">
+                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover bg-white group-hover:opacity-80 transition-opacity">
                         <div>
-                            <h4 class="font-semibold text-slate-800 text-sm">${post.authorName}</h4>
+                            <h4 class="font-semibold text-slate-800 text-sm group-hover:text-emerald-600 transition-colors">${post.authorName}</h4>
                             <span class="text-[10px] text-slate-500">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                     </div>
@@ -691,11 +713,11 @@
                     <button onclick="togglePicker('${post.id}')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm bg-black/5 hover:bg-black/10 font-medium ${myReact ? getRColor(myReact) : 'text-slate-600'}">
                         <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-5 h-5 ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تم التفاعل':'تفاعل'}</span>
                     </button>
-                    <button onclick="document.getElementById('comments-${post.id}').classList.toggle('hidden')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 bg-black/5 hover:bg-black/10 font-medium">
+                    <button onclick="document.getElementById('c-input-${post.id}').focus()" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 bg-black/5 hover:bg-black/10 font-medium">
                         <i data-lucide="message-square" class="w-5 h-5"></i> <span>${comments.length} تعليق</span>
                     </button>
                 </div>
-                <div id="comments-${post.id}" class="hidden mt-4 pt-4 border-t border-black/5">
+                <div id="comments-${post.id}" class="mt-4 pt-4 border-t border-black/5">
                     <div class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">${commentsHTML || '<p class="text-xs text-center text-slate-500 py-2">لا توجد تعليقات.</p>'}</div>
                     <div class="flex gap-2">
                         <input type="text" id="c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 border border-black/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400">
@@ -715,15 +737,15 @@
 
             return `
             <div class="flex gap-3 items-start group relative">
-                <img src="${aPic}" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover bg-white">
+                <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover bg-white cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="flex-1">
                     <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block">
-                        <span class="font-bold text-slate-800 text-xs block mb-1">${aName}</span>
+                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 text-xs block mb-1 cursor-pointer hover:text-emerald-600 transition-colors">${aName}</span>
                         <p class="text-slate-700">${c.text}</p>
                     </div>
                     <div class="flex items-center gap-3 mt-1 px-2 relative">
                         <button onclick="document.getElementById('cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors ${myR?getRColor(myR):'text-slate-500'}">تفاعل</button>
-                        ${tR>0 ? `<div class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
+                        ${tR>0 ? `<div onclick="showCommentReactors('${postId}', '${c.id}')" class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500 cursor-pointer hover:bg-slate-50"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
                         
                         <div id="cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white shadow-lg border border-slate-100 rounded-full px-2 py-1.5 gap-2 z-10">
                             <button onclick="handleCReact('${postId}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500"></i></button>
@@ -743,11 +765,86 @@
         }
         function getRColor(type) { return {like:'text-blue-500', heart:'text-rose-500', sad:'text-amber-500', angry:'text-red-600'}[type] || 'text-slate-500'; }
         function getRIconName(type) { return {like:'thumbs-up', heart:'heart', sad:'frown', angry:'angry'}[type] || 'thumbs-up'; }
+        
+        window.getReactionIconStr = (type) => {
+            if(type==='like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500"></i>';
+            if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 fill-current"></i>';
+            if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500"></i>';
+            if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600"></i>';
+            return '';
+        }
 
+        // --- Modals Logic ---
+        window.showReactors = (postId) => {
+            const p = allPosts.find(x=>x.id===postId); if(!p || !p.reactions) return;
+            const list = document.getElementById('reactors-list');
+            list.innerHTML = Object.keys(p.reactions).map(uid => {
+                const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
+                const rType = p.reactions[uid];
+                return `
+                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 p-3 rounded-xl transition-colors border-b border-slate-50 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white border border-slate-200">
+                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                    </div>
+                    <div class="bg-slate-100 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
+                </div>`;
+            }).join('');
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">لا يوجد تفاعلات.</p>';
+            document.getElementById('reactors-modal').classList.remove('hidden'); lucide.createIcons();
+        }
+
+        window.showCommentReactors = (postId, commentId) => {
+            const p = allPosts.find(x=>x.id===postId); if(!p) return;
+            const c = (p.comments||[]).find(x=>x.id===commentId); if(!c || !c.reactions) return;
+            const list = document.getElementById('reactors-list');
+            list.innerHTML = Object.keys(c.reactions).map(uid => {
+                const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
+                const rType = c.reactions[uid];
+                return `
+                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 p-3 rounded-xl transition-colors border-b border-slate-50 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white border border-slate-200">
+                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                    </div>
+                    <div class="bg-slate-100 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
+                </div>`;
+            }).join('');
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">لا يوجد تفاعلات.</p>';
+            document.getElementById('reactors-modal').classList.remove('hidden'); lucide.createIcons();
+        }
+
+        window.closeReactorsModal = () => document.getElementById('reactors-modal').classList.add('hidden');
+
+        // --- View Renders ---
         function renderFeedTab() {
             const friends = userData.friends || [];
             const posts = allPosts.filter(p => p.authorId === currentUser.uid || friends.includes(p.authorId)).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
             document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا توجد منشورات حالياً.</p></div>`;
+        }
+
+        function renderFriendsTab() {
+            const container = document.getElementById('friends-list-container');
+            const fIds = userData.friends || [];
+            if (!fIds.length) {
+                container.innerHTML = '<div class="col-span-full text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200"><i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i><p class="text-slate-500">لا يوجد أصدقاء في مساحتك حتى الآن.</p></div>';
+                return;
+            }
+            container.innerHTML = fIds.map(uid => {
+                const u = allUsers.find(x => x.uid === uid);
+                if (!u) return '';
+                return `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-colors group" onclick="viewProfile('${u.uid}')">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-100 bg-white">
+                        <div>
+                            <h4 class="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">${u.displayName}</h4>
+                            <p class="text-xs text-slate-500 font-mono">${u.myTabId}</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 group-hover:text-emerald-600"></i>
+                </div>`;
+            }).join('');
         }
 
         let isEditingProfile = false;
@@ -794,94 +891,61 @@
 
         function renderProfileTab() {
             const container = document.getElementById('profile-view-container');
-            const myP = allPosts.filter(p => p.authorId === currentUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-            document.getElementById('profile-posts-list').innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border">لا توجد منشورات.</p>';
+            const postsContainer = document.getElementById('profile-posts-list');
+            const postsSectionHeader = document.getElementById('profile-posts-header');
+            
+            const tUser = allUsers.find(u => u.uid === viewingUid) || userData;
+            const isMe = tUser.uid === currentUser.uid;
+            const isFriend = (userData.friends || []).includes(tUser.uid);
+            const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
 
-            if(!isEditingProfile) {
-                let socialHtml = (userData.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-800 text-white p-2 rounded-full hover:opacity-80"><i data-lucide="link" class="w-5 h-5"></i></a>`).join('');
-                let waHtml = userData.phoneNumber ? `<a href="https://wa.me/${userData.phoneNumber.replace(/\D/g,'')}" target="_blank" class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-medium"><i data-lucide="message-square" class="w-4 h-4"></i> تواصل</a>` : '';
-
-                container.innerHTML = `
-                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200">
-                    <img src="${userData.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                </div>
-                <div class="bg-white rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100">
-                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
-                        <img src="${userData.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md bg-white object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${userData.photoUrl}')">
-                        <div class="flex-1 w-full">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div><h1 class="text-2xl font-bold text-slate-800">${userData.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${userData.myTabId}</p></div></div>
-                                <button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> لوحة التحكم (حسابي)</button>
-                            </div>
-                            <p class="text-slate-600 mt-4 leading-relaxed max-w-2xl bg-slate-50 p-3 rounded-xl border">${userData.bio}</p>
-                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
-                            <div class="mt-6 flex gap-8 justify-center md:justify-start border-t pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(userData.friends||[]).length}</span><span class="text-xs text-slate-500 font-medium">أشخاص بالمساحة</span></div></div>
-                        </div>
-                    </div>
-                </div>`;
+            if (isMe || isFriend) {
+                const myP = allPosts.filter(p => p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                postsContainer.innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border">لا توجد منشورات.</p>';
+                postsSectionHeader.classList.remove('hidden');
             } else {
+                postsContainer.innerHTML = '';
+                postsSectionHeader.classList.add('hidden');
+            }
+
+            if(isMe && isEditingProfile) {
                 container.innerHTML = `
                 <div class="bg-white rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 mt-4">
                     <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600"></i> لوحة التحكم في حسابي</h3>
                     <div class="space-y-8">
-                        
-                        <!-- Account Data -->
                         <div>
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600"></i> بيانات الدخول</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs text-slate-500 mb-1 block">البريد الإلكتروني المسجل</label>
-                                    <input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border rounded-lg px-3 py-2 bg-slate-50 text-slate-500 cursor-not-allowed font-sans" dir="ltr">
-                                </div>
+                                <div><label class="text-xs text-slate-500 mb-1 block">البريد الإلكتروني المسجل</label><input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border rounded-lg px-3 py-2 bg-slate-50 text-slate-500 cursor-not-allowed font-sans" dir="ltr"></div>
                                 <div>
                                     <label class="text-xs text-slate-500 mb-1 block">كلمة المرور</label>
-                                    <button id="reset-pwd-btn" onclick="resetMyPassword()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex justify-center items-center gap-2">
-                                        <i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور
-                                    </button>
+                                    <button id="reset-pwd-btn" onclick="resetMyPassword()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex justify-center items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور</button>
                                     <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 hidden font-medium"></p>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Personal Data -->
                         <div>
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600"></i> المعلومات الشخصية</h4>
-                            
                             <div class="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div class="relative group">
                                     <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : userData.photoUrl}" class="w-16 h-16 rounded-full border-2 border-emerald-200 object-cover bg-white">
-                                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('profile-image-input').click()">
-                                        <i data-lucide="camera" class="w-6 h-6 text-white"></i>
-                                    </div>
+                                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('profile-image-input').click()"><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-slate-700">الصورة الشخصية</p>
-                                    <p class="text-xs text-slate-500 mb-2">يمكنك اختيار صورة جديدة لملفك الشخصي.</p>
-                                    <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600">تغيير الصورة</button>
+                                    <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600 mt-2">تغيير الصورة</button>
                                     <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="handleProfileImageSelect(event)">
                                 </div>
                             </div>
-
                             <div class="space-y-4">
                                 <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
                                 <div><label class="text-xs text-slate-500 mb-1">النبذة (Bio)</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none focus:border-emerald-500">${userData.bio}</textarea></div>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="text-xs text-slate-500 mb-1">النوع</label>
-                                        <select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white focus:border-emerald-500">
-                                            <option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option>
-                                            <option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-slate-500 mb-1">تاريخ الميلاد</label>
-                                        <input type="date" id="ep-dob" value="${userData.birthDate || ''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500">
-                                    </div>
+                                    <div><label class="text-xs text-slate-500 mb-1">النوع</label><select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white focus:border-emerald-500"><option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option><option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option></select></div>
+                                    <div><label class="text-xs text-slate-500 mb-1">تاريخ الميلاد</label><input type="date" id="ep-dob" value="${userData.birthDate || ''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Contact Data -->
                         <div>
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-emerald-600"></i> التواصل والروابط</h4>
                             <div class="space-y-4">
@@ -893,10 +957,47 @@
                                 <button onclick="addEPSocial()" class="text-xs text-emerald-600 mt-1 font-medium hover:underline">إضافة رابط +</button>
                             </div>
                         </div>
-
                         <div class="flex gap-2 justify-end mt-4 pt-4 border-t border-slate-100">
                             <button onclick="toggleEditProfile()" class="px-6 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200">إلغاء</button>
                             <button id="save-prof-btn" onclick="saveProfile()" class="px-6 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 flex items-center gap-2">حفظ التعديلات</button>
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                let actionBtn = '';
+                if (isMe) {
+                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> لوحة التحكم (حسابي)</button>`;
+                } else if (!isFriend) {
+                    if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
+                    else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
+                } else {
+                    actionBtn = `<button class="text-sm bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 mx-auto md:mx-0 cursor-default"><i data-lucide="check-circle" class="w-4 h-4"></i> صديق بالمساحة</button>`;
+                }
+
+                let socialHtml = '', waHtml = '', statsHtml = '';
+                if (isMe || isFriend) {
+                    socialHtml = (tUser.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-800 text-white p-2 rounded-full hover:opacity-80"><i data-lucide="link" class="w-5 h-5"></i></a>`).join('');
+                    waHtml = tUser.phoneNumber ? `<a href="https://wa.me/${tUser.phoneNumber.replace(/\D/g,'')}" target="_blank" class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-medium"><i data-lucide="message-square" class="w-4 h-4"></i> تواصل</a>` : '';
+                    statsHtml = `<div class="mt-6 flex gap-8 justify-center md:justify-start border-t border-slate-100 pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(tUser.friends||[]).length}</span><span class="text-xs text-slate-500 font-medium">أشخاص بالمساحة</span></div></div>`;
+                } else {
+                    statsHtml = `<div class="mt-6 border-t border-slate-100 pt-6 text-center md:text-right text-sm text-slate-500 flex items-center justify-center md:justify-start gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600"></i> هذا الحساب خاص، المحتوى غير متاح للغرباء.</div>`;
+                }
+
+                container.innerHTML = `
+                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200">
+                    <img src="${tUser.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                </div>
+                <div class="bg-white rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
+                        <img src="${tUser.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md bg-white object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${tUser.photoUrl}')">
+                        <div class="flex-1 w-full">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div><h1 class="text-2xl font-bold text-slate-800">${tUser.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${tUser.myTabId}</p></div></div>
+                                ${actionBtn}
+                            </div>
+                            <p class="text-slate-600 mt-4 leading-relaxed max-w-2xl bg-slate-50 p-3 rounded-xl border">${tUser.bio}</p>
+                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
+                            ${statsHtml}
                         </div>
                     </div>
                 </div>`;
@@ -917,10 +1018,10 @@
             const u = allUsers.find(x => x.myTabId.toUpperCase() === val);
             if(u) {
                 cont.innerHTML = `
-                <div class="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-200 flex flex-col md:flex-row items-center gap-6">
+                <div class="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-200 flex flex-col md:flex-row items-center gap-6 cursor-pointer hover:shadow-md transition-shadow" onclick="viewProfile('${u.uid}')">
                     <img src="${u.photoUrl}" class="w-24 h-24 rounded-full border-4 border-white object-cover bg-white">
                     <div class="flex-1 text-center md:text-right"><h3 class="text-xl font-bold">${u.displayName}</h3><p class="text-sm text-slate-500 mt-2">${u.bio}</p></div>
-                    <button onclick="sendFriendReq('${u.uid}')" class="bg-emerald-600 text-white px-8 py-3 rounded-xl">طلب إضافة</button>
+                    <button onclick="event.stopPropagation(); sendFriendReq('${u.uid}')" class="bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 transition-colors">طلب إضافة</button>
                 </div>`;
             } else msg.innerText = 'لم يتم العثور على حساب.';
         }
@@ -938,7 +1039,7 @@
             else cont.innerHTML = reqs.map(r => {
                 const u = allUsers.find(x => x.uid === r.from);
                 if(!u) return '';
-                return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white"><span class="font-bold text-sm">${u.displayName}</span></div><div class="flex gap-2"><button onclick="acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 text-emerald-700 p-2 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="declineReq('${r.id}')" class="bg-rose-50 text-rose-600 p-2 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
+                return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border cursor-pointer hover:bg-slate-50" onclick="viewProfile('${u.uid}')"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white"><span class="font-bold text-sm">${u.displayName}</span></div><div class="flex gap-2"><button onclick="event.stopPropagation(); acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 p-2 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="event.stopPropagation(); declineReq('${r.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
             }).join('');
         }
         window.acceptReq = async (reqId, fromUid) => {
