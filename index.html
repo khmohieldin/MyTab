@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTab - مساحتك الآمنة</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS with Dark Mode config -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {}
+            }
+        }
+        // Check and apply theme instantly to avoid flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts (Cairo) -->
@@ -15,7 +29,9 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
         
         .loader {
             border: 3px solid #f3f3f3;
@@ -25,57 +41,58 @@
             height: 20px;
             animation: spin 1s linear infinite;
         }
+        .dark .loader { border-color: #334155; border-top-color: #34d399; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .reaction-picker { display: none; }
         .reaction-picker.show { display: flex; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 overflow-hidden">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
 
     <!-- 1. Loading View -->
-    <div id="loading-view" class="flex h-screen w-full items-center justify-center bg-emerald-50 absolute inset-0 z-50">
+    <div id="loading-view" class="flex h-screen w-full items-center justify-center bg-emerald-50 dark:bg-slate-900 absolute inset-0 z-50">
         <div class="flex flex-col items-center gap-4">
-            <i data-lucide="shield" class="h-16 w-16 text-emerald-600 animate-pulse"></i>
-            <h1 class="text-2xl font-bold text-emerald-900 tracking-wider">MyTab</h1>
-            <p class="text-emerald-600/60">يتم تجهيز مساحتك الآمنة...</p>
+            <i data-lucide="shield" class="h-16 w-16 text-emerald-600 dark:text-emerald-500 animate-pulse"></i>
+            <h1 class="text-2xl font-bold text-emerald-900 dark:text-emerald-400 tracking-wider">MyTab</h1>
+            <p class="text-emerald-600/60 dark:text-emerald-500/60">يتم تجهيز مساحتك الآمنة...</p>
         </div>
     </div>
 
     <!-- 2. Auth View (Login/Register) -->
-    <div id="auth-view" class="hidden min-h-screen bg-emerald-50 flex items-center justify-center p-4 absolute inset-0 z-40">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100">
+    <div id="auth-view" class="hidden min-h-screen bg-emerald-50 dark:bg-slate-900 flex items-center justify-center p-4 absolute inset-0 z-40">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 dark:border-slate-700">
             <div class="flex flex-col items-center mb-8">
-                <i data-lucide="shield" class="w-16 h-16 text-emerald-600 mb-4"></i>
-                <h2 class="text-3xl font-bold text-slate-800 tracking-wider">MyTab</h2>
-                <p class="text-slate-500 text-sm mt-2">مساحتك الآمنة والخاصة</p>
+                <i data-lucide="shield" class="w-16 h-16 text-emerald-600 dark:text-emerald-500 mb-4"></i>
+                <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-wider">MyTab</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">مساحتك الآمنة والخاصة</p>
             </div>
 
-            <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
-                <button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600" onclick="switchAuthTab('login')">تسجيل الدخول</button>
-                <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700" onclick="switchAuthTab('register')">حساب جديد</button>
+            <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                <button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+                <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white" onclick="switchAuthTab('register')">حساب جديد</button>
             </div>
 
-            <div id="auth-error" class="hidden bg-rose-50 text-rose-600 p-3 rounded-xl text-sm mb-4 border border-rose-100 flex items-center gap-2">
+            <div id="auth-error" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-xl text-sm mb-4 border border-rose-100 dark:border-rose-800/50 flex items-center gap-2">
                 <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> <span id="auth-error-text"></span>
             </div>
 
             <form id="auth-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="auth-email" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
-                    <input type="password" id="auth-password" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required minlength="6">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label>
+                    <input type="password" id="auth-password" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required minlength="6">
                 </div>
                 <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2">
                     <i data-lucide="mail" class="w-5 h-5"></i> <span id="auth-submit-text">دخول</span>
                 </button>
             </form>
 
-            <div class="mt-6 border-t border-slate-100 pt-6">
-                <button onclick="handleGoogleAuth()" class="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex justify-center items-center gap-3">
+            <div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6">
+                <button onclick="handleGoogleAuth()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex justify-center items-center gap-3">
                     <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                     المتابعة باستخدام Google
                 </button>
@@ -84,59 +101,59 @@
     </div>
 
     <!-- 3. Verify Email View -->
-    <div id="verify-view" class="hidden min-h-screen bg-emerald-50 flex items-center justify-center p-4 absolute inset-0 z-40">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 text-center">
+    <div id="verify-view" class="hidden min-h-screen bg-emerald-50 dark:bg-slate-900 flex items-center justify-center p-4 absolute inset-0 z-40">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 dark:border-slate-700 text-center">
             <i data-lucide="mail" class="w-16 h-16 text-emerald-500 mx-auto mb-4"></i>
-            <h2 class="text-2xl font-bold text-slate-800 mb-2">تأكيد البريد الإلكتروني</h2>
-            <p class="text-slate-600 text-sm mb-6 leading-relaxed">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">تأكيد البريد الإلكتروني</h2>
+            <p class="text-slate-600 dark:text-slate-300 text-sm mb-6 leading-relaxed">
                 لقد أرسلنا رابط تأكيد إلى <span id="verify-email-display" class="font-semibold"></span>.<br>يرجى الضغط على الرابط في الرسالة لتتمكن من الدخول.
             </p>
             <p id="verify-msg" class="text-sm mb-4"></p>
             <div class="space-y-3">
                 <button onclick="checkEmailVerified()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors">لقد قمت بالتأكيد، دخول</button>
-                <button onclick="resendVerification()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors">إعادة إرسال الرابط</button>
-                <button onclick="handleLogout()" class="text-sm text-slate-500 hover:text-slate-800 mt-4 underline underline-offset-4 block w-full">تسجيل الخروج أو استخدام حساب آخر</button>
+                <button onclick="resendVerification()" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إعادة إرسال الرابط</button>
+                <button onclick="handleLogout()" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white mt-4 underline underline-offset-4 block w-full">تسجيل الخروج أو استخدام حساب آخر</button>
             </div>
         </div>
     </div>
 
     <!-- 4. Registration Details View -->
-    <div id="register-details-view" class="hidden min-h-screen bg-slate-50 flex items-center justify-center p-4 absolute inset-0 z-40 overflow-y-auto">
-        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-lg border border-emerald-100 my-auto">
+    <div id="register-details-view" class="hidden min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 absolute inset-0 z-40 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-lg w-full shadow-lg border border-emerald-100 dark:border-slate-700 my-auto">
             <div class="flex flex-col items-center mb-8">
-                <i data-lucide="shield" class="w-12 h-12 text-emerald-600 mb-2"></i>
-                <h2 class="text-2xl font-bold text-slate-800">إعداد مساحتك الآمنة</h2>
-                <p class="text-slate-500 text-sm mt-1">أكمل بياناتك لإنشاء حسابك في MyTab</p>
+                <i data-lucide="shield" class="w-12 h-12 text-emerald-600 dark:text-emerald-500 mb-2"></i>
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">إعداد مساحتك الآمنة</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">أكمل بياناتك لإنشاء حسابك في MyTab</p>
             </div>
             <form id="reg-form" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل *</label>
-                    <input type="text" id="reg-name" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الاسم الكامل *</label>
+                    <input type="text" id="reg-name" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">النوع *</label>
-                        <select id="reg-gender" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none bg-white">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">النوع *</label>
+                        <select id="reg-gender" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100">
                             <option value="male">ذكر</option>
                             <option value="female">أنثى</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">تاريخ الميلاد *</label>
-                        <input type="date" id="reg-dob" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الميلاد *</label>
+                        <input type="date" id="reg-dob" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">رقم الهاتف (للواتساب - اختياري)</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">رقم الهاتف (للواتساب - اختياري)</label>
                     <div class="relative">
                         <i data-lucide="smartphone" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                        <input type="tel" id="reg-phone" class="w-full border border-slate-200 rounded-xl pr-10 pl-4 py-3 focus:border-emerald-500 outline-none" placeholder="مثال: 010xxxxxxxx">
+                        <input type="tel" id="reg-phone" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl pr-10 pl-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" placeholder="مثال: 010xxxxxxxx">
                     </div>
                 </div>
-                <div class="border-t border-slate-100 pt-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">حسابات التواصل الاجتماعي (اختياري)</label>
+                <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">حسابات التواصل الاجتماعي (اختياري)</label>
                     <div id="reg-socials-container"></div>
-                    <button type="button" onclick="addRegSocialLink()" class="text-sm text-emerald-600 font-medium flex items-center gap-1 mt-2 hover:text-emerald-700">
+                    <button type="button" onclick="addRegSocialLink()" class="text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-2 hover:text-emerald-700 dark:hover:text-emerald-300">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i> إضافة رابط
                     </button>
                 </div>
@@ -148,55 +165,59 @@
     </div>
 
     <!-- 5. Main App Layout -->
-    <div id="main-layout" class="hidden flex h-screen w-full">
+    <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900">
         
         <!-- Sidebar Navigation -->
-        <nav class="w-20 md:w-64 bg-white border-l border-emerald-100 flex flex-col justify-between py-6 shrink-0 z-10 shadow-sm overflow-y-auto">
+        <nav class="w-20 md:w-64 bg-white dark:bg-slate-800 border-l border-emerald-100 dark:border-slate-700 flex flex-col justify-between py-6 shrink-0 z-10 shadow-sm overflow-y-auto transition-colors">
             <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-8">
-                <div class="flex items-center gap-3 text-emerald-600 font-bold text-2xl w-full justify-center md:justify-start">
+                <div class="flex items-center gap-3 text-emerald-600 dark:text-emerald-400 font-bold text-2xl w-full justify-center md:justify-start">
                     <i data-lucide="shield" class="h-8 w-8"></i>
                     <span class="hidden md:block tracking-wide">MyTab</span>
                 </div>
                 <div class="flex flex-col w-full gap-2">
-                    <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">الرئيسية</span></button>
+                    <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">الرئيسية</span></button>
                     
                     <div class="relative w-full">
-                        <button onclick="switchTab('messages')" id="nav-messages" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="hidden md:block">الرسائل</span></button>
+                        <button onclick="switchTab('messages')" id="nav-messages" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="hidden md:block">الرسائل</span></button>
                         <span id="msg-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
 
-                    <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات</span></button>
-                    <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
-                    <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
-                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user-plus" class="w-6 h-6"></i><span class="hidden md:block">إضافة صديق</span></button>
+                    <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات</span></button>
+                    <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
+                    <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
+                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-6 h-6"></i><span class="hidden md:block">إضافة صديق</span></button>
                     <div class="relative w-full">
-                        <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
+                        <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
                     
                     <div class="mt-auto w-full flex flex-col gap-1">
-                        <button onclick="showCharterModal()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100 hover:text-emerald-600">
+                        <!-- Theme Toggle Button -->
+                        <button onclick="toggleTheme()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400">
+                            <i data-lucide="moon" id="theme-icon" class="w-6 h-6"></i><span class="hidden md:block" id="theme-text">الوضع الداكن</span>
+                        </button>
+                        <button onclick="showCharterModal()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400">
                             <i data-lucide="scroll-text" class="w-6 h-6"></i><span class="hidden md:block">ميثاق المساحة</span>
                         </button>
-                        <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50">
+                        <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30">
                             <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="px-2 md:px-6 flex flex-col items-center md:items-start gap-2 mt-8">
-                <div class="hidden md:flex flex-col text-xs text-slate-500 mb-2 bg-slate-100 px-3 py-3 rounded-xl w-full group relative">
-                    <span class="font-semibold text-slate-700 mb-1">المعرف الخاص بك:</span>
-                    <button onclick="copyMyId()" class="flex items-center justify-between w-full bg-white px-2 py-1.5 rounded border border-slate-200 hover:border-emerald-400">
-                        <span id="sidebar-myid" class="font-mono text-emerald-600 tracking-wider text-sm"></span>
-                        <i data-lucide="copy" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500"></i>
+            <div class="px-2 md:px-6 flex flex-col items-center md:items-start gap-2 mt-4 pb-4">
+                <div class="hidden md:flex flex-col text-xs text-slate-500 dark:text-slate-400 mb-2 bg-slate-100 dark:bg-slate-700 px-3 py-3 rounded-xl w-full group relative">
+                    <span class="font-semibold text-slate-700 dark:text-slate-300 mb-1">المعرف الخاص بك:</span>
+                    <button onclick="copyMyId()" class="flex items-center justify-between w-full bg-white dark:bg-slate-800 px-2 py-1.5 rounded border border-slate-200 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500">
+                        <span id="sidebar-myid" class="font-mono text-emerald-600 dark:text-emerald-400 tracking-wider text-sm"></span>
+                        <i data-lucide="copy" class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500"></i>
                     </button>
                 </div>
-                <div class="flex items-center gap-3 hover:bg-emerald-50 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="viewMyProfile()">
-                    <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 object-cover bg-white">
+                <div class="flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="viewMyProfile()">
+                    <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 dark:border-emerald-700 object-cover bg-white dark:bg-slate-800">
                     <div class="hidden md:flex flex-col items-start overflow-hidden">
-                        <span id="sidebar-name" class="font-medium text-sm text-slate-700 truncate w-32"></span>
+                        <span id="sidebar-name" class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate w-32"></span>
                         <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
                     </div>
                 </div>
@@ -204,39 +225,44 @@
         </nav>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto bg-slate-50/50 relative">
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors">
             
             <!-- Mobile Topbar -->
-            <div class="md:hidden flex justify-between items-center bg-white p-4 shadow-sm border-b border-slate-100 sticky top-0 z-20">
-                <button onclick="copyMyId()" class="flex items-center gap-2">
-                    <span id="mobile-myid" class="font-mono text-emerald-600 font-bold"></span>
-                    <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i>
-                </button>
-                <span class="text-xs text-slate-500 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
+            <div class="md:hidden flex justify-between items-center bg-white dark:bg-slate-800 p-4 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button onclick="copyMyId()" class="flex items-center gap-2">
+                        <span id="mobile-myid" class="font-mono text-emerald-600 dark:text-emerald-400 font-bold"></span>
+                        <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTheme()" class="text-slate-500 dark:text-slate-400"><i data-lucide="moon" id="mobile-theme-icon" class="w-5 h-5"></i></button>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
+                </div>
             </div>
 
             <div class="max-w-2xl mx-auto w-full min-h-full p-4 md:p-8">
                 
                 <!-- Feed Tab -->
                 <div id="tab-content-feed" class="tab-content space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-4">الرئيسية</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">الرئيسية</h2>
                     <!-- Create Post Box -->
-                    <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors">
+                    <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors">
                         <div class="flex gap-4">
-                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white cursor-pointer hover:opacity-80 transition-opacity" onclick="viewMyProfile()">
+                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="viewMyProfile()">
                             <div class="flex-1">
-                                <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
+                                <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-2 text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
                                 
                                 <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block">
-                                    <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 shadow-sm">
+                                    <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm">
                                     <button onclick="removePostImage('post-image-preview-container', 'post-image-preview', 'post-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                                 </div>
 
-                                <div class="flex items-center justify-between mt-4 border-t border-black/5 pt-4">
+                                <div class="flex items-center justify-between mt-4 border-t border-black/5 dark:border-white/5 pt-4">
                                     <div class="flex items-center gap-3">
                                         <input type="file" id="post-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event, 'post-image-preview-container', 'post-image-preview')">
-                                        <button onclick="document.getElementById('post-image-input').click()" class="text-slate-500 hover:text-emerald-600 bg-black/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
-                                        <div class="w-px h-6 bg-black/10 mx-1"></div>
+                                        <button onclick="document.getElementById('post-image-input').click()" class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-black/5 dark:bg-white/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
+                                        <div class="w-px h-6 bg-black/10 dark:bg-white/10 mx-1"></div>
                                         <div id="color-picker-container" class="flex gap-2"></div>
                                     </div>
                                     <button onclick="submitPost()" id="submit-post-btn" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-6 py-2 rounded-xl font-medium flex items-center gap-2">
@@ -253,29 +279,29 @@
                 <!-- Messages Tab -->
                 <div id="tab-content-messages" class="tab-content hidden h-[85vh] flex-col relative">
                     <!-- Chat Friends List View -->
-                    <div id="messages-list-view" class="w-full h-full flex flex-col bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-4 border-b border-slate-100"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600"></i> الرسائل الخاصة</h2></div>
-                        <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50"></div>
+                    <div id="messages-list-view" class="w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700"><h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2></div>
+                        <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50 dark:bg-slate-900/50"></div>
                     </div>
                     
                     <!-- Chat Room View -->
-                    <div id="chat-room-view" class="hidden w-full h-full flex flex-col bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden absolute inset-0 z-10">
+                    <div id="chat-room-view" class="hidden w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden absolute inset-0 z-10 transition-colors">
                         <!-- Chat Header -->
-                        <div class="p-3 md:p-4 border-b border-slate-100 flex items-center gap-3 bg-white shadow-sm z-10">
-                            <button onclick="closeChatRoom()" class="p-2 bg-slate-100 rounded-full text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-                            <img id="chat-room-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
-                            <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)"><h3 id="chat-room-name" class="font-bold text-slate-800 hover:text-emerald-600 transition-colors"></h3></div>
+                        <div class="p-3 md:p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 bg-white dark:bg-slate-800 shadow-sm z-10">
+                            <button onclick="closeChatRoom()" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-500 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+                            <img id="chat-room-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
+                            <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)"><h3 id="chat-room-name" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"></h3></div>
                         </div>
                         <!-- Messages Area -->
-                        <div id="chat-messages-area" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 flex flex-col"></div>
+                        <div id="chat-messages-area" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col"></div>
                         <!-- Input Area -->
-                        <div class="p-3 border-t border-slate-100 bg-white flex flex-col gap-2 relative">
+                        <div class="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-2 relative">
                             <!-- Sticker Picker -->
-                            <div id="sticker-picker" class="hidden absolute bottom-[calc(100%+10px)] right-4 bg-white border border-slate-200 shadow-xl rounded-2xl p-3 grid grid-cols-4 gap-2 mb-2 w-64 h-48 overflow-y-auto z-20"></div>
+                            <div id="sticker-picker" class="hidden absolute bottom-[calc(100%+10px)] right-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-3 grid grid-cols-4 gap-2 mb-2 w-64 h-48 overflow-y-auto z-20"></div>
                             
                             <div class="flex items-center gap-2">
-                                <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 hover:text-emerald-500 transition-colors bg-slate-50 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
-                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا..." class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" onkeydown="if(event.key==='Enter') sendMessage('text')">
+                                <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
+                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا..." class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400" onkeydown="if(event.key==='Enter') sendMessage('text')">
                                 <button onclick="sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
                             </div>
                         </div>
@@ -287,7 +313,7 @@
 
                 <!-- Friends Tab -->
                 <div id="tab-content-friends" class="tab-content hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="users" class="w-6 h-6 text-emerald-600"></i> أصدقائي بالمساحة</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2"><i data-lucide="users" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> أصدقائي بالمساحة</h2>
                     <div id="friends-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
 
@@ -295,28 +321,28 @@
                 <div id="tab-content-profile" class="tab-content hidden pb-10">
                     <div id="profile-view-container"></div>
                     <div class="mt-8 space-y-6">
-                        <h3 id="profile-posts-header" class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2">المنشورات</h3>
+                        <h3 id="profile-posts-header" class="text-lg font-bold text-slate-800 dark:text-slate-100 px-2 border-r-4 border-emerald-500 mr-2">المنشورات</h3>
                         <div id="profile-posts-list" class="space-y-6"></div>
                     </div>
                 </div>
 
                 <!-- Search Tab -->
                 <div id="tab-content-search" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6">إضافة صديق</h2>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
-                        <p class="text-sm text-slate-500 mb-4 leading-relaxed">أدخل المعرف السري (MYT-XXXXX) للشخص الذي تريد إضافته لمساحتك.</p>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">إضافة صديق</h2>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8 transition-colors">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">أدخل المعرف السري (MYT-XXXXX) للشخص الذي تريد إضافته لمساحتك.</p>
                         <div class="flex gap-3">
-                            <input type="text" id="search-input" placeholder="MYT-12345" class="flex-1 border rounded-xl px-4 py-3 font-mono focus:border-emerald-500 outline-none uppercase">
-                            <button onclick="performSearch()" class="bg-slate-800 text-white px-6 rounded-xl"><i data-lucide="search" class="w-5 h-5"></i></button>
+                            <input type="text" id="search-input" placeholder="MYT-12345" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-mono focus:border-emerald-500 outline-none uppercase text-slate-800 dark:text-slate-100">
+                            <button onclick="performSearch()" class="bg-slate-800 dark:bg-slate-700 text-white px-6 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600"><i data-lucide="search" class="w-5 h-5"></i></button>
                         </div>
-                        <p id="search-msg" class="text-sm text-emerald-600 mt-3"></p>
+                        <p id="search-msg" class="text-sm text-emerald-600 dark:text-emerald-400 mt-3"></p>
                     </div>
                     <div id="search-result-container"></div>
                 </div>
 
                 <!-- Requests Tab -->
                 <div id="tab-content-requests" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6">طلبات الانضمام</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">طلبات الانضمام</h2>
                     <div id="requests-list" class="space-y-4"></div>
                 </div>
 
@@ -331,51 +357,51 @@
     </div>
 
     <!-- Reactors Modal -->
-    <div id="reactors-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeReactorsModal()">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 class="font-bold text-lg text-slate-800">قائمة المتفاعلين</h3>
-                <button onclick="closeReactorsModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="reactors-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 dark:bg-slate-900/80 p-4 backdrop-blur-sm" onclick="closeReactorsModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-colors" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">قائمة المتفاعلين</h3>
+                <button onclick="closeReactorsModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="reactors-list" class="overflow-y-auto space-y-2 pr-2"></div>
         </div>
     </div>
 
     <!-- Create Community Modal -->
-    <div id="create-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeCreateCommModal()">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <h3 class="font-bold text-xl text-slate-800 flex items-center gap-2"><i data-lucide="plus-circle" class="w-6 h-6 text-emerald-600"></i> إنشاء مجتمع خاص</h3>
+    <div id="create-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 dark:bg-slate-900/80 p-4 backdrop-blur-sm" onclick="closeCreateCommModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-colors" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="plus-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إنشاء مجتمع خاص</h3>
                 <button onclick="closeCreateCommModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <div class="space-y-4">
                 <div class="flex flex-col items-center mb-4">
                     <div class="relative group">
-                        <img id="comm-icon-preview" src="https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128" class="w-20 h-20 rounded-2xl object-cover shadow-sm bg-emerald-100">
+                        <img id="comm-icon-preview" src="https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128" class="w-20 h-20 rounded-2xl object-cover shadow-sm bg-emerald-100 dark:bg-emerald-900/50">
                         <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('comm-icon-input').click()"><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
                     </div>
                     <input type="file" id="comm-icon-input" accept="image/*" class="hidden" onchange="handleCommIconSelect(event)">
-                    <span class="text-xs text-slate-500 mt-2">أيقونة المجتمع</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 mt-2">أيقونة المجتمع</span>
                 </div>
-                <div><label class="text-sm text-slate-700 mb-1 block">اسم المجتمع</label><input type="text" id="comm-name" placeholder="مثال: مجتمع البرمجيات" class="w-full border rounded-xl px-4 py-2 outline-none focus:border-emerald-500"></div>
-                <div><label class="text-sm text-slate-700 mb-1 block">التفاصيل / الوصف</label><textarea id="comm-desc" rows="2" placeholder="أضف وصفاً لمجتمعك..." class="w-full border rounded-xl px-4 py-2 outline-none resize-none focus:border-emerald-500"></textarea></div>
+                <div><label class="text-sm text-slate-700 dark:text-slate-300 mb-1 block">اسم المجتمع</label><input type="text" id="comm-name" placeholder="مثال: مجتمع البرمجيات" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100"></div>
+                <div><label class="text-sm text-slate-700 dark:text-slate-300 mb-1 block">التفاصيل / الوصف</label><textarea id="comm-desc" rows="2" placeholder="أضف وصفاً لمجتمعك..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 outline-none resize-none focus:border-emerald-500 text-slate-800 dark:text-slate-100"></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-sm text-slate-700 mb-1 block">الخصوصية</label>
-                        <select id="comm-privacy" class="w-full border rounded-xl px-4 py-2 outline-none bg-white">
+                        <label class="text-sm text-slate-700 dark:text-slate-300 mb-1 block">الخصوصية</label>
+                        <select id="comm-privacy" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 outline-none text-slate-800 dark:text-slate-100">
                             <option value="public">عام (يظهر بالبروفايل)</option>
                             <option value="private">خاص (مخفي)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-sm text-slate-700 mb-1 block">لون المجتمع</label>
-                        <select id="comm-color" class="w-full border rounded-xl px-4 py-2 outline-none bg-white">
-                            <option value="bg-emerald-100">أخضر</option>
-                            <option value="bg-blue-100">أزرق</option>
-                            <option value="bg-purple-100">بنفسجي</option>
-                            <option value="bg-amber-100">أصفر</option>
-                            <option value="bg-rose-100">أحمر</option>
-                            <option value="bg-slate-100">رمادي</option>
+                        <label class="text-sm text-slate-700 dark:text-slate-300 mb-1 block">لون المجتمع</label>
+                        <select id="comm-color" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 outline-none text-slate-800 dark:text-slate-100">
+                            <option value="bg-emerald-100 dark:bg-emerald-900/40">أخضر</option>
+                            <option value="bg-blue-100 dark:bg-blue-900/40">أزرق</option>
+                            <option value="bg-purple-100 dark:bg-purple-900/40">بنفسجي</option>
+                            <option value="bg-amber-100 dark:bg-amber-900/40">أصفر</option>
+                            <option value="bg-rose-100 dark:bg-rose-900/40">أحمر</option>
+                            <option value="bg-slate-100 dark:bg-slate-800">رمادي</option>
                         </select>
                     </div>
                 </div>
@@ -385,10 +411,10 @@
     </div>
 
     <!-- Add Members Modal -->
-    <div id="add-member-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onclick="closeAddMemberModal()">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 class="font-bold text-lg text-slate-800">إضافة أصدقاء للمجتمع</h3>
+    <div id="add-member-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 dark:bg-slate-900/80 p-4 backdrop-blur-sm" onclick="closeAddMemberModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">إضافة أصدقاء للمجتمع</h3>
                 <button onclick="closeAddMemberModal()" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="comm-friends-list" class="overflow-y-auto space-y-2 pr-2"></div>
@@ -397,28 +423,28 @@
 
     <!-- Space Charter Modal (ميثاق المساحة) -->
     <div id="charter-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh]">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh] border dark:border-slate-700">
             <div class="flex items-center justify-center mb-6">
-                <div class="bg-emerald-100 p-4 rounded-full">
-                    <i data-lucide="scroll-text" class="w-8 h-8 text-emerald-600"></i>
+                <div class="bg-emerald-100 dark:bg-emerald-900/50 p-4 rounded-full">
+                    <i data-lucide="scroll-text" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i>
                 </div>
             </div>
-            <h2 class="text-2xl font-bold text-center text-slate-800 mb-5">ميثاق المساحة</h2>
+            <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-5">ميثاق المساحة</h2>
             
-            <div class="text-slate-700 space-y-4 text-sm md:text-base leading-relaxed text-justify bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <div class="text-slate-700 dark:text-slate-300 space-y-4 text-sm md:text-base leading-relaxed text-justify bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <p>مرحباً بك في مساحتك الآمنة. لقد بُنيت <strong>MyTab</strong> على فلسفة الخصوصية والحرية المطلقة.</p>
                 <p>نحن نؤمن بأن هذه صفحتك، ومملكتك الخاصة، ومساحتك المغلقة التي تديرها كما يحلو لك، وتدعو إليها من تثق بهم فقط.</p>
-                <p>أفكارك، معتقداتك، ثقافتك، وكل ما تشاركه هنا هو ملك لك وحدك، ونحن نحترم حريتك الشخصية إلى أبعد الحدود. <span class="font-bold text-emerald-700">لذلك، حريتك هنا مطلقة تماماً، ولا نضع أي قيود على ما تكتب أو تعبر عنه.</span></p>
+                <p>أفكارك، معتقداتك، ثقافتك، وكل ما تشاركه هنا هو ملك لك وحدك، ونحن نحترم حريتك الشخصية إلى أبعد الحدود. <span class="font-bold text-emerald-700 dark:text-emerald-400">لذلك، حريتك هنا مطلقة تماماً، ولا نضع أي قيود على ما تكتب أو تعبر عنه.</span></p>
                 
-                <div class="bg-rose-50 border-r-4 border-rose-500 p-4 rounded-xl mt-4">
-                    <p class="font-bold text-rose-700 flex items-center gap-2 mb-2"><i data-lucide="alert-octagon" class="w-5 h-5"></i> الاستثناء الوحيد:</p>
-                    <p class="text-rose-600 text-sm font-medium">يُمنع منعاً باتاً نشر أو تداول أي <strong>محتوى إباحي</strong>. هذه هي القاعدة الوحيدة الصارمة لدينا للحفاظ على نظافة المنصة. في حال مخالفة هذا البند الوحيد، سيتم حظر الحساب بشكل نهائي ولا رجعة فيه.</p>
+                <div class="bg-rose-50 dark:bg-rose-900/30 border-r-4 border-rose-500 p-4 rounded-xl mt-4">
+                    <p class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-2"><i data-lucide="alert-octagon" class="w-5 h-5"></i> الاستثناء الوحيد:</p>
+                    <p class="text-rose-600 dark:text-rose-300 text-sm font-medium">يُمنع منعاً باتاً نشر أو تداول أي <strong>محتوى إباحي</strong>. هذه هي القاعدة الوحيدة الصارمة لدينا للحفاظ على نظافة المنصة. في حال مخالفة هذا البند الوحيد، سيتم حظر الحساب بشكل نهائي ولا رجعة فيه.</p>
                 </div>
                 
-                <p class="text-center font-bold text-emerald-700 mt-4 text-lg">باستثناء ذلك.. افعل ما تشاء، فهذه مساحتك!</p>
+                <p class="text-center font-bold text-emerald-700 dark:text-emerald-400 mt-4 text-lg">باستثناء ذلك.. افعل ما تشاء، فهذه مساحتك!</p>
             </div>
             
-            <button onclick="acceptCharter()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-colors mt-6 shadow-md flex justify-center items-center gap-2">
+            <button onclick="acceptCharter()" class="w-full bg-slate-800 dark:bg-emerald-600 hover:bg-slate-900 dark:hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-colors mt-6 shadow-md flex justify-center items-center gap-2">
                 <i data-lucide="check-circle" class="w-5 h-5"></i> قرأت الميثاق وموافق عليه
             </button>
         </div>
@@ -454,26 +480,56 @@
         let allPosts = [];
         let friendRequests = [];
         let allCommunities = [];
-        let allMessages = []; // For chat system
+        let allMessages = []; 
         let activeTabStr = 'feed';
         let viewingUid = null;
         let activeCommunityId = null;
-        let activeChatFriendId = null; // Currently opened chat
+        let activeChatFriendId = null; 
         let isAuthLoginMode = true;
         let postSelectedColor = 'white';
         let postImageFile = null;
         let regSocialLinks = [];
 
         const POST_COLORS = {
-            'white': { bg: 'bg-white', border: 'border-gray-200', text: 'text-slate-800' },
-            'green': { bg: 'bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-900' },
-            'yellow': { bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-900' },
-            'blue': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900' },
-            'gray': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-900' },
-            'rose': { bg: 'bg-rose-100', border: 'border-rose-300', text: 'text-rose-900' },
+            'white': { bg: 'bg-white dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-700', text: 'text-slate-800 dark:text-slate-100' },
+            'green': { bg: 'bg-emerald-100 dark:bg-emerald-900/40', border: 'border-emerald-300 dark:border-emerald-700/50', text: 'text-emerald-900 dark:text-emerald-100' },
+            'yellow': { bg: 'bg-yellow-100 dark:bg-yellow-900/40', border: 'border-yellow-300 dark:border-yellow-700/50', text: 'text-yellow-900 dark:text-yellow-100' },
+            'blue': { bg: 'bg-blue-100 dark:bg-blue-900/40', border: 'border-blue-300 dark:border-blue-700/50', text: 'text-blue-900 dark:text-blue-100' },
+            'gray': { bg: 'bg-gray-100 dark:bg-slate-700', border: 'border-gray-300 dark:border-slate-600', text: 'text-gray-900 dark:text-gray-100' },
+            'rose': { bg: 'bg-rose-100 dark:bg-rose-900/40', border: 'border-rose-300 dark:border-rose-700/50', text: 'text-rose-900 dark:text-rose-100' },
         };
 
         lucide.createIcons();
+        updateThemeIcons();
+
+        // --- Theme Logic ---
+        window.toggleTheme = () => {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcons();
+        }
+
+        function updateThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconName = isDark ? 'sun' : 'moon';
+            const text = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
+            
+            const desktopIcon = document.getElementById('theme-icon');
+            const desktopText = document.getElementById('theme-text');
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            
+            if(desktopIcon) desktopIcon.setAttribute('data-lucide', iconName);
+            if(desktopText) desktopText.innerText = text;
+            if(mobileIcon) mobileIcon.setAttribute('data-lucide', iconName);
+            
+            lucide.createIcons();
+        }
 
         // --- Auth Observer ---
         onAuthStateChanged(auth, async (user) => {
@@ -555,14 +611,16 @@
 
         window.switchAuthTab = (type) => {
             isAuthLoginMode = (type === 'login');
-            document.getElementById('tab-login').className = isAuthLoginMode ? 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600' : 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700';
-            document.getElementById('tab-register').className = !isAuthLoginMode ? 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600' : 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700';
+            const activeClass = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400';
+            const inactiveClass = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white';
+            document.getElementById('tab-login').className = isAuthLoginMode ? activeClass : inactiveClass;
+            document.getElementById('tab-register').className = !isAuthLoginMode ? activeClass : inactiveClass;
             document.getElementById('auth-submit-text').innerText = isAuthLoginMode ? 'دخول' : 'إنشاء حساب';
         }
 
         window.switchTab = (tab) => {
             if (tab === 'communities') activeCommunityId = null;
-            if (tab === 'messages') activeChatFriendId = null; // reset opened chat when clicking tab
+            if (tab === 'messages') activeChatFriendId = null; 
             if (tab !== 'profile') viewingUid = currentUser.uid;
             
             activeTabStr = tab;
@@ -570,12 +628,12 @@
                 const tc = document.getElementById(`tab-content-${t}`);
                 if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
-                if(navBtn) navBtn.className = `nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-slate-500 hover:bg-slate-100'}`;
+                if(navBtn) navBtn.className = `nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`;
             });
             const tcAct = document.getElementById(`tab-content-${tab}`);
             if(tcAct) tcAct.classList.remove('hidden');
             if (tab === 'messages') {
-                tcAct.classList.add('flex'); // Add flex for layout
+                tcAct.classList.add('flex'); 
                 document.getElementById('chat-room-view').classList.add('hidden');
                 document.getElementById('messages-list-view').classList.remove('hidden');
             }
@@ -650,13 +708,13 @@
         }
 
         window.resendVerification = async () => {
-            try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600'; } 
-            catch(e) { document.getElementById('verify-msg').innerText='حدث خطأ.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
+            try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600 dark:text-emerald-400'; } 
+            catch(e) { document.getElementById('verify-msg').innerText='حدث خطأ.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600 dark:text-rose-400'; }
         }
         window.checkEmailVerified = async () => {
             await currentUser.reload();
             if(auth.currentUser.emailVerified) window.location.reload();
-            else { document.getElementById('verify-msg').innerText='لم يتم التأكيد بعد.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
+            else { document.getElementById('verify-msg').innerText='لم يتم التأكيد بعد.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600 dark:text-rose-400'; }
         }
 
         window.addRegSocialLink = () => { regSocialLinks.push({platform:'facebook', url:''}); renderRegSocials(); }
@@ -667,15 +725,15 @@
             const container = document.getElementById('reg-socials-container');
             container.innerHTML = regSocialLinks.map((link, idx) => `
                 <div class="flex gap-2 mb-2">
-                    <select onchange="updateRegSocial(${idx}, 'platform', this.value)" class="w-1/3 border rounded-xl px-2 py-2 text-sm bg-white">
+                    <select onchange="updateRegSocial(${idx}, 'platform', this.value)" class="w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-2 py-2 text-sm text-slate-800 dark:text-slate-100">
                         <option value="facebook" ${link.platform==='facebook'?'selected':''}>فيسبوك</option>
                         <option value="youtube" ${link.platform==='youtube'?'selected':''}>يوتيوب</option>
                         <option value="tiktok" ${link.platform==='tiktok'?'selected':''}>تيك توك</option>
                         <option value="instagram" ${link.platform==='instagram'?'selected':''}>انستجرام</option>
                         <option value="twitter" ${link.platform==='twitter'?'selected':''}>تويتر</option>
                     </select>
-                    <input type="url" placeholder="الرابط..." oninput="updateRegSocial(${idx}, 'url', this.value)" value="${link.url}" class="flex-1 border rounded-xl px-3 py-2 text-sm outline-none">
-                    <button type="button" onclick="removeRegSocial(${idx})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <input type="url" placeholder="الرابط..." oninput="updateRegSocial(${idx}, 'url', this.value)" value="${link.url}" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm outline-none text-slate-800 dark:text-slate-100">
+                    <button type="button" onclick="removeRegSocial(${idx})" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
@@ -734,8 +792,11 @@
             if(picker) {
                 picker.innerHTML = Object.keys(POST_COLORS).map(id => {
                     const c = POST_COLORS[id];
-                    const selectedClass = postSelectedColor === id ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
-                    return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
+                    // Using includes instead of exact match to handle dark variants
+                    const isSelected = postSelectedColor === id;
+                    const selectedClass = isSelected ? 'border-slate-800 dark:border-slate-300 scale-110 shadow-md' : 'border-black/10 dark:border-white/10 opacity-70 hover:opacity-100';
+                    const bgClass = c.bg.split(' ')[0]; // Use light bg for the picker dot
+                    return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${bgClass==='bg-white'?'bg-white':bgClass.replace('100','400')} ${selectedClass} transition-all"></button>`;
                 }).join('');
             }
         }
@@ -759,8 +820,10 @@
             if(picker) {
                 picker.innerHTML = Object.keys(POST_COLORS).map(colorId => {
                     const c = POST_COLORS[colorId];
-                    const selectedClass = postSelectedColor === colorId ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
-                    return `<button onclick="setPostColor('${colorId}', '${pickerId}', '${containerId}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
+                    const isSelected = postSelectedColor === colorId;
+                    const selectedClass = isSelected ? 'border-slate-800 dark:border-slate-300 scale-110 shadow-md' : 'border-black/10 dark:border-white/10 opacity-70 hover:opacity-100';
+                    const bgClass = c.bg.split(' ')[0];
+                    return `<button onclick="setPostColor('${colorId}', '${pickerId}', '${containerId}')" class="w-6 h-6 rounded-full border-2 ${bgClass==='bg-white'?'bg-white':bgClass.replace('100','400')} ${selectedClass} transition-all"></button>`;
                 }).join('');
             }
             const c = POST_COLORS[postSelectedColor];
@@ -774,7 +837,6 @@
                 postImageFile = file;
                 document.getElementById(previewContId).classList.remove('hidden');
                 document.getElementById(previewImgId).src = URL.createObjectURL(file);
-                // force white color when image selected
                 setPostColor('white', previewContId.includes('comm') ? 'comm-color-picker' : 'color-picker-container', previewContId.includes('comm') ? 'create-comm-post-container' : 'create-post-container');
             }
         }
@@ -839,36 +901,32 @@
         function generatePostHTML(post) {
             const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
             const isMine = post.authorId === currentUser.uid;
-            // التحقق من صلاحية الحذف (صاحب المنشور أو صاحب المجتمع)
             let canDelete = isMine;
             if (!canDelete && post.communityId) {
                 const comm = allCommunities.find(c => c.id === post.communityId);
-                if (comm && comm.creatorId === currentUser.uid) {
-                    canDelete = true;
-                }
+                if (comm && comm.creatorId === currentUser.uid) canDelete = true;
             }
 
             const {ytId, tkId} = extractEmbeds(post.content||'');
-            
             const reactions = post.reactions || {};
             const myReact = reactions[currentUser.uid];
             const tReact = Object.keys(reactions).length;
             const reactNames = getReactorNames(reactions);
 
             let mediaHTML = '';
-            if(post.imageUrl) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden border border-black/5 shadow-sm relative group cursor-zoom-in" onclick="openLightbox('${post.imageUrl}')"><img src="${post.imageUrl}" class="w-full max-h-96 object-cover"><div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center"><i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i></div></div>`;
+            if(post.imageUrl) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm relative group cursor-zoom-in" onclick="openLightbox('${post.imageUrl}')"><img src="${post.imageUrl}" class="w-full max-h-96 object-cover"><div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors flex items-center justify-center"><i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i></div></div>`;
             if(ytId) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
-            if(tkId) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[325px] h-[600px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
+            if(tkId) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[325px] h-[600px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
             let statsHTML = '';
             if(tReact > 0) {
-                statsHTML = `<div onclick="showReactors('${post.id}')" class="flex items-center gap-2 mb-3 px-2 border-b border-black/5 pb-2 mt-2 cursor-pointer hover:bg-black/5 p-1.5 rounded-lg transition-colors w-fit">
+                statsHTML = `<div onclick="showReactors('${post.id}')" class="flex items-center gap-2 mb-3 px-2 border-b border-black/5 dark:border-white/5 pb-2 mt-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-lg transition-colors w-fit">
                     <div class="flex -space-x-1 rtl:space-x-reverse">
-                        ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
-                        ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
-                        ${Object.values(reactions).includes('sad') ? `<i data-lucide="frown" class="w-4 h-4 text-amber-500 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
-                        ${Object.values(reactions).includes('angry') ? `<i data-lucide="angry" class="w-4 h-4 text-red-600 bg-white rounded-full p-0.5 shadow-sm"></i>` : ''}
-                    </div><span class="text-xs text-slate-600 font-medium">${tReact} &bull; ${reactNames} تفاعلوا</span>
+                        ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm border dark:border-slate-700"></i>` : ''}
+                        ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 dark:text-blue-400 bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm border dark:border-slate-700"></i>` : ''}
+                        ${Object.values(reactions).includes('sad') ? `<i data-lucide="frown" class="w-4 h-4 text-amber-500 dark:text-amber-400 bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm border dark:border-slate-700"></i>` : ''}
+                        ${Object.values(reactions).includes('angry') ? `<i data-lucide="angry" class="w-4 h-4 text-red-600 dark:text-red-400 bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm border dark:border-slate-700"></i>` : ''}
+                    </div><span class="text-xs text-slate-600 dark:text-slate-300 font-medium">${tReact} &bull; ${reactNames} تفاعلوا</span>
                 </div>`;
             }
 
@@ -876,39 +934,39 @@
             let commentsHTML = comments.map(cm => generateCommentHTML(cm, post, canDelete)).join('');
 
             return `
-            <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border} mb-6">
+            <div class="rounded-3xl p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-6">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3 cursor-pointer group" onclick="viewProfile('${post.authorId}')">
-                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover bg-white group-hover:opacity-80 transition-opacity">
+                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
                         <div>
-                            <h4 class="font-semibold text-slate-800 text-sm group-hover:text-emerald-600 transition-colors">${post.authorName}</h4>
-                            <span class="text-[10px] text-slate-500">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <h4 class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">${post.authorName}</h4>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                     </div>
-                    ${canDelete ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 rounded-full p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    ${canDelete ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                 </div>
-                <div class="text-slate-800 whitespace-pre-wrap leading-relaxed mb-4 px-1 text-lg" dir="auto">${post.content}</div>
+                <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-4 px-1 text-lg" dir="auto">${post.content}</div>
                 ${mediaHTML}
                 ${statsHTML}
                 <div class="flex items-center gap-2 relative">
-                    <div id="picker-${post.id}" class="reaction-picker absolute -top-12 right-0 bg-white border border-slate-200 shadow-lg rounded-full px-3 py-2 gap-3 z-10 animate-in fade-in zoom-in duration-200">
-                        <button onclick="handleReact('${post.id}', 'like')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-6 h-6 text-blue-500"></i></button>
-                        <button onclick="handleReact('${post.id}', 'heart')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-6 h-6 text-rose-500 fill-current"></i></button>
-                        <button onclick="handleReact('${post.id}', 'sad')" class="hover:scale-125 transition-transform"><i data-lucide="frown" class="w-6 h-6 text-amber-500"></i></button>
-                        <button onclick="handleReact('${post.id}', 'angry')" class="hover:scale-125 transition-transform"><i data-lucide="angry" class="w-6 h-6 text-red-600"></i></button>
+                    <div id="picker-${post.id}" class="reaction-picker absolute -top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-3 py-2 gap-3 z-10 animate-in fade-in zoom-in duration-200">
+                        <button onclick="handleReact('${post.id}', 'like')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-6 h-6 text-blue-500 dark:text-blue-400"></i></button>
+                        <button onclick="handleReact('${post.id}', 'heart')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-6 h-6 text-rose-500 dark:text-rose-400 fill-current"></i></button>
+                        <button onclick="handleReact('${post.id}', 'sad')" class="hover:scale-125 transition-transform"><i data-lucide="frown" class="w-6 h-6 text-amber-500 dark:text-amber-400"></i></button>
+                        <button onclick="handleReact('${post.id}', 'angry')" class="hover:scale-125 transition-transform"><i data-lucide="angry" class="w-6 h-6 text-red-600 dark:text-red-400"></i></button>
                     </div>
-                    <button onclick="togglePicker('${post.id}')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm bg-black/5 hover:bg-black/10 font-medium ${myReact ? getRColor(myReact) : 'text-slate-600'}">
+                    <button onclick="togglePicker('${post.id}')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-medium transition-colors ${myReact ? getRColor(myReact) : 'text-slate-600 dark:text-slate-300'}">
                         <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-5 h-5 ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تم التفاعل':'تفاعل'}</span>
                     </button>
-                    <button onclick="document.getElementById('c-input-${post.id}').focus()" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 bg-black/5 hover:bg-black/10 font-medium">
+                    <button onclick="document.getElementById('c-input-${post.id}').focus()" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-medium transition-colors">
                         <i data-lucide="message-square" class="w-5 h-5"></i> <span>${comments.length} تعليق</span>
                     </button>
                 </div>
-                <div class="mt-4 pt-4 border-t border-black/5">
+                <div class="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
                     <div class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">${commentsHTML}</div>
                     <div class="flex gap-2">
-                        <input type="text" id="c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 border border-black/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400">
-                        <button onclick="addComment('${post.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 rounded-xl"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
+                        <input type="text" id="c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 dark:bg-slate-800/80 border border-black/10 dark:border-slate-600 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-800 dark:text-slate-100 dark:placeholder-slate-400 transition-colors">
+                        <button onclick="addComment('${post.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 rounded-xl transition-colors"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
                     </div>
                 </div>
             </div>`;
@@ -921,25 +979,24 @@
             const reacts = c.reactions || {};
             const myR = reacts[currentUser.uid];
             const tR = Object.keys(reacts).length;
-            
             const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
 
             return `
             <div class="flex gap-3 items-start group relative">
-                <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover bg-white cursor-pointer hover:opacity-80 transition-opacity">
+                <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 mt-1 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="flex-1">
-                    <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block relative group/comment">
-                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 text-xs block mb-1 cursor-pointer hover:text-emerald-600 transition-colors">${aName}</span>
-                        <p class="text-slate-700">${c.text}</p>
-                        ${canDeleteComment ? `<button onclick="deleteComment('${post.id}', '${c.id}')" class="absolute -right-8 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover/comment:opacity-100 transition-opacity p-1 bg-rose-50 hover:bg-rose-100 rounded-full" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    <div class="bg-white/60 dark:bg-slate-700/60 border border-black/5 dark:border-white/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block relative group/comment">
+                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 dark:text-slate-200 text-xs block mb-1 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">${aName}</span>
+                        <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
+                        ${canDeleteComment ? `<button onclick="deleteComment('${post.id}', '${c.id}')" class="absolute -right-8 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover/comment:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                     </div>
                     <div class="flex items-center gap-3 mt-1 px-2 relative">
-                        <button onclick="document.getElementById('cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors ${myR?getRColor(myR):'text-slate-500'}">تفاعل</button>
-                        ${tR>0 ? `<div onclick="showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500 cursor-pointer hover:bg-slate-50"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
+                        <button onclick="document.getElementById('cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors ${myR?getRColor(myR):'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}">تفاعل</button>
+                        ${tR>0 ? `<div onclick="showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><i data-lucide="heart" class="w-3 h-3 text-rose-500 dark:text-rose-400 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
                         
-                        <div id="cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white shadow-lg border border-slate-100 rounded-full px-2 py-1.5 gap-2 z-10">
-                            <button onclick="handleCReact('${post.id}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500"></i></button>
-                            <button onclick="handleCReact('${post.id}', '${c.id}', 'heart')"><i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current"></i></button>
+                        <div id="cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white dark:bg-slate-800 shadow-lg border border-slate-100 dark:border-slate-700 rounded-full px-2 py-1.5 gap-2 z-10">
+                            <button onclick="handleCReact('${post.id}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i></button>
+                            <button onclick="handleCReact('${post.id}', '${c.id}', 'heart')"><i data-lucide="heart" class="w-4 h-4 text-rose-500 dark:text-rose-400 fill-current"></i></button>
                         </div>
                     </div>
                 </div>
@@ -953,14 +1010,14 @@
             if(names.length<=2) return names.join(' و ');
             return `${names[0]} و ${names.length-1} آخرين`;
         }
-        function getRColor(type) { return {like:'text-blue-500', heart:'text-rose-500', sad:'text-amber-500', angry:'text-red-600'}[type] || 'text-slate-500'; }
+        function getRColor(type) { return {like:'text-blue-500 dark:text-blue-400', heart:'text-rose-500 dark:text-rose-400', sad:'text-amber-500 dark:text-amber-400', angry:'text-red-600 dark:text-red-400'}[type] || 'text-slate-500 dark:text-slate-400'; }
         function getRIconName(type) { return {like:'thumbs-up', heart:'heart', sad:'frown', angry:'angry'}[type] || 'thumbs-up'; }
         
         window.getReactionIconStr = (type) => {
-            if(type==='like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500"></i>';
-            if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 fill-current"></i>';
-            if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500"></i>';
-            if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600"></i>';
+            if(type==='like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500 dark:text-blue-400"></i>';
+            if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 dark:text-rose-400 fill-current"></i>';
+            if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500 dark:text-amber-400"></i>';
+            if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600 dark:text-red-400"></i>';
             return '';
         }
 
@@ -972,15 +1029,15 @@
                 const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
                 const rType = p.reactions[uid];
                 return `
-                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 p-3 rounded-xl transition-colors border-b border-slate-50 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
+                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 p-3 rounded-xl transition-colors border-b border-slate-50 dark:border-slate-700 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
                     <div class="flex items-center gap-3">
-                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white border border-slate-200">
-                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
                     </div>
-                    <div class="bg-slate-100 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
+                    <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
-            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">لا يوجد تفاعلات.</p>';
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
             document.getElementById('reactors-modal').classList.remove('hidden'); lucide.createIcons();
         }
 
@@ -992,15 +1049,15 @@
                 const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
                 const rType = c.reactions[uid];
                 return `
-                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 p-3 rounded-xl transition-colors border-b border-slate-50 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
+                <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 p-3 rounded-xl transition-colors border-b border-slate-50 dark:border-slate-700 last:border-0" onclick="closeReactorsModal(); viewProfile('${uid}')">
                     <div class="flex items-center gap-3">
-                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white border border-slate-200">
-                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
                     </div>
-                    <div class="bg-slate-100 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
+                    <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
-            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">لا يوجد تفاعلات.</p>';
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
             document.getElementById('reactors-modal').classList.remove('hidden'); lucide.createIcons();
         }
 
@@ -1077,15 +1134,15 @@
             list.innerHTML = availableFriends.map(uid => {
                 const u = allUsers.find(x => x.uid === uid); if(!u) return '';
                 return `
-                <div class="flex items-center justify-between p-3 border-b border-slate-50 last:border-0 hover:bg-emerald-50 rounded-xl transition-colors">
+                <div class="flex items-center justify-between p-3 border-b border-slate-50 dark:border-slate-700 last:border-0 hover:bg-emerald-50 dark:hover:bg-slate-700 rounded-xl transition-colors">
                     <div class="flex items-center gap-3">
-                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 bg-white">
-                        <span class="font-bold text-sm text-slate-700">${u.displayName}</span>
+                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
                     </div>
-                    <button onclick="addMemberToComm('${uid}', '${commId}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">إضافة</button>
+                    <button onclick="addMemberToComm('${uid}', '${commId}')" class="bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">إضافة</button>
                 </div>`;
             }).join('');
-            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 py-4">جميع أصدقائك موجودون بالفعل في هذا المجتمع.</p>';
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">جميع أصدقائك موجودون بالفعل في هذا المجتمع.</p>';
             document.getElementById('add-member-modal').classList.remove('hidden'); lucide.createIcons();
         }
         window.closeAddMemberModal = () => document.getElementById('add-member-modal').classList.add('hidden');
@@ -1107,38 +1164,38 @@
                 
                 container.innerHTML = `
                 <div class="flex items-center justify-between gap-2 mb-6">
-                    <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 hover:text-emerald-600 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
-                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>` : `<button onclick="leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`}
+                    <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
+                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>` : `<button onclick="leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`}
                 </div>
-                <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden">
-                    <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white border border-white/50 relative z-10">
+                <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden transition-colors">
+                    <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white dark:bg-slate-800 border border-white/50 relative z-10">
                     <div class="flex-1 text-center md:text-right relative z-10">
-                        <h2 class="text-2xl font-bold text-slate-800">${comm.name}</h2>
-                        <p class="text-slate-600 mt-2 max-w-xl">${comm.description || 'لا يوجد وصف.'}</p>
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">${comm.name}</h2>
+                        <p class="text-slate-600 dark:text-slate-300 mt-2 max-w-xl">${comm.description || 'لا يوجد وصف.'}</p>
                         <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                            <span class="bg-white/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
-                            <span class="bg-white/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
+                            <span class="bg-white/60 dark:bg-slate-900/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
+                            <span class="bg-white/60 dark:bg-slate-900/60 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
                             ${isAdmin ? `<button onclick="showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
                         </div>
                     </div>
                 </div>
                 
                 <div class="mb-8">
-                    <h3 class="font-bold text-slate-700 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
-                    <div id="create-comm-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors mb-6">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
+                    <div id="create-comm-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors mb-6">
                         <div class="flex gap-4">
-                            <img src="${userData.photoUrl}" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white">
+                            <img src="${userData.photoUrl}" class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800">
                             <div class="flex-1">
-                                <textarea id="comm-post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="شارك شيئاً مع أعضاء هذا المجتمع..."></textarea>
+                                <textarea id="comm-post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-2 text-lg" rows="3" placeholder="شارك شيئاً مع أعضاء هذا المجتمع..."></textarea>
                                 <div id="comm-image-preview-container" class="hidden relative mt-2 mb-4 inline-block">
-                                    <img id="comm-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 shadow-sm">
+                                    <img id="comm-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm">
                                     <button onclick="removePostImage('comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                                 </div>
-                                <div class="flex items-center justify-between mt-4 border-t border-black/5 pt-4">
+                                <div class="flex items-center justify-between mt-4 border-t border-black/5 dark:border-white/5 pt-4">
                                     <div class="flex items-center gap-3">
                                         <input type="file" id="comm-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event, 'comm-image-preview-container', 'comm-image-preview')">
-                                        <button onclick="document.getElementById('comm-image-input').click()" class="text-slate-500 hover:text-emerald-600 bg-black/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
-                                        <div class="w-px h-6 bg-black/10 mx-1"></div>
+                                        <button onclick="document.getElementById('comm-image-input').click()" class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-black/5 dark:bg-white/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
+                                        <div class="w-px h-6 bg-black/10 dark:bg-white/10 mx-1"></div>
                                         <div id="comm-color-picker" class="flex gap-2"></div>
                                     </div>
                                     <button onclick="submitPost('${comm.id}', 'comm-post-content', 'submit-comm-post-btn', 'comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" id="submit-comm-post-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl font-medium flex items-center gap-2">
@@ -1148,212 +1205,279 @@
                             </div>
                         </div>
                     </div>
-                    <div>${cPosts.length ? cPosts.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border border-dashed border-slate-200">لا توجد منشورات في هذا المجتمع بعد.</p>'}</div>
+                    <div>${cPosts.length ? cPosts.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>'}</div>
                 </div>`;
                 setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
             } else {
                 const myComms = allCommunities.filter(c => c.members.includes(currentUser.uid));
                 container.innerHTML = `
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="layers" class="w-6 h-6 text-emerald-600"></i> المجتمعات الخاصة</h2>
-                    <button onclick="showCreateCommModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i> إنشاء مجتمع</button>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="layers" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> المجتمعات الخاصة</h2>
+                    <button onclick="showCreateCommModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-colors"><i data-lucide="plus" class="w-4 h-4"></i> إنشاء مجتمع</button>
                 </div>
                 ${myComms.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${myComms.map(c => `
-                    <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
                                 <img src="${c.iconUrl}" class="w-full h-full object-cover">
                             </div>
                             <div>
-                                <h4 class="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">${c.name}</h4>
-                                <p class="text-xs text-slate-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو &bull; <i data-lucide="${c.isPrivate?'lock':'globe'}" class="w-3 h-3"></i> ${c.isPrivate?'خاص':'عام'}</p>
+                                <h4 class="font-bold text-slate-800 dark:text-slate-200 text-lg group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">${c.name}</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو &bull; <i data-lucide="${c.isPrivate?'lock':'globe'}" class="w-3 h-3"></i> ${c.isPrivate?'خاص':'عام'}</p>
                             </div>
                         </div>
-                    </div>`).join('')}</div>` : '<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="layers" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا تنتمي لأي مجتمعات حالياً.</p></div>'}
+                    </div>`).join('')}</div>` : '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-emerald-200 dark:border-emerald-900/50"><i data-lucide="layers" class="w-16 h-16 text-emerald-200 dark:text-emerald-900/50 mx-auto mb-4"></i><p class="text-slate-500 dark:text-slate-400 text-sm">لا تنتمي لأي مجتمعات حالياً.</p></div>'}
                 `;
             }
             lucide.createIcons();
         }
 
-        // --- Chat / Messages Logic ---
-        function getChatId(uid1, uid2) {
-            return [uid1, uid2].sort().join('_');
-        }
-
-        window.openChatRoom = (friendId) => {
-            activeChatFriendId = friendId;
-            document.getElementById('messages-list-view').classList.add('hidden');
-            const roomView = document.getElementById('chat-room-view');
-            roomView.classList.remove('hidden');
-            roomView.classList.add('flex');
-            
-            const friend = allUsers.find(u => u.uid === friendId);
-            document.getElementById('chat-room-avatar').src = friend.photoUrl;
-            document.getElementById('chat-room-name').innerText = friend.displayName;
-            
-            renderChatRoom();
-            markChatAsRead(friendId);
-            lucide.createIcons();
-        }
-
-        window.closeChatRoom = () => {
-            activeChatFriendId = null;
-            const roomView = document.getElementById('chat-room-view');
-            roomView.classList.add('hidden');
-            roomView.classList.remove('flex');
-            document.getElementById('messages-list-view').classList.remove('hidden');
-            renderMessagesList();
-        }
-
-        async function markChatAsRead(friendId) {
-            const chatId = getChatId(currentUser.uid, friendId);
-            const unreadMsgs = allMessages.filter(m => m.chatId === chatId && m.receiverId === currentUser.uid && !m.read);
-            for(let m of unreadMsgs) {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true });
-                } catch(e) {}
-            }
-        }
-
-        window.sendMessage = async (type = 'text', content = null) => {
-            let text = content;
-            if(type === 'text') {
-                const input = document.getElementById('chat-input');
-                text = input.value.trim();
-                if(!text) return;
-                input.value = '';
-            }
-            if(!activeChatFriendId) return;
-
-            const chatId = getChatId(currentUser.uid, activeChatFriendId);
-            const msgId = 'msg_' + Date.now().toString() + Math.floor(Math.random()*1000);
-            
-            try {
-                await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId), {
-                    chatId, senderId: currentUser.uid, receiverId: activeChatFriendId,
-                    text, type, read: false, createdAt: new Date().toISOString(), reactions: {}
-                });
-                setTimeout(() => scrollToBottom('chat-messages-area'), 100);
-            } catch(e) { alert('خطأ في إرسال الرسالة'); }
-        }
-
-        window.toggleStickerPicker = () => {
-            const picker = document.getElementById('sticker-picker');
-            picker.classList.toggle('hidden');
-            if(!picker.innerHTML.trim()) {
-                const emojis = ['😂','😍','🥺','😡','😭','👍','🙏','🔥','🎉','💔','👋','✨','👀','💀','😎','🥳'];
-                picker.innerHTML = emojis.map(e => `<button onclick="sendSticker('${e}')" class="text-4xl hover:scale-110 transition-transform p-2">${e}</button>`).join('');
-            }
-        }
-
-        window.sendSticker = (emoji) => {
-            document.getElementById('sticker-picker').classList.add('hidden');
-            sendMessage('sticker', emoji);
-        }
-
-        function scrollToBottom(id) {
-            const el = document.getElementById(id);
-            if(el) el.scrollTop = el.scrollHeight;
-        }
-
-        function renderMessagesList() {
+        // --- View Renders continued ---
+        function renderFeedTab() {
             const friends = userData.friends || [];
-            const list = document.getElementById('chat-friends-list');
-            if(!friends.length) {
-                list.innerHTML = '<p class="text-center text-slate-500 mt-10">لا يوجد أصدقاء بعد لبدء محادثة. قم بإضافة أصدقاء أولاً.</p>';
+            // تصفية المنشورات لاستبعاد منشورات المجتمعات الخاصة وعرضها فقط في الحائط العام
+            const posts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-emerald-200 dark:border-emerald-900/50 transition-colors"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 dark:text-emerald-900/50 mx-auto mb-4"></i><p class="text-slate-500 dark:text-slate-400 text-sm">لا توجد منشورات حالياً.</p></div>`;
+            setPostColor('white', 'color-picker-container', 'create-post-container');
+        }
+
+        window.removeFriend = async (friendUid) => {
+            if(!confirm('هل أنت متأكد من إلغاء الصداقة وإزالة هذا الشخص من مساحتك؟')) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayRemove(friendUid) });
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', friendUid), { friends: arrayRemove(currentUser.uid) });
+            } catch (e) {
+                alert('حدث خطأ أثناء إلغاء الصداقة.');
+            }
+        }
+
+        function renderFriendsTab() {
+            const container = document.getElementById('friends-list-container');
+            const fIds = userData.friends || [];
+            if (!fIds.length) {
+                container.innerHTML = '<div class="col-span-full text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="users" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا يوجد أصدقاء في مساحتك حتى الآن.</p></div>';
                 return;
             }
-            
-            const chatsData = friends.map(fid => {
-                const chatId = getChatId(currentUser.uid, fid);
-                const msgs = allMessages.filter(m => m.chatId === chatId).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-                const lastMsg = msgs[0];
-                const unreadCount = msgs.filter(m => m.receiverId === currentUser.uid && !m.read).length;
-                const friend = allUsers.find(u => u.uid === fid);
-                return { friend, lastMsg, unreadCount, time: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 };
-            }).sort((a,b) => b.time - a.time);
-
-            list.innerHTML = chatsData.map(c => {
-                if(!c.friend) return '';
-                let msgPreview = c.lastMsg ? (c.lastMsg.type==='sticker' ? 'ملصق' : c.lastMsg.text) : 'ابدأ المحادثة...';
-                let timeStr = c.lastMsg ? new Date(c.lastMsg.createdAt).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
+            container.innerHTML = fIds.map(uid => {
+                const u = allUsers.find(x => x.uid === uid);
+                if (!u) return '';
                 return `
-                <div onclick="openChatRoom('${c.friend.uid}')" class="flex items-center gap-3 p-3 rounded-2xl hover:bg-emerald-50 cursor-pointer transition-colors border border-transparent hover:border-emerald-100 ${c.unreadCount>0 ? 'bg-emerald-50/50' : 'bg-white'}">
-                    <img src="${c.friend.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white">
-                    <div class="flex-1 overflow-hidden">
-                        <div class="flex justify-between items-center mb-1">
-                            <h4 class="font-bold text-slate-800 text-sm truncate ${c.unreadCount>0?'text-emerald-700':''}">${c.friend.displayName}</h4>
-                            <span class="text-[10px] text-slate-400">${timeStr}</span>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 hover:border-emerald-200 dark:hover:border-slate-600 transition-colors group" onclick="viewProfile('${u.uid}')">
+                    <div class="flex items-center gap-3">
+                        <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800">
+                        <div>
+                            <h4 class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">${u.displayName}</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">${u.myTabId}</p>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <p class="text-xs text-slate-500 truncate w-full ${c.unreadCount>0?'font-bold text-slate-800':''}">${c.lastMsg && c.lastMsg.senderId===currentUser.uid ? 'أنت: ':''}${msgPreview}</p>
-                            ${c.unreadCount > 0 ? `<span class="bg-emerald-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shrink-0 mr-2">${c.unreadCount}</span>` : ''}
-                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation(); removeFriend('${u.uid}')" class="text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-2 rounded-lg transition-colors hidden group-hover:flex items-center gap-1 text-xs font-bold" title="إلغاء الصداقة">
+                            <i data-lucide="user-minus" class="w-4 h-4"></i> إزالة
+                        </button>
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"></i>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        function renderChatRoom() {
-            const area = document.getElementById('chat-messages-area');
-            const chatId = getChatId(currentUser.uid, activeChatFriendId);
-            const msgs = allMessages.filter(m => m.chatId === chatId).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
-            
-            // Mark as read immediately if we receive a new message while room is open
-            const hasUnread = msgs.some(m => m.receiverId === currentUser.uid && !m.read);
-            if(hasUnread) markChatAsRead(activeChatFriendId);
+        let isEditingProfile = false;
+        window.toggleEditProfile = () => { 
+            isEditingProfile = !isEditingProfile; 
+            if (!isEditingProfile) { window.tmpProfImgFile = null; window.removeProfImg = false; }
+            renderAll(); 
+        }
 
-            if(!msgs.length) {
-                area.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-400"><i data-lucide="message-square" class="w-12 h-12 mb-2 opacity-50"></i><p class="text-sm">هذه بداية المحادثة السريّة بينكم.</p></div>`;
-                lucide.createIcons();
-                return;
+        window.handleProfileImageSelect = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                window.tmpProfImgFile = file;
+                window.removeProfImg = false;
+                document.getElementById('edit-profile-avatar-preview').src = URL.createObjectURL(file);
+            }
+        }
+        
+        window.removeProfilePhoto = () => {
+            window.tmpProfImgFile = null;
+            window.removeProfImg = true;
+            const gender = document.getElementById('ep-gender') ? document.getElementById('ep-gender').value : userData.gender;
+            document.getElementById('edit-profile-avatar-preview').src = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
+        }
+
+        window.saveProfile = async () => {
+            const btn = document.getElementById('save-prof-btn');
+            btn.disabled=true; btn.innerHTML='جاري...';
+            try {
+                let pUrl = userData.photoUrl;
+                if (window.tmpProfImgFile) {
+                    pUrl = await uploadToImgbb(window.tmpProfImgFile);
+                } else if (window.removeProfImg) {
+                    const gender = document.getElementById('ep-gender').value;
+                    pUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
+                }
+                
+                const sLinksRaw = Array.from(document.querySelectorAll('.edit-social-row')).map(row => ({
+                    platform: row.querySelector('.s-plat').value,
+                    url: row.querySelector('.s-url').value
+                }));
+
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                    displayName: document.getElementById('ep-name').value,
+                    bio: document.getElementById('ep-bio').value,
+                    phoneNumber: document.getElementById('ep-phone').value,
+                    gender: document.getElementById('ep-gender').value,
+                    birthDate: document.getElementById('ep-dob').value,
+                    photoUrl: pUrl,
+                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
+                });
+                isEditingProfile = false;
+                window.tmpProfImgFile = null;
+                window.removeProfImg = false;
+            } catch(e) { alert('خطأ في الحفظ'); }
+            renderAll();
+        }
+
+        function renderProfileTab() {
+            const container = document.getElementById('profile-view-container');
+            const postsContainer = document.getElementById('profile-posts-list');
+            const postsSectionHeader = document.getElementById('profile-posts-header');
+            
+            const tUser = allUsers.find(u => u.uid === viewingUid) || userData;
+            const isMe = tUser.uid === currentUser.uid;
+            const isFriend = (userData.friends || []).includes(tUser.uid);
+            const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
+
+            if (isMe || isFriend) {
+                const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                postsContainer.innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
+                postsSectionHeader.classList.remove('hidden');
+            } else {
+                postsContainer.innerHTML = '';
+                postsSectionHeader.classList.add('hidden');
             }
 
-            area.innerHTML = msgs.map((m, i) => {
-                const isMe = m.senderId === currentUser.uid;
-                let contentHTML = m.type === 'sticker' ? `<div class="text-6xl pt-2">${m.text}</div>` : `<div class="p-3 rounded-2xl text-sm ${isMe ? 'bg-emerald-600 text-white rounded-tl-none shadow-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tr-none shadow-sm'}">${m.text}</div>`;
-                
-                let seenHTML = '';
-                if(isMe && m.read) seenHTML = `<span class="text-[10px] text-emerald-600 flex items-center gap-0.5 mt-1 font-medium"><i data-lucide="check-check" class="w-3 h-3"></i> شوهد</span>`;
-                else if(isMe && !m.read) seenHTML = `<span class="text-[10px] text-slate-400 flex items-center gap-0.5 mt-1"><i data-lucide="check" class="w-3 h-3"></i> أُرسلت</span>`;
-
-                const rList = Object.entries(m.reactions || {});
-                let reactHTML = '';
-                if(rList.length) {
-                    const rIcon = getReactionIconStr(rList[0][1]);
-                    reactHTML = `<div class="absolute ${isMe?'-left-2':'-right-2'} -bottom-3 bg-white border border-slate-200 shadow-sm rounded-full p-1 z-10 text-xs">${rIcon}</div>`;
+            if(isMe && isEditingProfile) {
+                container.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 dark:border-slate-700 mt-4 transition-colors">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إعدادات حسابي</h3>
+                    <div class="space-y-8">
+                        <div>
+                            <h4 class="font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> بيانات الدخول</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">البريد الإلكتروني المسجل</label><input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 cursor-not-allowed font-sans" dir="ltr"></div>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">كلمة المرور</label>
+                                    <button id="reset-pwd-btn" onclick="resetMyPassword()" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex justify-center items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور</button>
+                                    <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 dark:text-emerald-400 hidden font-medium"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> المعلومات الشخصية</h4>
+                            <div class="flex items-center gap-4 mb-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                <div class="relative group">
+                                    <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : (window.removeProfImg ? `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${userData.gender}&backgroundColor=10b981` : userData.photoUrl)}" class="w-16 h-16 rounded-full border-2 border-emerald-200 dark:border-emerald-700 object-cover bg-white dark:bg-slate-800">
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">الصورة الشخصية</p>
+                                    <div class="flex gap-2 mt-2">
+                                        <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-bold text-slate-600 dark:text-slate-300">تغيير الصورة</button>
+                                        <button onclick="removeProfilePhoto()" class="text-xs bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50 px-3 py-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors font-bold flex items-center gap-1"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف</button>
+                                    </div>
+                                    <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="handleProfileImageSelect(event)">
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100"></div>
+                                <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1">النبذة (Bio)</label><textarea id="ep-bio" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none resize-none focus:border-emerald-500 text-slate-800 dark:text-slate-100">${userData.bio}</textarea></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1">النوع</label><select id="ep-gender" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100"><option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option><option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option></select></div>
+                                    <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1">تاريخ الميلاد</label><input type="date" id="ep-dob" value="${userData.birthDate || ''}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 mb-4 flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> التواصل والروابط</h4>
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1">هاتف الواتساب</label><input type="text" id="ep-phone" value="${userData.phoneNumber||''}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100" dir="ltr"></div>
+                                <div id="ep-socials">
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">الروابط الاجتماعية</label>
+                                    ${(userData.socialLinks||[]).map(l => `<div class="edit-social-row flex gap-2 mb-2"><select class="s-plat w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-800 dark:text-slate-100"><option value="facebook" ${l.platform==='facebook'?'selected':''}>فيسبوك</option><option value="youtube" ${l.platform==='youtube'?'selected':''}>يوتيوب</option><option value="tiktok" ${l.platform==='tiktok'?'selected':''}>تيك توك</option><option value="instagram" ${l.platform==='instagram'?'selected':''}>انستجرام</option><option value="twitter" ${l.platform==='twitter'?'selected':''}>تويتر</option></select><input type="url" class="s-url flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none text-slate-800 dark:text-slate-100" value="${l.url}"><button onclick="this.parentElement.remove()" class="text-rose-500 dark:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}
+                                </div>
+                                <button onclick="addEPSocial()" class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium hover:underline">إضافة رابط +</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 justify-end mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                            <button onclick="toggleEditProfile()" class="px-6 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600">إلغاء</button>
+                            <button id="save-prof-btn" onclick="saveProfile()" class="px-6 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 flex items-center gap-2">حفظ التعديلات</button>
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                let actionBtn = '';
+                if (isMe) {
+                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
+                } else if (!isFriend) {
+                    if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
+                    else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
+                } else {
+                    actionBtn = `<div class="flex items-center gap-2 mx-auto md:mx-0"><button onclick="openChatRoom('${tUser.uid}'); switchTab('messages')" class="text-sm bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-300 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button><button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 dark:bg-emerald-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-400 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button></div>`;
                 }
 
-                return `
-                <div class="flex flex-col ${isMe ? 'items-start' : 'items-end'} relative group w-full mb-2">
-                    <div class="max-w-[75%] relative">
-                        ${contentHTML}
-                        ${reactHTML}
-                        <button onclick="document.getElementById('msg-react-${m.id}').classList.toggle('hidden')" class="absolute top-1/2 -translate-y-1/2 ${isMe ? '-right-10' : '-left-10'} opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-emerald-500 transition-opacity bg-white rounded-full shadow-sm border border-slate-100"><i data-lucide="smile-plus" class="w-4 h-4"></i></button>
-                        
-                        <div id="msg-react-${m.id}" class="hidden absolute top-0 ${isMe ? '-right-44' : '-left-44'} bg-white shadow-lg border border-slate-100 rounded-full px-2 py-1 gap-1 z-20 flex">
-                            <button onclick="handleMsgReact('${m.id}', 'like')" class="hover:scale-125 p-1 transition-transform"><i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500"></i></button>
-                            <button onclick="handleMsgReact('${m.id}', 'heart')" class="hover:scale-125 p-1 transition-transform"><i data-lucide="heart" class="w-5 h-5 text-rose-500 fill-current"></i></button>
-                            <button onclick="handleMsgReact('${m.id}', 'sad')" class="hover:scale-125 p-1 transition-transform"><i data-lucide="frown" class="w-5 h-5 text-amber-500"></i></button>
+                let socialHtml = '', waHtml = '', statsHtml = '';
+                if (isMe || isFriend) {
+                    socialHtml = (tUser.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-800 dark:bg-slate-700 text-white p-2 rounded-full hover:opacity-80"><i data-lucide="link" class="w-5 h-5"></i></a>`).join('');
+                    waHtml = tUser.phoneNumber ? `<a href="https://wa.me/${tUser.phoneNumber.replace(/\D/g,'')}" target="_blank" class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-medium"><i data-lucide="message-square" class="w-4 h-4"></i> تواصل</a>` : '';
+                    statsHtml = `<div class="mt-6 flex gap-8 justify-center md:justify-start border-t border-slate-100 dark:border-slate-700 pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600 dark:text-emerald-400">${(tUser.friends||[]).length}</span><span class="text-xs text-slate-500 dark:text-slate-400 font-medium">أشخاص بالمساحة</span></div></div>`;
+                } else {
+                    statsHtml = `<div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6 text-center md:text-right text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center md:justify-start gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> هذا الحساب خاص، المحتوى غير متاح للغرباء.</div>`;
+                }
+                
+                const publicComms = allCommunities.filter(c => c.creatorId === tUser.uid && !c.isPrivate);
+
+                container.innerHTML = `
+                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200 dark:border-slate-700">
+                    <img src="${tUser.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
+                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
+                        <img src="${tUser.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-md bg-white dark:bg-slate-800 object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${tUser.photoUrl}')">
+                        <div class="flex-1 w-full">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div><h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">${tUser.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 dark:text-emerald-400 font-mono text-sm bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 rounded-lg">${tUser.myTabId}</p></div></div>
+                                ${actionBtn}
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300 mt-4 leading-relaxed max-w-2xl bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">${tUser.bio}</p>
+                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
+                            ${statsHtml}
                         </div>
                     </div>
-                    ${seenHTML}
-                </div>`;
-            }).join('');
-            lucide.createIcons();
-            
-            // Auto scroll slightly delayed to let images/DOM render
-            setTimeout(() => scrollToBottom('chat-messages-area'), 50);
+                </div>
+                ${publicComms.length > 0 ? `
+                <div class="mt-8 mx-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 px-2 border-r-4 border-emerald-500 mr-2 mb-4">المجتمعات العامة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${publicComms.map(c => `
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
+                                    <img src="${c.iconUrl}" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-200 text-lg group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">${c.name}</h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو</p>
+                                </div>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                `;
+            }
         }
-
-        window.handleMsgReact = async (msgId, type) => {
-            const m = allMessages.find(x => x.id === msgId);
-            if(!m) return;
-            const r = {...(m.reactions||{})};
-            if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
-            try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId), {reactions: r});
-            } catch(e) {}
+        window.addEPSocial = () => {
+            const div = document.createElement('div'); div.className = 'edit-social-row flex gap-2 mb-2';
+            div.innerHTML = `<select class="s-plat w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-800 dark:text-slate-100"><option value="facebook">فيسبوك</option><option value="youtube">يوتيوب</option><option value="tiktok">تيك توك</option><option value="instagram">انستجرام</option><option value="twitter">تويتر</option></select><input type="url" class="s-url flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none text-slate-800 dark:text-slate-100"><button onclick="this.parentElement.remove()" class="text-rose-500 dark:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+            document.getElementById('ep-socials').appendChild(div); lucide.createIcons();
         }
 
     </script>
