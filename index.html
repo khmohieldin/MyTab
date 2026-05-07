@@ -158,16 +158,15 @@
                     <span class="hidden md:block tracking-wide">MyTab</span>
                 </div>
                 <div class="flex flex-col w-full gap-2">
-                    <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">المساحة</span></button>
-                    <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات الخاصة</span></button>
+                    <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">الرئيسية</span></button>
+                    <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات</span></button>
                     <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
-                    <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">لوحة التحكم (حسابي)</span></button>
-                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث بمعرف</span></button>
+                    <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
+                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث</span></button>
                     <div class="relative w-full">
                         <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
-                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="settings" class="w-6 h-6"></i><span class="hidden md:block">إدارة المنصة</span></button>
                     
                     <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 mt-auto">
                         <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
@@ -209,7 +208,7 @@
                 
                 <!-- Feed Tab -->
                 <div id="tab-content-feed" class="tab-content space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-4">المساحة الآمنة</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">الرئيسية</h2>
                     <!-- Create Post Box -->
                     <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors">
                         <div class="flex gap-4">
@@ -276,16 +275,6 @@
                 <div id="tab-content-requests" class="tab-content hidden">
                     <h2 class="text-2xl font-bold text-slate-800 mb-6">طلبات الانضمام</h2>
                     <div id="requests-list" class="space-y-4"></div>
-                </div>
-
-                <!-- Admin Tab -->
-                <div id="tab-content-admin" class="tab-content hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i> إدارة المنصة</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مستخدمين</p><h3 id="admin-users-count" class="text-2xl font-bold">0</h3></div>
-                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">منشورات</p><h3 id="admin-posts-count" class="text-2xl font-bold">0</h3></div>
-                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مجتمعات</p><h3 id="admin-comms-count" class="text-2xl font-bold">0</h3></div>
-                    </div>
                 </div>
 
             </div>
@@ -490,7 +479,7 @@
             if (tab !== 'profile') viewingUid = currentUser.uid;
             
             activeTabStr = tab;
-            ['feed', 'profile', 'search', 'requests', 'admin', 'friends', 'communities'].forEach(t => {
+            ['feed', 'profile', 'search', 'requests', 'friends', 'communities'].forEach(t => {
                 const tc = document.getElementById(`tab-content-${t}`);
                 if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -727,7 +716,6 @@
             if(activeTabStr==='profile') renderProfileTab();
             if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
-            if(activeTabStr==='admin') renderAdminTab();
             lucide.createIcons();
         }
 
@@ -937,6 +925,16 @@
             } catch(e) { alert('حدث خطأ'); }
         }
 
+        window.leaveCommunity = async (id) => {
+            if(!confirm('هل أنت متأكد من رغبتك في الانسحاب من هذا المجتمع؟')) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), {
+                    members: arrayRemove(currentUser.uid)
+                });
+                closeCommunityView();
+            } catch(e) { alert('حدث خطأ أثناء المغادرة'); }
+        }
+
         window.showAddMemberModal = (commId) => {
             const comm = allCommunities.find(c => c.id === commId); if(!comm) return;
             const list = document.getElementById('comm-friends-list');
@@ -975,9 +973,9 @@
                 const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
                 
                 container.innerHTML = `
-                <div class="flex items-center justify-between mb-6">
-                    <button onclick="closeCommunityView()" class="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-bold transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i> عودة للمجتمعات</button>
-                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> حذف المجتمع</button>` : ''}
+                <div class="flex items-center justify-between gap-2 mb-6">
+                    <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 hover:text-emerald-600 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
+                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>` : `<button onclick="leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`}
                 </div>
                 <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden">
                     <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white border border-white/50 relative z-10">
@@ -1155,7 +1153,7 @@
             if(isMe && isEditingProfile) {
                 container.innerHTML = `
                 <div class="bg-white rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 mt-4">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600"></i> لوحة التحكم في حسابي</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600"></i> إعدادات حسابي</h3>
                     <div class="space-y-8">
                         <div>
                             <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600"></i> بيانات الدخول</h4>
@@ -1212,7 +1210,7 @@
             } else {
                 let actionBtn = '';
                 if (isMe) {
-                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> لوحة التحكم (حسابي)</button>`;
+                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
                 } else if (!isFriend) {
                     if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
                     else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
@@ -1316,12 +1314,6 @@
             await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) });
         }
         window.declineReq = async (reqId) => { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); }
-
-        function renderAdminTab() {
-            document.getElementById('admin-users-count').innerText = allUsers.length;
-            document.getElementById('admin-posts-count').innerText = allPosts.length;
-            document.getElementById('admin-comms-count').innerText = allCommunities.length;
-        }
 
     </script>
 </body>
