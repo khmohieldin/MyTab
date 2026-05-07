@@ -161,13 +161,13 @@
                 </div>
                 <div class="flex flex-col w-full gap-2">
                     <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">المساحة</span></button>
-                    <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
+                    <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">لوحة التحكم (حسابي)</span></button>
                     <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث بمعرف</span></button>
                     <div class="relative w-full">
                         <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
-                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="settings" class="w-6 h-6"></i><span class="hidden md:block">لوحة الإدارة</span></button>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="settings" class="w-6 h-6"></i><span class="hidden md:block">إدارة المنصة</span></button>
                     
                     <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 mt-auto">
                         <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
@@ -184,7 +184,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3 hover:bg-emerald-50 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="switchTab('profile')">
-                    <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 object-cover">
+                    <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 object-cover bg-white">
                     <div class="hidden md:flex flex-col items-start overflow-hidden">
                         <span id="sidebar-name" class="font-medium text-sm text-slate-700 truncate w-32"></span>
                         <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
@@ -213,7 +213,7 @@
                     <!-- Create Post Box -->
                     <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors">
                         <div class="flex gap-4">
-                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover">
+                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover bg-white">
                             <div class="flex-1">
                                 <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
                                 
@@ -271,7 +271,7 @@
 
                 <!-- Admin Tab -->
                 <div id="tab-content-admin" class="tab-content hidden space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i> لوحة الإدارة</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i> إدارة المنصة</h2>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مستخدمين</p><h3 id="admin-users-count" class="text-2xl font-bold">0</h3></div>
                         <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">منشورات</p><h3 id="admin-posts-count" class="text-2xl font-bold">0</h3></div>
@@ -292,7 +292,7 @@
     <!-- ==================== LOGIC ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configs ---
@@ -466,6 +466,22 @@
 
         window.handleLogout = async () => { await signOut(auth); }
 
+        window.resetMyPassword = async () => {
+            if(!currentUser || !currentUser.email) return;
+            const btn = document.getElementById('reset-pwd-btn');
+            const msg = document.getElementById('pwd-msg');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإرسال...';
+            try {
+                await sendPasswordResetEmail(auth, currentUser.email);
+                msg.innerText = 'تم إرسال رابط تغيير كلمة المرور إلى بريدك.';
+                msg.classList.remove('hidden');
+            } catch(e) {
+                alert('حدث خطأ أثناء محاولة إرسال الرابط.');
+            }
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور';
+            lucide.createIcons();
+        }
+
         // --- Verify Functions ---
         window.resendVerification = async () => {
             try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600'; } 
@@ -506,10 +522,8 @@
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             
             const gender = document.getElementById('reg-gender').value;
-            // إرجاع النمط السابق الجميل Notionists مع التمييز بين النوعين
-            const avatarUrl = gender === 'female' 
-                ? `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.uid}-girl&backgroundColor=10b981` 
-                : `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.uid}-boy&backgroundColor=10b981`;
+            // تحديث رابط الصورة الافتراضية (Notionists style with green background)
+            const avatarUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
 
             const newUserData = {
                 uid: currentUser.uid,
@@ -656,7 +670,7 @@
             <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border}">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3">
-                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover">
+                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover bg-white">
                         <div>
                             <h4 class="font-semibold text-slate-800 text-sm">${post.authorName}</h4>
                             <span class="text-[10px] text-slate-500">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
@@ -694,15 +708,14 @@
         function generateCommentHTML(c, postId) {
             const author = allUsers.find(u => u.uid === c.authorId);
             const aName = c.authorId === currentUser.uid ? 'أنت' : (author?author.displayName:'صديق');
-            // تحديث رابط الصورة الافتراضية للتعليقات ليكون بنفس نمط Notionists الأنيق
-            const aPic = author?author.photoUrl:`https://api.dicebear.com/7.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
+            const aPic = author?author.photoUrl:`https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
             const reacts = c.reactions || {};
             const myR = reacts[currentUser.uid];
             const tR = Object.keys(reacts).length;
 
             return `
             <div class="flex gap-3 items-start group relative">
-                <img src="${aPic}" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover">
+                <img src="${aPic}" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover bg-white">
                 <div class="flex-1">
                     <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block">
                         <span class="font-bold text-slate-800 text-xs block mb-1">${aName}</span>
@@ -756,6 +769,7 @@
                     bio: document.getElementById('ep-bio').value,
                     phoneNumber: document.getElementById('ep-phone').value,
                     gender: document.getElementById('ep-gender').value,
+                    birthDate: document.getElementById('ep-dob').value,
                     photoUrl: pUrl,
                     socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
                 });
@@ -783,39 +797,77 @@
                         <img src="${userData.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md bg-white object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${userData.photoUrl}')">
                         <div class="flex-1 w-full">
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div><h1 class="text-2xl font-bold text-slate-800">${userData.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${userData.myTabId}</p></div></div>
-                                <button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4"></i> تعديل</button>
+                                <div><h1 class="text-2xl font-bold text-slate-800">${userData.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${userData.myTabId}</p></div></div>
+                                <button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> لوحة التحكم (حسابي)</button>
                             </div>
                             <p class="text-slate-600 mt-4 leading-relaxed max-w-2xl bg-slate-50 p-3 rounded-xl border">${userData.bio}</p>
-                            <div class="mt-4 flex flex-wrap gap-3">${waHtml}${socialHtml}</div>
-                            <div class="mt-6 flex gap-8 border-t pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(userData.friends||[]).length}</span><span class="text-xs text-slate-500">أشخاص</span></div></div>
+                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
+                            <div class="mt-6 flex gap-8 justify-center md:justify-start border-t pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(userData.friends||[]).length}</span><span class="text-xs text-slate-500 font-medium">أشخاص بالمساحة</span></div></div>
                         </div>
                     </div>
                 </div>`;
             } else {
                 container.innerHTML = `
                 <div class="bg-white rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 mt-4">
-                    <div class="space-y-4">
-                        <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none"></div>
-                        <div><label class="text-xs text-slate-500 mb-1">النبذة</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none">${userData.bio}</textarea></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-xs text-slate-500 mb-1">هاتف الواتساب</label><input type="text" id="ep-phone" value="${userData.phoneNumber||''}" class="w-full border rounded-lg px-3 py-2 outline-none"></div>
-                            <div>
-                                <label class="text-xs text-slate-500 mb-1">النوع</label>
-                                <select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white">
-                                    <option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option>
-                                    <option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option>
-                                </select>
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600"></i> لوحة التحكم في حسابي</h3>
+                    <div class="space-y-8">
+                        
+                        <!-- Account Data -->
+                        <div>
+                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600"></i> بيانات الدخول</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-500 mb-1 block">البريد الإلكتروني المسجل</label>
+                                    <input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border rounded-lg px-3 py-2 bg-slate-50 text-slate-500 cursor-not-allowed font-sans" dir="ltr">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500 mb-1 block">كلمة المرور</label>
+                                    <button id="reset-pwd-btn" onclick="resetMyPassword()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex justify-center items-center gap-2">
+                                        <i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور
+                                    </button>
+                                    <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 hidden font-medium"></p>
+                                </div>
                             </div>
                         </div>
-                        <div id="ep-socials">
-                            <label class="text-xs text-slate-500 mb-1 block">روابط</label>
-                            ${(userData.socialLinks||[]).map(l => `<div class="edit-social-row flex gap-2 mb-2"><select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook" ${l.platform==='facebook'?'selected':''}>فيسبوك</option><option value="youtube" ${l.platform==='youtube'?'selected':''}>يوتيوب</option><option value="tiktok" ${l.platform==='tiktok'?'selected':''}>تيك توك</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none" value="${l.url}"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}
+
+                        <!-- Personal Data -->
+                        <div>
+                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600"></i> المعلومات الشخصية</h4>
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
+                                <div><label class="text-xs text-slate-500 mb-1">النبذة (Bio)</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none focus:border-emerald-500">${userData.bio}</textarea></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-slate-500 mb-1">النوع</label>
+                                        <select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white focus:border-emerald-500">
+                                            <option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option>
+                                            <option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500 mb-1">تاريخ الميلاد</label>
+                                        <input type="date" id="ep-dob" value="${userData.birthDate || ''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="addEPSocial()" class="text-xs text-emerald-600 mt-1">إضافة رابط +</button>
-                        <div class="flex gap-2 justify-end mt-4">
-                            <button onclick="toggleEditProfile()" class="px-4 py-2 rounded-lg bg-slate-100 text-sm">إلغاء</button>
-                            <button id="save-prof-btn" onclick="saveProfile()" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm">حفظ</button>
+                        
+                        <!-- Contact Data -->
+                        <div>
+                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-emerald-600"></i> التواصل والروابط</h4>
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-slate-500 mb-1">هاتف الواتساب</label><input type="text" id="ep-phone" value="${userData.phoneNumber||''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500" dir="ltr"></div>
+                                <div id="ep-socials">
+                                    <label class="text-xs text-slate-500 mb-1 block">الروابط الاجتماعية</label>
+                                    ${(userData.socialLinks||[]).map(l => `<div class="edit-social-row flex gap-2 mb-2"><select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook" ${l.platform==='facebook'?'selected':''}>فيسبوك</option><option value="youtube" ${l.platform==='youtube'?'selected':''}>يوتيوب</option><option value="tiktok" ${l.platform==='tiktok'?'selected':''}>تيك توك</option><option value="instagram" ${l.platform==='instagram'?'selected':''}>انستجرام</option><option value="twitter" ${l.platform==='twitter'?'selected':''}>تويتر</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none" value="${l.url}"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}
+                                </div>
+                                <button onclick="addEPSocial()" class="text-xs text-emerald-600 mt-1 font-medium hover:underline">إضافة رابط +</button>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 justify-end mt-4 pt-4 border-t border-slate-100">
+                            <button onclick="toggleEditProfile()" class="px-6 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200">إلغاء</button>
+                            <button id="save-prof-btn" onclick="saveProfile()" class="px-6 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 flex items-center gap-2">حفظ التعديلات</button>
                         </div>
                     </div>
                 </div>`;
@@ -823,7 +875,7 @@
         }
         window.addEPSocial = () => {
             const div = document.createElement('div'); div.className = 'edit-social-row flex gap-2 mb-2';
-            div.innerHTML = `<select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook">فيسبوك</option><option value="youtube">يوتيوب</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+            div.innerHTML = `<select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook">فيسبوك</option><option value="youtube">يوتيوب</option><option value="tiktok">تيك توك</option><option value="instagram">انستجرام</option><option value="twitter">تويتر</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>`;
             document.getElementById('ep-socials').appendChild(div); lucide.createIcons();
         }
 
@@ -837,7 +889,7 @@
             if(u) {
                 cont.innerHTML = `
                 <div class="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-200 flex flex-col md:flex-row items-center gap-6">
-                    <img src="${u.photoUrl}" class="w-24 h-24 rounded-full border-4 border-white object-cover">
+                    <img src="${u.photoUrl}" class="w-24 h-24 rounded-full border-4 border-white object-cover bg-white">
                     <div class="flex-1 text-center md:text-right"><h3 class="text-xl font-bold">${u.displayName}</h3><p class="text-sm text-slate-500 mt-2">${u.bio}</p></div>
                     <button onclick="sendFriendReq('${u.uid}')" class="bg-emerald-600 text-white px-8 py-3 rounded-xl">طلب إضافة</button>
                 </div>`;
@@ -857,7 +909,7 @@
             else cont.innerHTML = reqs.map(r => {
                 const u = allUsers.find(x => x.uid === r.from);
                 if(!u) return '';
-                return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover"><span class="font-bold text-sm">${u.displayName}</span></div><div class="flex gap-2"><button onclick="acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 text-emerald-700 p-2 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="declineReq('${r.id}')" class="bg-rose-50 text-rose-600 p-2 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
+                return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white"><span class="font-bold text-sm">${u.displayName}</span></div><div class="flex gap-2"><button onclick="acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 text-emerald-700 p-2 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="declineReq('${r.id}')" class="bg-rose-50 text-rose-600 p-2 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
             }).join('');
         }
         window.acceptReq = async (reqId, fromUid) => {
