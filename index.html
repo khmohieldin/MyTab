@@ -162,7 +162,7 @@
                     <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="layers" class="w-6 h-6"></i><span class="hidden md:block">المجتمعات</span></button>
                     <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="users" class="w-6 h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
-                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث</span></button>
+                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user-plus" class="w-6 h-6"></i><span class="hidden md:block">إضافة صديق</span></button>
                     <div class="relative w-full">
                         <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
@@ -259,7 +259,7 @@
 
                 <!-- Search Tab -->
                 <div id="tab-content-search" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-6">البحث وإضافة أصدقاء</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">إضافة صديق</h2>
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
                         <p class="text-sm text-slate-500 mb-4 leading-relaxed">أدخل المعرف السري (MYT-XXXXX) للشخص الذي تريد إضافته لمساحتك.</p>
                         <div class="flex gap-3">
@@ -728,6 +728,15 @@
         function generatePostHTML(post) {
             const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
             const isMine = post.authorId === currentUser.uid;
+            // التحقق من صلاحية الحذف (صاحب المنشور أو صاحب المجتمع)
+            let canDelete = isMine;
+            if (!canDelete && post.communityId) {
+                const comm = allCommunities.find(c => c.id === post.communityId);
+                if (comm && comm.creatorId === currentUser.uid) {
+                    canDelete = true;
+                }
+            }
+
             const {ytId, tkId} = extractEmbeds(post.content||'');
             
             const reactions = post.reactions || {};
@@ -753,7 +762,7 @@
             }
 
             const comments = post.comments || [];
-            let commentsHTML = comments.map(cm => generateCommentHTML(cm, post.id)).join('');
+            let commentsHTML = comments.map(cm => generateCommentHTML(cm, post, canDelete)).join('');
 
             return `
             <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border} mb-6">
@@ -765,7 +774,7 @@
                             <span class="text-[10px] text-slate-500">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                     </div>
-                    ${isMine ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 rounded-full p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    ${canDelete ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 rounded-full p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                 </div>
                 <div class="text-slate-800 whitespace-pre-wrap leading-relaxed mb-4 px-1 text-lg" dir="auto">${post.content}</div>
                 ${mediaHTML}
@@ -794,29 +803,32 @@
             </div>`;
         }
 
-        function generateCommentHTML(c, postId) {
+        function generateCommentHTML(c, post, canDeletePost) {
             const author = allUsers.find(u => u.uid === c.authorId);
             const aName = c.authorId === currentUser.uid ? 'أنت' : (author?author.displayName:'صديق');
             const aPic = author?author.photoUrl:`https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
             const reacts = c.reactions || {};
             const myR = reacts[currentUser.uid];
             const tR = Object.keys(reacts).length;
+            
+            const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
 
             return `
             <div class="flex gap-3 items-start group relative">
                 <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover bg-white cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="flex-1">
-                    <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block">
+                    <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block relative group/comment">
                         <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 text-xs block mb-1 cursor-pointer hover:text-emerald-600 transition-colors">${aName}</span>
                         <p class="text-slate-700">${c.text}</p>
+                        ${canDeleteComment ? `<button onclick="deleteComment('${post.id}', '${c.id}')" class="absolute -right-8 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover/comment:opacity-100 transition-opacity p-1 bg-rose-50 hover:bg-rose-100 rounded-full" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                     </div>
                     <div class="flex items-center gap-3 mt-1 px-2 relative">
                         <button onclick="document.getElementById('cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors ${myR?getRColor(myR):'text-slate-500'}">تفاعل</button>
-                        ${tR>0 ? `<div onclick="showCommentReactors('${postId}', '${c.id}')" class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500 cursor-pointer hover:bg-slate-50"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
+                        ${tR>0 ? `<div onclick="showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500 cursor-pointer hover:bg-slate-50"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
                         
                         <div id="cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white shadow-lg border border-slate-100 rounded-full px-2 py-1.5 gap-2 z-10">
-                            <button onclick="handleCReact('${postId}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500"></i></button>
-                            <button onclick="handleCReact('${postId}', '${c.id}', 'heart')"><i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current"></i></button>
+                            <button onclick="handleCReact('${post.id}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500"></i></button>
+                            <button onclick="handleCReact('${post.id}', '${c.id}', 'heart')"><i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current"></i></button>
                         </div>
                     </div>
                 </div>
@@ -1329,6 +1341,59 @@
             await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) });
         }
         window.declineReq = async (reqId) => { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); }
+
+        // --- Post/Comment Interactions ---
+        window.deletePost = async (id) => { 
+            if(confirm('متأكد؟')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', id)); 
+                } catch(e) {
+                    alert('خطأ أثناء حذف المنشور');
+                }
+            }
+        }
+        
+        window.deleteComment = async (postId, commentId) => {
+            if(confirm('هل تريد حذف هذا التعليق؟')) {
+                try {
+                    const p = allPosts.find(x => x.id === postId); 
+                    if (!p) return;
+                    const newComments = p.comments.filter(c => c.id !== commentId);
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId), { comments: newComments });
+                } catch (e) {
+                    alert('خطأ أثناء حذف التعليق');
+                }
+            }
+        }
+
+        window.togglePicker = (id) => { document.getElementById('picker-'+id).classList.toggle('show'); }
+        window.handleReact = async (pId, type) => {
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const r = {...(p.reactions||{})};
+            if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {reactions: r});
+        }
+        window.addComment = async (pId) => {
+            const val = document.getElementById('c-input-'+pId).value; if(!val.trim()) return;
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const nc = { id: Date.now().toString(), authorId: currentUser.uid, text: val, createdAt: new Date().toISOString(), reactions: {} };
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: arrayUnion(nc)});
+        }
+        window.handleCReact = async (pId, cId, type) => {
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const comments = p.comments.map(c => {
+                if(c.id===cId) {
+                    const r = {...(c.reactions||{})};
+                    if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
+                    return {...c, reactions: r};
+                } return c;
+            });
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: comments});
+        }
+
+        // --- Lightbox ---
+        window.openLightbox = (url) => { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.remove('hidden'); }
+        window.closeLightbox = (e) => { if(e) e.stopPropagation(); document.getElementById('lightbox').classList.add('hidden'); document.getElementById('lightbox-img').src = ''; }
 
     </script>
 </body>
