@@ -681,6 +681,15 @@
             lucide.createIcons();
         }
 
+        function generateUniqueId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = 'MYT-';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
         document.getElementById('reg-form').addEventListener('submit', async(e) => {
             e.preventDefault();
             const btn = document.getElementById('reg-submit-btn');
@@ -691,7 +700,7 @@
 
             const newUserData = {
                 uid: currentUser.uid,
-                myTabId: `MYT-${Math.floor(10000 + Math.random() * 90000)}`,
+                myTabId: generateUniqueId(),
                 displayName: document.getElementById('reg-name').value,
                 gender: gender,
                 birthDate: document.getElementById('reg-dob').value,
@@ -1347,248 +1356,6 @@
             } catch(e) {}
         }
 
-        // --- Renderers continued ---
-        function renderFeedTab() {
-            const friends = userData.friends || [];
-            // تصفية المنشورات لاستبعاد منشورات المجتمعات الخاصة وعرضها فقط في الحائط العام
-            const posts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-            document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا توجد منشورات حالياً.</p></div>`;
-            setPostColor('white', 'color-picker-container', 'create-post-container');
-        }
-
-        window.removeFriend = async (friendUid) => {
-            if(!confirm('هل أنت متأكد من إلغاء الصداقة وإزالة هذا الشخص من مساحتك؟')) return;
-            try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayRemove(friendUid) });
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', friendUid), { friends: arrayRemove(currentUser.uid) });
-            } catch (e) {
-                alert('حدث خطأ أثناء إلغاء الصداقة.');
-            }
-        }
-
-        function renderFriendsTab() {
-            const container = document.getElementById('friends-list-container');
-            const fIds = userData.friends || [];
-            if (!fIds.length) {
-                container.innerHTML = '<div class="col-span-full text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200"><i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i><p class="text-slate-500">لا يوجد أصدقاء في مساحتك حتى الآن.</p></div>';
-                return;
-            }
-            container.innerHTML = fIds.map(uid => {
-                const u = allUsers.find(x => x.uid === uid);
-                if (!u) return '';
-                return `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-colors group" onclick="viewProfile('${u.uid}')">
-                    <div class="flex items-center gap-3">
-                        <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-100 bg-white">
-                        <div>
-                            <h4 class="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">${u.displayName}</h4>
-                            <p class="text-xs text-slate-500 font-mono">${u.myTabId}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="event.stopPropagation(); removeFriend('${u.uid}')" class="text-rose-500 hover:bg-rose-100 p-2 rounded-lg transition-colors hidden group-hover:flex items-center gap-1 text-xs font-bold" title="إلغاء الصداقة">
-                            <i data-lucide="user-minus" class="w-4 h-4"></i> إزالة
-                        </button>
-                        <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 group-hover:text-emerald-600"></i>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        let isEditingProfile = false;
-        window.toggleEditProfile = () => { 
-            isEditingProfile = !isEditingProfile; 
-            if (!isEditingProfile) { window.tmpProfImgFile = null; window.removeProfImg = false; }
-            renderAll(); 
-        }
-
-        window.handleProfileImageSelect = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                window.tmpProfImgFile = file;
-                window.removeProfImg = false;
-                document.getElementById('edit-profile-avatar-preview').src = URL.createObjectURL(file);
-            }
-        }
-        
-        window.removeProfilePhoto = () => {
-            window.tmpProfImgFile = null;
-            window.removeProfImg = true;
-            const gender = document.getElementById('ep-gender') ? document.getElementById('ep-gender').value : userData.gender;
-            document.getElementById('edit-profile-avatar-preview').src = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
-        }
-
-        window.saveProfile = async () => {
-            const btn = document.getElementById('save-prof-btn');
-            btn.disabled=true; btn.innerHTML='جاري...';
-            try {
-                let pUrl = userData.photoUrl;
-                if (window.tmpProfImgFile) {
-                    pUrl = await uploadToImgbb(window.tmpProfImgFile);
-                } else if (window.removeProfImg) {
-                    const gender = document.getElementById('ep-gender').value;
-                    pUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
-                }
-                
-                const sLinksRaw = Array.from(document.querySelectorAll('.edit-social-row')).map(row => ({
-                    platform: row.querySelector('.s-plat').value,
-                    url: row.querySelector('.s-url').value
-                }));
-
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
-                    displayName: document.getElementById('ep-name').value,
-                    bio: document.getElementById('ep-bio').value,
-                    phoneNumber: document.getElementById('ep-phone').value,
-                    gender: document.getElementById('ep-gender').value,
-                    birthDate: document.getElementById('ep-dob').value,
-                    photoUrl: pUrl,
-                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
-                });
-                isEditingProfile = false;
-                window.tmpProfImgFile = null;
-                window.removeProfImg = false;
-            } catch(e) { alert('خطأ في الحفظ'); }
-            renderAll();
-        }
-
-        function renderProfileTab() {
-            const container = document.getElementById('profile-view-container');
-            const postsContainer = document.getElementById('profile-posts-list');
-            const postsSectionHeader = document.getElementById('profile-posts-header');
-            
-            const tUser = allUsers.find(u => u.uid === viewingUid) || userData;
-            const isMe = tUser.uid === currentUser.uid;
-            const isFriend = (userData.friends || []).includes(tUser.uid);
-            const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
-
-            if (isMe || isFriend) {
-                const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-                postsContainer.innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border border-dashed border-slate-200">لا توجد منشورات.</p>';
-                postsSectionHeader.classList.remove('hidden');
-            } else {
-                postsContainer.innerHTML = '';
-                postsSectionHeader.classList.add('hidden');
-            }
-
-            if(isMe && isEditingProfile) {
-                container.innerHTML = `
-                <div class="bg-white rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 mt-4">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600"></i> إعدادات حسابي</h3>
-                    <div class="space-y-8">
-                        <div>
-                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600"></i> بيانات الدخول</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label class="text-xs text-slate-500 mb-1 block">البريد الإلكتروني المسجل</label><input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border rounded-lg px-3 py-2 bg-slate-50 text-slate-500 cursor-not-allowed font-sans" dir="ltr"></div>
-                                <div>
-                                    <label class="text-xs text-slate-500 mb-1 block">كلمة المرور</label>
-                                    <button id="reset-pwd-btn" onclick="resetMyPassword()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex justify-center items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور</button>
-                                    <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 hidden font-medium"></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-emerald-600"></i> المعلومات الشخصية</h4>
-                            <div class="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <div class="relative group">
-                                    <img id="edit-profile-avatar-preview" src="${window.tmpProfImgFile ? URL.createObjectURL(window.tmpProfImgFile) : (window.removeProfImg ? `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${userData.gender}&backgroundColor=10b981` : userData.photoUrl)}" class="w-16 h-16 rounded-full border-2 border-emerald-200 object-cover bg-white">
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold text-slate-700">الصورة الشخصية</p>
-                                    <div class="flex gap-2 mt-2">
-                                        <button onclick="document.getElementById('profile-image-input').click()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-600">تغيير الصورة</button>
-                                        <button onclick="removeProfilePhoto()" class="text-xs bg-rose-50 text-rose-600 border border-rose-100 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors font-bold flex items-center gap-1"><i data-lucide="trash-2" class="w-3 h-3"></i> حذف</button>
-                                    </div>
-                                    <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="handleProfileImageSelect(event)">
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
-                                <div><label class="text-xs text-slate-500 mb-1">النبذة (Bio)</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none focus:border-emerald-500">${userData.bio}</textarea></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="text-xs text-slate-500 mb-1">النوع</label><select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white focus:border-emerald-500"><option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option><option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option></select></div>
-                                    <div><label class="text-xs text-slate-500 mb-1">تاريخ الميلاد</label><input type="date" id="ep-dob" value="${userData.birthDate || ''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-700 border-b pb-2 mb-4 flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-emerald-600"></i> التواصل والروابط</h4>
-                            <div class="space-y-4">
-                                <div><label class="text-xs text-slate-500 mb-1">هاتف الواتساب</label><input type="text" id="ep-phone" value="${userData.phoneNumber||''}" class="w-full border rounded-lg px-3 py-2 outline-none focus:border-emerald-500" dir="ltr"></div>
-                                <div id="ep-socials">
-                                    <label class="text-xs text-slate-500 mb-1 block">الروابط الاجتماعية</label>
-                                    ${(userData.socialLinks||[]).map(l => `<div class="edit-social-row flex gap-2 mb-2"><select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook" ${l.platform==='facebook'?'selected':''}>فيسبوك</option><option value="youtube" ${l.platform==='youtube'?'selected':''}>يوتيوب</option><option value="tiktok" ${l.platform==='tiktok'?'selected':''}>تيك توك</option><option value="instagram" ${l.platform==='instagram'?'selected':''}>انستجرام</option><option value="twitter" ${l.platform==='twitter'?'selected':''}>تويتر</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none" value="${l.url}"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}
-                                </div>
-                                <button onclick="addEPSocial()" class="text-xs text-emerald-600 mt-1 font-medium hover:underline">إضافة رابط +</button>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 justify-end mt-4 pt-4 border-t border-slate-100">
-                            <button onclick="toggleEditProfile()" class="px-6 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200">إلغاء</button>
-                            <button id="save-prof-btn" onclick="saveProfile()" class="px-6 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 flex items-center gap-2">حفظ التعديلات</button>
-                        </div>
-                    </div>
-                </div>`;
-            } else {
-                let actionBtn = '';
-                if (isMe) {
-                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
-                } else if (!isFriend) {
-                    if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
-                    else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
-                } else {
-                    actionBtn = `<div class="flex items-center gap-2 mx-auto md:mx-0"><button onclick="openChatRoom('${tUser.uid}'); switchTab('messages')" class="text-sm bg-blue-100 hover:bg-blue-200 hover:text-blue-700 text-blue-600 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button><button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 hover:bg-rose-100 hover:text-rose-700 text-emerald-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button></div>`;
-                }
-
-                let socialHtml = '', waHtml = '', statsHtml = '';
-                if (isMe || isFriend) {
-                    socialHtml = (tUser.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-800 text-white p-2 rounded-full hover:opacity-80"><i data-lucide="link" class="w-5 h-5"></i></a>`).join('');
-                    waHtml = tUser.phoneNumber ? `<a href="https://wa.me/${tUser.phoneNumber.replace(/\D/g,'')}" target="_blank" class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-medium"><i data-lucide="message-square" class="w-4 h-4"></i> تواصل</a>` : '';
-                    statsHtml = `<div class="mt-6 flex gap-8 justify-center md:justify-start border-t border-slate-100 pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(tUser.friends||[]).length}</span><span class="text-xs text-slate-500 font-medium">أشخاص بالمساحة</span></div></div>`;
-                } else {
-                    statsHtml = `<div class="mt-6 border-t border-slate-100 pt-6 text-center md:text-right text-sm text-slate-500 flex items-center justify-center md:justify-start gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600"></i> هذا الحساب خاص، المحتوى غير متاح للغرباء.</div>`;
-                }
-                
-                const publicComms = allCommunities.filter(c => c.creatorId === tUser.uid && !c.isPrivate);
-
-                container.innerHTML = `
-                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200">
-                    <img src="${tUser.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                </div>
-                <div class="bg-white rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100">
-                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
-                        <img src="${tUser.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md bg-white object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${tUser.photoUrl}')">
-                        <div class="flex-1 w-full">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div><h1 class="text-2xl font-bold text-slate-800">${tUser.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${tUser.myTabId}</p></div></div>
-                                ${actionBtn}
-                            </div>
-                            <p class="text-slate-600 mt-4 leading-relaxed max-w-2xl bg-slate-50 p-3 rounded-xl border">${tUser.bio}</p>
-                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
-                            ${statsHtml}
-                        </div>
-                    </div>
-                </div>
-                ${publicComms.length > 0 ? `
-                <div class="mt-8 mx-4">
-                    <h3 class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2 mb-4">المجتمعات العامة</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${publicComms.map(c => `
-                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 hover:shadow-md transition-all group" onclick="viewCommunity('${c.id}')">
-                            <div class="flex items-center gap-4">
-                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${c.color || 'bg-emerald-100'} overflow-hidden shadow-sm border border-black/5">
-                                    <img src="${c.iconUrl}" class="w-full h-full object-cover">
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">${c.name}</h4>
-                                    <p class="text-xs text-slate-500 flex items-center gap-1 mt-1"><i data-lucide="users" class="w-3 h-3"></i> ${c.members.length} عضو</p>
-                                </div>
-                            </div>
-                        </div>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-                `;
-            }
-        }
     </script>
 </body>
 </html>
