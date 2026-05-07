@@ -1246,6 +1246,13 @@
             } catch(e) { alert('حدث خطأ أثناء المغادرة'); }
         }
 
+        window.removeMemberFromComm = async (commId, uid) => {
+            if(!confirm('هل أنت متأكد من إزالة هذا العضو من المجتمع؟')) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayRemove(uid) });
+            } catch(e) { alert('حدث خطأ أثناء الإزالة'); }
+        }
+
         window.showAddMemberModal = (commId) => {
             const comm = allCommunities.find(c => c.id === commId); if(!comm) return;
             const list = document.getElementById('comm-friends-list');
@@ -1331,6 +1338,33 @@
                     </div>`;
                 }
 
+                let membersHtml = '';
+                if (isMember) {
+                    membersHtml = `
+                    <div class="mb-8">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">أعضاء المجتمع (${comm.members.length})</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${comm.members.map(uid => {
+                                const u = allUsers.find(x => x.uid === uid);
+                                if(!u) return '';
+                                const isCreator = uid === comm.creatorId;
+                                return `<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-100 dark:border-slate-700">
+                                    <div class="flex items-center gap-3 cursor-pointer" onclick="viewProfile('${u.uid}')">
+                                        <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                        <div>
+                                            <span class="font-bold text-sm text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">${u.displayName}</span>
+                                            ${isCreator ? '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full mr-2 font-bold">المدير</span>' : ''}
+                                        </div>
+                                    </div>
+                                    ${isAdmin && !isCreator ? `
+                                    <button onclick="removeMemberFromComm('${comm.id}', '${u.uid}')" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 p-2 rounded-full transition-colors" title="إزالة العضو"><i data-lucide="user-minus" class="w-4 h-4"></i></button>
+                                    ` : ''}
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }
+
                 container.innerHTML = `
                 <div class="flex items-center justify-between gap-2 mb-6">
                     <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
@@ -1350,6 +1384,7 @@
                 </div>
                 
                 ${requestsHtml}
+                ${membersHtml}
 
                 <div class="mb-8">
                     <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
