@@ -506,6 +506,11 @@
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             
             const gender = document.getElementById('reg-gender').value;
+            // إرجاع النمط السابق الجميل Notionists مع التمييز بين النوعين
+            const avatarUrl = gender === 'female' 
+                ? `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.uid}-girl&backgroundColor=10b981` 
+                : `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.uid}-boy&backgroundColor=10b981`;
+
             const newUserData = {
                 uid: currentUser.uid,
                 myTabId: `MYT-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -515,7 +520,7 @@
                 phoneNumber: document.getElementById('reg-phone').value,
                 socialLinks: regSocialLinks.filter(l => l.url.trim()!==''),
                 bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
-                photoUrl: gender==='female'?`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}&style=circle&top=longHair&backgroundColor=10b981`:`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}&style=circle&top=shortHair&backgroundColor=10b981`,
+                photoUrl: avatarUrl,
                 coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
                 friends: [], isPrivate: true, isAdmin: false, createdAt: new Date().toISOString()
             };
@@ -689,7 +694,8 @@
         function generateCommentHTML(c, postId) {
             const author = allUsers.find(u => u.uid === c.authorId);
             const aName = c.authorId === currentUser.uid ? 'أنت' : (author?author.displayName:'صديق');
-            const aPic = author?author.photoUrl:`https://api.dicebear.com/7.x/avataaars/svg?seed=${c.authorId}&style=circle`;
+            // تحديث رابط الصورة الافتراضية للتعليقات ليكون بنفس نمط Notionists الأنيق
+            const aPic = author?author.photoUrl:`https://api.dicebear.com/7.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
             const reacts = c.reactions || {};
             const myR = reacts[currentUser.uid];
             const tR = Object.keys(reacts).length;
