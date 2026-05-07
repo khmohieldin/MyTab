@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTab - مساحتك الآمنة</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #059669;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .reaction-picker { display: none; }
+        .reaction-picker.show { display: flex; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-hidden">
+
+    <!-- 1. Loading View -->
+    <div id="loading-view" class="flex h-screen w-full items-center justify-center bg-emerald-50 absolute inset-0 z-50">
+        <div class="flex flex-col items-center gap-4">
+            <i data-lucide="shield" class="h-16 w-16 text-emerald-600 animate-pulse"></i>
+            <h1 class="text-2xl font-bold text-emerald-900 tracking-wider">MyTab</h1>
+            <p class="text-emerald-600/60">يتم تجهيز مساحتك الآمنة...</p>
+        </div>
+    </div>
+
+    <!-- 2. Auth View (Login/Register) -->
+    <div id="auth-view" class="hidden min-h-screen bg-emerald-50 flex items-center justify-center p-4 absolute inset-0 z-40">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100">
+            <div class="flex flex-col items-center mb-8">
+                <i data-lucide="shield" class="w-16 h-16 text-emerald-600 mb-4"></i>
+                <h2 class="text-3xl font-bold text-slate-800 tracking-wider">MyTab</h2>
+                <p class="text-slate-500 text-sm mt-2">مساحتك الآمنة والخاصة</p>
+            </div>
+
+            <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+                <button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+                <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700" onclick="switchAuthTab('register')">حساب جديد</button>
+            </div>
+
+            <div id="auth-error" class="hidden bg-rose-50 text-rose-600 p-3 rounded-xl text-sm mb-4 border border-rose-100 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> <span id="auth-error-text"></span>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
+                    <input type="password" id="auth-password" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required minlength="6">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2">
+                    <i data-lucide="mail" class="w-5 h-5"></i> <span id="auth-submit-text">دخول</span>
+                </button>
+            </form>
+
+            <div class="mt-6 border-t border-slate-100 pt-6">
+                <button onclick="handleGoogleAuth()" class="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex justify-center items-center gap-3">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    المتابعة باستخدام Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Verify Email View -->
+    <div id="verify-view" class="hidden min-h-screen bg-emerald-50 flex items-center justify-center p-4 absolute inset-0 z-40">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 text-center">
+            <i data-lucide="mail" class="w-16 h-16 text-emerald-500 mx-auto mb-4"></i>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">تأكيد البريد الإلكتروني</h2>
+            <p class="text-slate-600 text-sm mb-6 leading-relaxed">
+                لقد أرسلنا رابط تأكيد إلى <span id="verify-email-display" class="font-semibold"></span>.<br>يرجى الضغط على الرابط في الرسالة لتتمكن من الدخول.
+            </p>
+            <p id="verify-msg" class="text-sm mb-4"></p>
+            <div class="space-y-3">
+                <button onclick="checkEmailVerified()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors">لقد قمت بالتأكيد، دخول</button>
+                <button onclick="resendVerification()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors">إعادة إرسال الرابط</button>
+                <button onclick="handleLogout()" class="text-sm text-slate-500 hover:text-slate-800 mt-4 underline underline-offset-4 block w-full">تسجيل الخروج أو استخدام حساب آخر</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Registration Details View -->
+    <div id="register-details-view" class="hidden min-h-screen bg-slate-50 flex items-center justify-center p-4 absolute inset-0 z-40 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-lg border border-emerald-100 my-auto">
+            <div class="flex flex-col items-center mb-8">
+                <i data-lucide="shield" class="w-12 h-12 text-emerald-600 mb-2"></i>
+                <h2 class="text-2xl font-bold text-slate-800">إعداد مساحتك الآمنة</h2>
+                <p class="text-slate-500 text-sm mt-1">أكمل بياناتك لإنشاء حسابك في MyTab</p>
+            </div>
+            <form id="reg-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل *</label>
+                    <input type="text" id="reg-name" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">النوع *</label>
+                        <select id="reg-gender" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none bg-white">
+                            <option value="male">ذكر</option>
+                            <option value="female">أنثى</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">تاريخ الميلاد *</label>
+                        <input type="date" id="reg-dob" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">رقم الهاتف (للواتساب - اختياري)</label>
+                    <div class="relative">
+                        <i data-lucide="smartphone" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                        <input type="tel" id="reg-phone" class="w-full border border-slate-200 rounded-xl pr-10 pl-4 py-3 focus:border-emerald-500 outline-none" placeholder="مثال: 010xxxxxxxx">
+                    </div>
+                </div>
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">حسابات التواصل الاجتماعي (اختياري)</label>
+                    <div id="reg-socials-container"></div>
+                    <button type="button" onclick="addRegSocialLink()" class="text-sm text-emerald-600 font-medium flex items-center gap-1 mt-2 hover:text-emerald-700">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> إضافة رابط
+                    </button>
+                </div>
+                <button type="submit" id="reg-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors mt-6 flex justify-center items-center gap-2">
+                    دخول المساحة
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Main App Layout -->
+    <div id="main-layout" class="hidden flex h-screen w-full">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="w-20 md:w-64 bg-white border-l border-emerald-100 flex flex-col justify-between py-6 shrink-0 z-10 shadow-sm overflow-y-auto">
+            <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-8">
+                <div class="flex items-center gap-3 text-emerald-600 font-bold text-2xl w-full justify-center md:justify-start">
+                    <i data-lucide="shield" class="h-8 w-8"></i>
+                    <span class="hidden md:block tracking-wide">MyTab</span>
+                </div>
+                <div class="flex flex-col w-full gap-2">
+                    <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 text-emerald-800 font-medium"><i data-lucide="home" class="w-6 h-6"></i><span class="hidden md:block">المساحة</span></button>
+                    <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="user" class="w-6 h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
+                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="search" class="w-6 h-6"></i><span class="hidden md:block">البحث بمعرف</span></button>
+                    <div class="relative w-full">
+                        <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="bell" class="w-6 h-6"></i><span class="hidden md:block">الطلبات</span></button>
+                        <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
+                    </div>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100"><i data-lucide="settings" class="w-6 h-6"></i><span class="hidden md:block">لوحة الإدارة</span></button>
+                    
+                    <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 mt-auto">
+                        <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-2 md:px-6 flex flex-col items-center md:items-start gap-2 mt-8">
+                <div class="hidden md:flex flex-col text-xs text-slate-500 mb-2 bg-slate-100 px-3 py-3 rounded-xl w-full group relative">
+                    <span class="font-semibold text-slate-700 mb-1">المعرف الخاص بك:</span>
+                    <button onclick="copyMyId()" class="flex items-center justify-between w-full bg-white px-2 py-1.5 rounded border border-slate-200 hover:border-emerald-400">
+                        <span id="sidebar-myid" class="font-mono text-emerald-600 tracking-wider text-sm"></span>
+                        <i data-lucide="copy" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500"></i>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 hover:bg-emerald-50 p-2 rounded-xl transition-colors w-full cursor-pointer" onclick="switchTab('profile')">
+                    <img id="sidebar-avatar" src="" alt="profile" class="w-10 h-10 rounded-full border-2 border-emerald-200 object-cover">
+                    <div class="hidden md:flex flex-col items-start overflow-hidden">
+                        <span id="sidebar-name" class="font-medium text-sm text-slate-700 truncate w-32"></span>
+                        <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 relative">
+            
+            <!-- Mobile Topbar -->
+            <div class="md:hidden flex justify-between items-center bg-white p-4 shadow-sm border-b border-slate-100 sticky top-0 z-20">
+                <button onclick="copyMyId()" class="flex items-center gap-2">
+                    <span id="mobile-myid" class="font-mono text-emerald-600 font-bold"></span>
+                    <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i>
+                </button>
+                <span class="text-xs text-slate-500 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span>
+            </div>
+
+            <div class="max-w-2xl mx-auto w-full min-h-full p-4 md:p-8">
+                
+                <!-- Feed Tab -->
+                <div id="tab-content-feed" class="tab-content space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">المساحة الآمنة</h2>
+                    <!-- Create Post Box -->
+                    <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white border-gray-200 transition-colors">
+                        <div class="flex gap-4">
+                            <img id="create-post-avatar" src="" class="w-12 h-12 rounded-full border border-black/10 shrink-0 object-cover">
+                            <div class="flex-1">
+                                <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 placeholder-slate-500 p-2 text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
+                                
+                                <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block">
+                                    <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 shadow-sm">
+                                    <button onclick="removePostImage()" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                </div>
+
+                                <div class="flex items-center justify-between mt-4 border-t border-black/5 pt-4">
+                                    <div class="flex items-center gap-3">
+                                        <input type="file" id="post-image-input" accept="image/*" class="hidden" onchange="handlePostImageSelect(event)">
+                                        <button onclick="document.getElementById('post-image-input').click()" class="text-slate-500 hover:text-emerald-600 bg-black/5 p-2 rounded-full"><i data-lucide="image" class="w-5 h-5"></i></button>
+                                        <div class="w-px h-6 bg-black/10 mx-1"></div>
+                                        <div id="color-picker-container" class="flex gap-2"></div>
+                                    </div>
+                                    <button onclick="submitPost()" id="submit-post-btn" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-6 py-2 rounded-xl font-medium flex items-center gap-2">
+                                        <i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i> <span>نشر</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Feed Posts list -->
+                    <div id="feed-posts-list" class="space-y-6 mt-8"></div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="tab-content-profile" class="tab-content hidden pb-10">
+                    <div id="profile-view-container"></div>
+                    <div class="mt-8 space-y-6">
+                        <h3 class="text-lg font-bold text-slate-800 px-2 border-r-4 border-emerald-500 mr-2">منشوراتي</h3>
+                        <div id="profile-posts-list" class="space-y-6"></div>
+                    </div>
+                </div>
+
+                <!-- Search Tab -->
+                <div id="tab-content-search" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">البحث وإضافة أصدقاء</h2>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+                        <p class="text-sm text-slate-500 mb-4 leading-relaxed">أدخل المعرف السري (MYT-XXXXX) للشخص الذي تريد إضافته لمساحتك.</p>
+                        <div class="flex gap-3">
+                            <input type="text" id="search-input" placeholder="MYT-12345" class="flex-1 border rounded-xl px-4 py-3 font-mono focus:border-emerald-500 outline-none uppercase">
+                            <button onclick="performSearch()" class="bg-slate-800 text-white px-6 rounded-xl"><i data-lucide="search" class="w-5 h-5"></i></button>
+                        </div>
+                        <p id="search-msg" class="text-sm text-emerald-600 mt-3"></p>
+                    </div>
+                    <div id="search-result-container"></div>
+                </div>
+
+                <!-- Requests Tab -->
+                <div id="tab-content-requests" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">طلبات الانضمام</h2>
+                    <div id="requests-list" class="space-y-4"></div>
+                </div>
+
+                <!-- Admin Tab -->
+                <div id="tab-content-admin" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i> لوحة الإدارة</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">مستخدمين</p><h3 id="admin-users-count" class="text-2xl font-bold">0</h3></div>
+                        <div class="bg-white p-6 rounded-3xl border text-center"><p class="text-sm text-slate-500">منشورات</p><h3 id="admin-posts-count" class="text-2xl font-bold">0</h3></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 cursor-zoom-out" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors p-2 bg-white/10 rounded-full" onclick="closeLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm" onclick="event.stopPropagation()">
+    </div>
+
+
+    <!-- ==================== LOGIC ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configs ---
+        const IMGBB_API_KEY = "8ef1d841b117d4d6bc14f2cf8bb82bdb";
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6owxIha9VxWWWb0cb7CXK6rV9Zx7QhCE",
+            authDomain: "mytab-4b290.firebaseapp.com",
+            projectId: "mytab-4b290",
+            storageBucket: "mytab-4b290.firebasestorage.app",
+            messagingSenderId: "1038104124306",
+            appId: "1:1038104124306:web:9fa7e542ebe872752fbf4b",
+            measurementId: "G-1EQFC7QNVZ"
+        };
+        const appIdStr = 'mytab-proto';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- State ---
+        let currentUser = null;
+        let userData = null;
+        let allUsers = [];
+        let allPosts = [];
+        let friendRequests = [];
+        let activeTabStr = 'feed';
+        let isAuthLoginMode = true;
+        let postSelectedColor = 'white';
+        let postImageFile = null;
+        let regSocialLinks = [];
+
+        const POST_COLORS = {
+            'white': { bg: 'bg-white', border: 'border-gray-200', text: 'text-slate-800' },
+            'green': { bg: 'bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-900' },
+            'yellow': { bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-900' },
+            'blue': { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900' },
+            'gray': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-900' },
+            'rose': { bg: 'bg-rose-100', border: 'border-rose-300', text: 'text-rose-900' },
+        };
+
+        // --- Init Icons ---
+        lucide.createIcons();
+
+        // --- Auth Observer ---
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                if (!user.isAnonymous && user.providerData.some(p => p.providerId === 'password') && !user.emailVerified) {
+                    showView('verify-view');
+                    document.getElementById('verify-email-display').innerText = user.email;
+                    return;
+                }
+                const userRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', user.uid);
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists()) {
+                    showView('register-details-view');
+                    renderRegSocials();
+                } else {
+                    userData = userSnap.data();
+                    setupDataListeners();
+                    showView('main-layout');
+                    updateSidebar();
+                    renderAll();
+                }
+            } else {
+                userData = null;
+                showView('auth-view');
+            }
+        });
+
+        // --- Listeners ---
+        let unsubs = [];
+        function setupDataListeners() {
+            unsubs.forEach(u => u()); unsubs = [];
+            
+            const u1 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'users'), (snap) => {
+                allUsers = snap.docs.map(d => d.data());
+                const current = snap.docs.find(d => d.id === currentUser.uid);
+                if(current) userData = current.data();
+                updateSidebar();
+                renderAll();
+            });
+            const u2 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'), (snap) => {
+                allPosts = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderAll();
+            });
+            const u3 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests'), (snap) => {
+                friendRequests = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                updateBadge();
+                if(activeTabStr === 'requests') renderRequestsTab();
+            });
+            unsubs.push(u1, u2, u3);
+        }
+
+        // --- View Management ---
+        function showView(viewId) {
+            ['loading-view', 'auth-view', 'verify-view', 'register-details-view', 'main-layout'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        window.switchAuthTab = (type) => {
+            isAuthLoginMode = (type === 'login');
+            document.getElementById('tab-login').className = isAuthLoginMode ? 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600' : 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700';
+            document.getElementById('tab-register').className = !isAuthLoginMode ? 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white shadow-sm text-emerald-600' : 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-700';
+            document.getElementById('auth-submit-text').innerText = isAuthLoginMode ? 'دخول' : 'إنشاء حساب';
+        }
+
+        window.switchTab = (tab) => {
+            activeTabStr = tab;
+            ['feed', 'profile', 'search', 'requests', 'admin'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if(navBtn) navBtn.className = `nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-slate-500 hover:bg-slate-100'}`;
+            });
+            document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+            renderAll();
+        }
+
+        // --- Authentication Functions ---
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const errDiv = document.getElementById('auth-error');
+            const errText = document.getElementById('auth-error-text');
+            const btn = document.getElementById('auth-submit-btn');
+            
+            errDiv.classList.add('hidden');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+
+            try {
+                if (isAuthLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await sendEmailVerification(cred.user);
+                }
+            } catch (error) {
+                errDiv.classList.remove('hidden');
+                if (error.code === 'auth/email-already-in-use') errText.innerText = 'البريد مستخدم مسبقاً.';
+                else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') errText.innerText = 'بيانات الدخول غير صحيحة.';
+                else if (error.code === 'auth/weak-password') errText.innerText = 'كلمة المرور ضعيفة جداً.';
+                else if (error.code === 'auth/unauthorized-domain') errText.innerText = 'عذراً، هذا النطاق غير مصرح به. يرجى إضافته في إعدادات Firebase.';
+                else errText.innerText = 'حدث خطأ. تأكد من البيانات.';
+            }
+            btn.disabled = false; btn.innerHTML = `<i data-lucide="mail" class="w-5 h-5"></i> <span>${isAuthLoginMode?'دخول':'إنشاء حساب'}</span>`;
+            lucide.createIcons();
+        });
+
+        window.handleGoogleAuth = async () => {
+            const errDiv = document.getElementById('auth-error');
+            const errText = document.getElementById('auth-error-text');
+            errDiv.classList.add('hidden');
+
+            try {
+                await signInWithPopup(auth, new GoogleAuthProvider());
+            } catch (error) { 
+                console.error(error); 
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    errDiv.classList.remove('hidden');
+                    if (error.code === 'auth/unauthorized-domain') {
+                        errText.innerText = 'النطاق الحالي غير مصرح به لاستخدام تسجيل الدخول بجوجل. يجب إضافة رابط هذا الموقع إلى "Authorized domains" في إعدادات Firebase.';
+                    } else {
+                        errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
+                    }
+                }
+            }
+        }
+
+        window.handleLogout = async () => { await signOut(auth); }
+
+        // --- Verify Functions ---
+        window.resendVerification = async () => {
+            try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600'; } 
+            catch(e) { document.getElementById('verify-msg').innerText='حدث خطأ.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
+        }
+        window.checkEmailVerified = async () => {
+            await currentUser.reload();
+            if(auth.currentUser.emailVerified) window.location.reload();
+            else { document.getElementById('verify-msg').innerText='لم يتم التأكيد بعد.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600'; }
+        }
+
+        // --- Registration ---
+        window.addRegSocialLink = () => { regSocialLinks.push({platform:'facebook', url:''}); renderRegSocials(); }
+        window.removeRegSocial = (idx) => { regSocialLinks.splice(idx, 1); renderRegSocials(); }
+        window.updateRegSocial = (idx, field, val) => { regSocialLinks[idx][field] = val; }
+        
+        function renderRegSocials() {
+            const container = document.getElementById('reg-socials-container');
+            container.innerHTML = regSocialLinks.map((link, idx) => `
+                <div class="flex gap-2 mb-2">
+                    <select onchange="updateRegSocial(${idx}, 'platform', this.value)" class="w-1/3 border rounded-xl px-2 py-2 text-sm bg-white">
+                        <option value="facebook" ${link.platform==='facebook'?'selected':''}>فيسبوك</option>
+                        <option value="youtube" ${link.platform==='youtube'?'selected':''}>يوتيوب</option>
+                        <option value="tiktok" ${link.platform==='tiktok'?'selected':''}>تيك توك</option>
+                        <option value="instagram" ${link.platform==='instagram'?'selected':''}>انستجرام</option>
+                        <option value="twitter" ${link.platform==='twitter'?'selected':''}>تويتر</option>
+                    </select>
+                    <input type="url" placeholder="الرابط..." oninput="updateRegSocial(${idx}, 'url', this.value)" value="${link.url}" class="flex-1 border rounded-xl px-3 py-2 text-sm outline-none">
+                    <button type="button" onclick="removeRegSocial(${idx})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        document.getElementById('reg-form').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const btn = document.getElementById('reg-submit-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
+            
+            const gender = document.getElementById('reg-gender').value;
+            const newUserData = {
+                uid: currentUser.uid,
+                myTabId: `MYT-${Math.floor(10000 + Math.random() * 90000)}`,
+                displayName: document.getElementById('reg-name').value,
+                gender: gender,
+                birthDate: document.getElementById('reg-dob').value,
+                phoneNumber: document.getElementById('reg-phone').value,
+                socialLinks: regSocialLinks.filter(l => l.url.trim()!==''),
+                bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
+                photoUrl: gender==='female'?`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}&style=circle&top=longHair&backgroundColor=10b981`:`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}&style=circle&top=shortHair&backgroundColor=10b981`,
+                coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
+                friends: [], isPrivate: true, isAdmin: false, createdAt: new Date().toISOString()
+            };
+
+            try {
+                await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), newUserData);
+                userData = newUserData;
+                showView('main-layout');
+                setupDataListeners();
+            } catch(e) { alert('خطأ أثناء الإنشاء'); btn.disabled=false; btn.innerHTML='دخول المساحة'; }
+        });
+
+        // --- Main App Logic ---
+        function updateSidebar() {
+            if(!userData) return;
+            document.getElementById('sidebar-myid').innerText = userData.myTabId;
+            document.getElementById('mobile-myid').innerText = userData.myTabId;
+            document.getElementById('sidebar-avatar').src = userData.photoUrl;
+            document.getElementById('sidebar-name').innerText = userData.displayName;
+            document.getElementById('create-post-avatar').src = userData.photoUrl;
+            
+            const picker = document.getElementById('color-picker-container');
+            picker.innerHTML = Object.keys(POST_COLORS).map(id => {
+                const c = POST_COLORS[id];
+                const selectedClass = postSelectedColor === id ? 'border-slate-800 scale-110 shadow-md' : 'border-black/10';
+                return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${c.bg==='bg-white'?'bg-white':c.bg.replace('100','400')} ${selectedClass} transition-all"></button>`;
+            }).join('');
+        }
+        function updateBadge() {
+            if(!currentUser) return;
+            const inc = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending').length;
+            const badge = document.getElementById('req-badge');
+            if(inc>0) { badge.classList.remove('hidden'); badge.innerText=inc; } else badge.classList.add('hidden');
+        }
+
+        window.copyMyId = () => {
+            navigator.clipboard.writeText(userData.myTabId).then(()=>alert('تم نسخ المعرف!')).catch(()=>{});
+        }
+        window.setPostColor = (id) => { postSelectedColor = id; updateSidebar(); updateCreatePostBox(); }
+        window.handlePostImageSelect = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                postImageFile = file;
+                document.getElementById('post-image-preview-container').classList.remove('hidden');
+                document.getElementById('post-image-preview').src = URL.createObjectURL(file);
+                setPostColor('white');
+            }
+        }
+        window.removePostImage = () => {
+            postImageFile = null;
+            document.getElementById('post-image-preview-container').classList.add('hidden');
+            document.getElementById('post-image-preview').src = '';
+            document.getElementById('post-image-input').value = '';
+        }
+        function updateCreatePostBox() {
+            const c = POST_COLORS[postSelectedColor];
+            const box = document.getElementById('create-post-container');
+            box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
+        }
+
+        window.submitPost = async () => {
+            const content = document.getElementById('post-content').value;
+            if(!content.trim() && !postImageFile) return;
+            const btn = document.getElementById('submit-post-btn');
+            btn.disabled=true; btn.innerHTML='<i class="loader"></i> جاري...';
+            
+            try {
+                let imgUrl = null;
+                if(postImageFile) imgUrl = await uploadToImgbb(postImageFile);
+                
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
+                    authorId: currentUser.uid, authorName: userData.displayName, authorPhoto: userData.photoUrl,
+                    content: content, imageUrl: imgUrl, colorId: postSelectedColor,
+                    createdAt: new Date().toISOString(), reactions: {}, comments: []
+                });
+                document.getElementById('post-content').value = '';
+                removePostImage();
+            } catch(e) { alert('حدث خطأ'); }
+            btn.disabled=false; btn.innerHTML='<i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
+            lucide.createIcons();
+        }
+
+        async function uploadToImgbb(file) {
+            const fd = new FormData(); fd.append("image", file);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method:"POST", body:fd });
+            const data = await res.json();
+            if(data.success) return data.data.url;
+            throw new Error();
+        }
+
+        // --- Renderers ---
+        function renderAll() {
+            if(activeTabStr==='feed') renderFeedTab();
+            if(activeTabStr==='profile') renderProfileTab();
+            if(activeTabStr==='requests') renderRequestsTab();
+            if(activeTabStr==='admin') renderAdminTab();
+            lucide.createIcons();
+        }
+
+        function extractEmbeds(text) {
+            const ytMatch = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            const tkMatch = text.match(/(?:https?:\/\/)?(?:www\.)?tiktok\.com\/.*\/video\/(\d+)/);
+            return { ytId: ytMatch?ytMatch[1]:null, tkId: tkMatch?tkMatch[1]:null };
+        }
+
+        function generatePostHTML(post) {
+            const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
+            const isMine = post.authorId === currentUser.uid;
+            const {ytId, tkId} = extractEmbeds(post.content||'');
+            
+            const reactions = post.reactions || {};
+            const myReact = reactions[currentUser.uid];
+            const tReact = Object.keys(reactions).length;
+            const reactNames = getReactorNames(reactions);
+
+            let mediaHTML = '';
+            if(post.imageUrl) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden border border-black/5 shadow-sm relative group cursor-zoom-in" onclick="openLightbox('${post.imageUrl}')"><img src="${post.imageUrl}" class="w-full max-h-96 object-cover"><div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center"><i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i></div></div>`;
+            if(ytId) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
+            if(tkId) mediaHTML += `<div class="mb-4 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[325px] h-[600px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
+
+            let statsHTML = '';
+            if(tReact > 0) {
+                statsHTML = `<div class="flex items-center gap-2 mb-3 px-2 border-b border-black/5 pb-2 mt-2"><div class="flex -space-x-1 rtl:space-x-reverse">
+                    ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current bg-white rounded-full p-0.5"></i>` : ''}
+                    ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5"></i>` : ''}
+                </div><span class="text-xs text-slate-500">${tReact} &bull; ${reactNames} تفاعلوا</span></div>`;
+            }
+
+            const comments = post.comments || [];
+            let commentsHTML = comments.map(cm => generateCommentHTML(cm, post.id)).join('');
+
+            return `
+            <div class="rounded-3xl p-5 shadow-sm border ${c.bg} ${c.border}">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 object-cover">
+                        <div>
+                            <h4 class="font-semibold text-slate-800 text-sm">${post.authorName}</h4>
+                            <span class="text-[10px] text-slate-500">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+                    ${isMine ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 rounded-full p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                </div>
+                <div class="text-slate-800 whitespace-pre-wrap leading-relaxed mb-4 px-1 text-lg" dir="auto">${post.content}</div>
+                ${mediaHTML}
+                ${statsHTML}
+                <div class="flex items-center gap-2 relative">
+                    <div id="picker-${post.id}" class="reaction-picker absolute -top-12 right-0 bg-white border border-slate-200 shadow-lg rounded-full px-3 py-2 gap-3 z-10 animate-in fade-in zoom-in duration-200">
+                        <button onclick="handleReact('${post.id}', 'like')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-6 h-6 text-blue-500"></i></button>
+                        <button onclick="handleReact('${post.id}', 'heart')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-6 h-6 text-rose-500 fill-current"></i></button>
+                        <button onclick="handleReact('${post.id}', 'sad')" class="hover:scale-125 transition-transform"><i data-lucide="frown" class="w-6 h-6 text-amber-500"></i></button>
+                        <button onclick="handleReact('${post.id}', 'angry')" class="hover:scale-125 transition-transform"><i data-lucide="angry" class="w-6 h-6 text-red-600"></i></button>
+                    </div>
+                    <button onclick="togglePicker('${post.id}')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm bg-black/5 hover:bg-black/10 font-medium ${myReact ? getRColor(myReact) : 'text-slate-600'}">
+                        <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-5 h-5 ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تم التفاعل':'تفاعل'}</span>
+                    </button>
+                    <button onclick="document.getElementById('comments-${post.id}').classList.toggle('hidden')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 bg-black/5 hover:bg-black/10 font-medium">
+                        <i data-lucide="message-square" class="w-5 h-5"></i> <span>${comments.length} تعليق</span>
+                    </button>
+                </div>
+                <div id="comments-${post.id}" class="hidden mt-4 pt-4 border-t border-black/5">
+                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">${commentsHTML || '<p class="text-xs text-center text-slate-500 py-2">لا توجد تعليقات.</p>'}</div>
+                    <div class="flex gap-2">
+                        <input type="text" id="c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 border border-black/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400">
+                        <button onclick="addComment('${post.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 rounded-xl"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function generateCommentHTML(c, postId) {
+            const author = allUsers.find(u => u.uid === c.authorId);
+            const aName = c.authorId === currentUser.uid ? 'أنت' : (author?author.displayName:'صديق');
+            const aPic = author?author.photoUrl:`https://api.dicebear.com/7.x/avataaars/svg?seed=${c.authorId}&style=circle`;
+            const reacts = c.reactions || {};
+            const myR = reacts[currentUser.uid];
+            const tR = Object.keys(reacts).length;
+
+            return `
+            <div class="flex gap-3 items-start group relative">
+                <img src="${aPic}" class="w-8 h-8 rounded-full border border-black/10 mt-1 object-cover">
+                <div class="flex-1">
+                    <div class="bg-white/60 border border-black/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block">
+                        <span class="font-bold text-slate-800 text-xs block mb-1">${aName}</span>
+                        <p class="text-slate-700">${c.text}</p>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1 px-2 relative">
+                        <button onclick="document.getElementById('cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors ${myR?getRColor(myR):'text-slate-500'}">تفاعل</button>
+                        ${tR>0 ? `<div class="flex items-center gap-1 bg-white border border-slate-100 shadow-sm rounded-full px-1.5 py-0.5 absolute left-2 -top-4 text-[10px] text-slate-500"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i><span class="ml-1 font-medium">${tR}</span></div>`:''}
+                        
+                        <div id="cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white shadow-lg border border-slate-100 rounded-full px-2 py-1.5 gap-2 z-10">
+                            <button onclick="handleCReact('${postId}', '${c.id}', 'like')"><i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500"></i></button>
+                            <button onclick="handleCReact('${postId}', '${c.id}', 'heart')"><i data-lucide="heart" class="w-4 h-4 text-rose-500 fill-current"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function getReactorNames(r) {
+            const uids = Object.keys(r || {});
+            if(!uids.length) return '';
+            const names = uids.map(id => id===currentUser.uid ? "أنت" : (allUsers.find(u=>u.uid===id)?.displayName.split(' ')[0]||"مستخدم"));
+            if(names.length<=2) return names.join(' و ');
+            return `${names[0]} و ${names.length-1} آخرين`;
+        }
+        function getRColor(type) { return {like:'text-blue-500', heart:'text-rose-500', sad:'text-amber-500', angry:'text-red-600'}[type] || 'text-slate-500'; }
+        function getRIconName(type) { return {like:'thumbs-up', heart:'heart', sad:'frown', angry:'angry'}[type] || 'thumbs-up'; }
+
+        function renderFeedTab() {
+            const friends = userData.friends || [];
+            const posts = allPosts.filter(p => p.authorId === currentUser.uid || friends.includes(p.authorId)).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            document.getElementById('feed-posts-list').innerHTML = posts.length ? posts.map(generatePostHTML).join('') : `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-emerald-200"><i data-lucide="shield" class="w-16 h-16 text-emerald-200 mx-auto mb-4"></i><p class="text-slate-500 text-sm">لا توجد منشورات حالياً.</p></div>`;
+        }
+
+        let isEditingProfile = false;
+        window.toggleEditProfile = () => { isEditingProfile = !isEditingProfile; renderProfileTab(); }
+        window.saveProfile = async () => {
+            const btn = document.getElementById('save-prof-btn');
+            btn.disabled=true; btn.innerHTML='جاري...';
+            try {
+                let pUrl = userData.photoUrl;
+                if(window.tmpProfImgFile) pUrl = await uploadToImgbb(window.tmpProfImgFile);
+                
+                const sLinksRaw = Array.from(document.querySelectorAll('.edit-social-row')).map(row => ({
+                    platform: row.querySelector('.s-plat').value,
+                    url: row.querySelector('.s-url').value
+                }));
+
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                    displayName: document.getElementById('ep-name').value,
+                    bio: document.getElementById('ep-bio').value,
+                    phoneNumber: document.getElementById('ep-phone').value,
+                    gender: document.getElementById('ep-gender').value,
+                    photoUrl: pUrl,
+                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
+                });
+                isEditingProfile = false;
+                window.tmpProfImgFile = null;
+            } catch(e) { alert('خطأ في الحفظ'); }
+            renderProfileTab();
+        }
+
+        function renderProfileTab() {
+            const container = document.getElementById('profile-view-container');
+            const myP = allPosts.filter(p => p.authorId === currentUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            document.getElementById('profile-posts-list').innerHTML = myP.length ? myP.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl border">لا توجد منشورات.</p>';
+
+            if(!isEditingProfile) {
+                let socialHtml = (userData.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-800 text-white p-2 rounded-full hover:opacity-80"><i data-lucide="link" class="w-5 h-5"></i></a>`).join('');
+                let waHtml = userData.phoneNumber ? `<a href="https://wa.me/${userData.phoneNumber.replace(/\D/g,'')}" target="_blank" class="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-medium"><i data-lucide="message-square" class="w-4 h-4"></i> تواصل</a>` : '';
+
+                container.innerHTML = `
+                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200">
+                    <img src="${userData.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                </div>
+                <div class="bg-white rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
+                        <img src="${userData.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md bg-white object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${userData.photoUrl}')">
+                        <div class="flex-1 w-full">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div><h1 class="text-2xl font-bold text-slate-800">${userData.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap"><p class="text-emerald-600 font-mono text-sm bg-emerald-50 px-3 py-1 rounded-lg">${userData.myTabId}</p></div></div>
+                                <button onclick="toggleEditProfile()" class="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4"></i> تعديل</button>
+                            </div>
+                            <p class="text-slate-600 mt-4 leading-relaxed max-w-2xl bg-slate-50 p-3 rounded-xl border">${userData.bio}</p>
+                            <div class="mt-4 flex flex-wrap gap-3">${waHtml}${socialHtml}</div>
+                            <div class="mt-6 flex gap-8 border-t pt-6"><div class="text-center"><span class="block font-bold text-2xl text-emerald-600">${(userData.friends||[]).length}</span><span class="text-xs text-slate-500">أشخاص</span></div></div>
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                container.innerHTML = `
+                <div class="bg-white rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 mt-4">
+                    <div class="space-y-4">
+                        <div><label class="text-xs text-slate-500 mb-1">الاسم</label><input type="text" id="ep-name" value="${userData.displayName}" class="w-full border rounded-lg px-3 py-2 outline-none"></div>
+                        <div><label class="text-xs text-slate-500 mb-1">النبذة</label><textarea id="ep-bio" rows="2" class="w-full border rounded-lg px-3 py-2 outline-none resize-none">${userData.bio}</textarea></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs text-slate-500 mb-1">هاتف الواتساب</label><input type="text" id="ep-phone" value="${userData.phoneNumber||''}" class="w-full border rounded-lg px-3 py-2 outline-none"></div>
+                            <div>
+                                <label class="text-xs text-slate-500 mb-1">النوع</label>
+                                <select id="ep-gender" class="w-full border rounded-lg px-3 py-2 outline-none bg-white">
+                                    <option value="male" ${userData.gender==='male'?'selected':''}>ذكر</option>
+                                    <option value="female" ${userData.gender==='female'?'selected':''}>أنثى</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="ep-socials">
+                            <label class="text-xs text-slate-500 mb-1 block">روابط</label>
+                            ${(userData.socialLinks||[]).map(l => `<div class="edit-social-row flex gap-2 mb-2"><select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook" ${l.platform==='facebook'?'selected':''}>فيسبوك</option><option value="youtube" ${l.platform==='youtube'?'selected':''}>يوتيوب</option><option value="tiktok" ${l.platform==='tiktok'?'selected':''}>تيك توك</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none" value="${l.url}"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}
+                        </div>
+                        <button onclick="addEPSocial()" class="text-xs text-emerald-600 mt-1">إضافة رابط +</button>
+                        <div class="flex gap-2 justify-end mt-4">
+                            <button onclick="toggleEditProfile()" class="px-4 py-2 rounded-lg bg-slate-100 text-sm">إلغاء</button>
+                            <button id="save-prof-btn" onclick="saveProfile()" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm">حفظ</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        }
+        window.addEPSocial = () => {
+            const div = document.createElement('div'); div.className = 'edit-social-row flex gap-2 mb-2';
+            div.innerHTML = `<select class="s-plat w-1/3 border rounded-lg px-2 py-1 text-xs bg-white"><option value="facebook">فيسبوك</option><option value="youtube">يوتيوب</option></select><input type="url" class="s-url flex-1 border rounded-lg px-2 py-1 text-xs outline-none"><button onclick="this.parentElement.remove()" class="text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+            document.getElementById('ep-socials').appendChild(div); lucide.createIcons();
+        }
+
+        window.performSearch = () => {
+            const val = document.getElementById('search-input').value.trim().toUpperCase();
+            const msg = document.getElementById('search-msg'); const cont = document.getElementById('search-result-container');
+            msg.innerText = ''; cont.innerHTML = '';
+            if(!val) return;
+            if(val === userData.myTabId.toUpperCase()) { msg.innerText = 'لا يمكنك إضافة نفسك.'; return; }
+            const u = allUsers.find(x => x.myTabId.toUpperCase() === val);
+            if(u) {
+                cont.innerHTML = `
+                <div class="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-200 flex flex-col md:flex-row items-center gap-6">
+                    <img src="${u.photoUrl}" class="w-24 h-24 rounded-full border-4 border-white object-cover">
+                    <div class="flex-1 text-center md:text-right"><h3 class="text-xl font-bold">${u.displayName}</h3><p class="text-sm text-slate-500 mt-2">${u.bio}</p></div>
+                    <button onclick="sendFriendReq('${u.uid}')" class="bg-emerald-600 text-white px-8 py-3 rounded-xl">طلب إضافة</button>
+                </div>`;
+            } else msg.innerText = 'لم يتم العثور على حساب.';
+        }
+        window.sendFriendReq = async (toUid) => {
+            const msg = document.getElementById('search-msg');
+            if((userData.friends||[]).includes(toUid)) { msg.innerText = 'موجود مسبقاً.'; return; }
+            if(friendRequests.find(r => r.from === currentUser.uid && r.to === toUid)) { msg.innerText = 'أرسلت طلباً مسبقاً.'; return; }
+            try { await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), {from: currentUser.uid, to: toUid, status: 'pending', createdAt: new Date().toISOString()}); msg.innerText = 'تم إرسال الطلب.'; } catch(e) { msg.innerText = 'خطأ'; }
+        }
+
+        function renderRequestsTab() {
+            const reqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending');
+            const cont = document.getElementById('requests-list');
+            if(!reqs.length) cont.innerHTML = '<p class="text-center text-slate-500 py-10 bg-white rounded-3xl">لا توجد طلبات</p>';
+            else cont.innerHTML = reqs.map(r => {
+                const u = allUsers.find(x => x.uid === r.from);
+                if(!u) return '';
+                return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover"><span class="font-bold text-sm">${u.displayName}</span></div><div class="flex gap-2"><button onclick="acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 text-emerald-700 p-2 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="declineReq('${r.id}')" class="bg-rose-50 text-rose-600 p-2 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
+            }).join('');
+        }
+        window.acceptReq = async (reqId, fromUid) => {
+            await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayUnion(fromUid) });
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) });
+        }
+        window.declineReq = async (reqId) => { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); }
+
+        function renderAdminTab() {
+            document.getElementById('admin-users-count').innerText = allUsers.length;
+            document.getElementById('admin-posts-count').innerText = allPosts.length;
+        }
+
+        // --- Post/Comment Interactions ---
+        window.deletePost = async (id) => { if(confirm('متأكد؟')) await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', id)); }
+        window.togglePicker = (id) => { document.getElementById('picker-'+id).classList.toggle('show'); }
+        window.handleReact = async (pId, type) => {
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const r = {...(p.reactions||{})};
+            if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {reactions: r});
+        }
+        window.addComment = async (pId) => {
+            const val = document.getElementById('c-input-'+pId).value; if(!val.trim()) return;
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const nc = { id: Date.now().toString(), authorId: currentUser.uid, text: val, createdAt: new Date().toISOString(), reactions: {} };
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: arrayUnion(nc)});
+        }
+        window.handleCReact = async (pId, cId, type) => {
+            const p = allPosts.find(x=>x.id===pId); if(!p) return;
+            const comments = p.comments.map(c => {
+                if(c.id===cId) {
+                    const r = {...(c.reactions||{})};
+                    if(r[currentUser.uid]===type) delete r[currentUser.uid]; else r[currentUser.uid]=type;
+                    return {...c, reactions: r};
+                } return c;
+            });
+            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', pId), {comments: comments});
+        }
+
+        // --- Lightbox ---
+        window.openLightbox = (url) => { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.remove('hidden'); }
+        window.closeLightbox = (e) => { if(e) e.stopPropagation(); document.getElementById('lightbox').classList.add('hidden'); document.getElementById('lightbox-img').src = ''; }
+
+    </script>
+</body>
+</html>
