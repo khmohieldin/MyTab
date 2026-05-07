@@ -168,9 +168,14 @@
                         <span id="req-badge" class="hidden absolute top-2 right-4 md:right-auto md:left-4 bg-rose-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
                     
-                    <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 mt-auto">
-                        <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
-                    </button>
+                    <div class="mt-auto w-full flex flex-col gap-1">
+                        <button onclick="showCharterModal()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 hover:bg-slate-100 hover:text-emerald-600">
+                            <i data-lucide="scroll-text" class="w-6 h-6"></i><span class="hidden md:block">ميثاق المساحة</span>
+                        </button>
+                        <button onclick="handleLogout()" class="flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50">
+                            <i data-lucide="log-out" class="w-6 h-6"></i><span class="hidden md:block">خروج</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -352,6 +357,35 @@
         </div>
     </div>
 
+    <!-- Space Charter Modal (ميثاق المساحة) -->
+    <div id="charter-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <div class="flex items-center justify-center mb-6">
+                <div class="bg-emerald-100 p-4 rounded-full">
+                    <i data-lucide="scroll-text" class="w-8 h-8 text-emerald-600"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-slate-800 mb-5">ميثاق المساحة</h2>
+            
+            <div class="text-slate-700 space-y-4 text-sm md:text-base leading-relaxed text-justify bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <p>مرحباً بك في مساحتك الآمنة. لقد بُنيت <strong>MyTab</strong> على فلسفة الخصوصية والحرية المطلقة.</p>
+                <p>نحن نؤمن بأن هذه صفحتك، ومملكتك الخاصة، ومساحتك المغلقة التي تديرها كما يحلو لك، وتدعو إليها من تثق بهم فقط.</p>
+                <p>أفكارك، معتقداتك، ثقافتك، وكل ما تشاركه هنا هو ملك لك وحدك، ونحن نحترم حريتك الشخصية إلى أبعد الحدود. <span class="font-bold text-emerald-700">لذلك، حريتك هنا مطلقة تماماً، ولا نضع أي قيود على ما تكتب أو تعبر عنه.</span></p>
+                
+                <div class="bg-rose-50 border-r-4 border-rose-500 p-4 rounded-xl mt-4">
+                    <p class="font-bold text-rose-700 flex items-center gap-2 mb-2"><i data-lucide="alert-octagon" class="w-5 h-5"></i> الاستثناء الوحيد:</p>
+                    <p class="text-rose-600 text-sm font-medium">يُمنع منعاً باتاً نشر أو تداول أي <strong>محتوى إباحي</strong>. هذه هي القاعدة الوحيدة الصارمة لدينا للحفاظ على نظافة المنصة. في حال مخالفة هذا البند الوحيد، سيتم حظر الحساب بشكل نهائي ولا رجعة فيه.</p>
+                </div>
+                
+                <p class="text-center font-bold text-emerald-700 mt-4 text-lg">باستثناء ذلك.. افعل ما تشاء، فهذه مساحتك!</p>
+            </div>
+            
+            <button onclick="acceptCharter()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-colors mt-6 shadow-md flex justify-center items-center gap-2">
+                <i data-lucide="check-circle" class="w-5 h-5"></i> قرأت الميثاق وموافق عليه
+            </button>
+        </div>
+    </div>
+
     <!-- ==================== LOGIC ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -422,6 +456,11 @@
                     showView('main-layout');
                     updateSidebar();
                     renderAll();
+                    
+                    // إظهار الميثاق للمستخدم إذا لم يوافق عليه مسبقاً
+                    if (!localStorage.getItem('mytab_charter_accepted')) {
+                        showCharterModal();
+                    }
                 }
             } else {
                 userData = null;
@@ -894,6 +933,16 @@
         }
 
         window.closeReactorsModal = () => document.getElementById('reactors-modal').classList.add('hidden');
+
+        // --- Charter Logic ---
+        window.showCharterModal = () => { 
+            document.getElementById('charter-modal').classList.remove('hidden'); 
+            lucide.createIcons(); 
+        }
+        window.acceptCharter = () => { 
+            localStorage.setItem('mytab_charter_accepted', 'true'); 
+            document.getElementById('charter-modal').classList.add('hidden'); 
+        }
 
         // --- Communities Logic ---
         window.showCreateCommModal = () => document.getElementById('create-comm-modal').classList.remove('hidden');
