@@ -620,7 +620,7 @@
 
         window.switchTab = (tab) => {
             if (tab === 'communities') activeCommunityId = null;
-            if (tab === 'messages') activeChatFriendId = null; 
+            if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null; 
             if (tab !== 'profile') viewingUid = currentUser.uid;
             
             activeTabStr = tab;
@@ -633,11 +633,19 @@
             const tcAct = document.getElementById(`tab-content-${tab}`);
             if(tcAct) tcAct.classList.remove('hidden');
             if (tab === 'messages') {
-                tcAct.classList.add('flex'); 
-                document.getElementById('chat-room-view').classList.add('hidden');
-                document.getElementById('messages-list-view').classList.remove('hidden');
+                tcAct.classList.add('flex');
+                if (!activeChatFriendId) {
+                    document.getElementById('chat-room-view').classList.add('hidden');
+                    document.getElementById('messages-list-view').classList.remove('hidden');
+                }
             }
             renderAll();
+        }
+
+        window.goToChat = (uid) => {
+            activeChatFriendId = uid;
+            switchTab('messages');
+            openChatRoom(uid);
         }
 
         window.viewProfile = (uid) => {
@@ -1095,12 +1103,37 @@
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities')), {
                     name, description: desc, iconUrl, color: document.getElementById('comm-color').value,
                     isPrivate: document.getElementById('comm-privacy').value === 'private',
-                    creatorId: currentUser.uid, members: [currentUser.uid], createdAt: new Date().toISOString()
+                    creatorId: currentUser.uid, members: [currentUser.uid], joinRequests: [], createdAt: new Date().toISOString()
                 });
                 closeCreateCommModal();
                 document.getElementById('comm-name').value=''; document.getElementById('comm-desc').value='';
             } catch(e) { alert('خطأ في الإنشاء'); }
             btn.disabled = false; btn.innerHTML = 'إنشاء المجتمع';
+        }
+
+        window.requestJoinComm = async (id) => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), {
+                    joinRequests: arrayUnion(currentUser.uid)
+                });
+            } catch(e) { alert('حدث خطأ أثناء إرسال الطلب'); }
+        }
+
+        window.acceptCommReq = async (commId, uid) => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
+                    members: arrayUnion(uid),
+                    joinRequests: arrayRemove(uid)
+                });
+            } catch(e) { alert('حدث خطأ'); }
+        }
+
+        window.rejectCommReq = async (commId, uid) => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
+                    joinRequests: arrayRemove(uid)
+                });
+            } catch(e) { alert('حدث خطأ'); }
         }
 
         window.viewCommunity = (id) => { activeCommunityId = id; renderCommunitiesTab(); }
@@ -1162,12 +1195,44 @@
                 const comm = allCommunities.find(c => c.id === activeCommunityId);
                 if (!comm) { activeCommunityId = null; renderCommunitiesTab(); return; }
                 const isAdmin = comm.creatorId === currentUser.uid;
+                const isMember = comm.members.includes(currentUser.uid);
+                const hasRequested = (comm.joinRequests || []).includes(currentUser.uid);
                 const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
                 
+                let topActionBtn = '';
+                if (isAdmin) topActionBtn = `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>`;
+                else if (isMember) topActionBtn = `<button onclick="leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`;
+                else if (hasRequested) topActionBtn = `<button disabled class="text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 whitespace-nowrap cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> <span class="hidden sm:inline">تم إرسال الطلب</span><span class="sm:hidden">قيد الانتظار</span></button>`;
+                else topActionBtn = `<button onclick="requestJoinComm('${comm.id}')" class="text-emerald-600 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4"></i> <span class="hidden sm:inline">طلب انضمام</span><span class="sm:hidden">انضمام</span></button>`;
+
+                let requestsHtml = '';
+                if (isAdmin && comm.joinRequests && comm.joinRequests.length > 0) {
+                    requestsHtml = `
+                    <div class="mb-8">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">طلبات الانضمام (${comm.joinRequests.length})</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${comm.joinRequests.map(uid => {
+                                const u = allUsers.find(x => x.uid === uid);
+                                if(!u) return '';
+                                return \`<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-100 dark:border-slate-700">
+                                    <div class="flex items-center gap-3 cursor-pointer" onclick="viewProfile('\${u.uid}')">
+                                        <img src="\${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                        <span class="font-bold text-sm text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">\${u.displayName}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="acceptCommReq('\${comm.id}', '\${u.uid}')" class="bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 p-2 rounded-full transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
+                                        <button onclick="rejectCommReq('\${comm.id}', '\${u.uid}')" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>\`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }
+
                 container.innerHTML = `
                 <div class="flex items-center justify-between gap-2 mb-6">
                     <button onclick="closeCommunityView()" class="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
-                    ${isAdmin ? `<button onclick="deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>` : `<button onclick="leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`}
+                    ${topActionBtn}
                 </div>
                 <div class="${comm.color || 'bg-slate-100'} p-6 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden transition-colors">
                     <img src="${comm.iconUrl}" class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-white dark:bg-slate-800 border border-white/50 relative z-10">
@@ -1182,8 +1247,11 @@
                     </div>
                 </div>
                 
+                ${requestsHtml}
+
                 <div class="mb-8">
                     <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
+                    ${isMember ? `
                     <div id="create-comm-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors mb-6">
                         <div class="flex gap-4">
                             <img src="${userData.photoUrl}" class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800">
@@ -1206,10 +1274,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div>${cPosts.length ? cPosts.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>'}</div>
+                    </div>` : `<div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl text-slate-500 dark:text-slate-400 text-sm text-center mb-6 border border-slate-200 dark:border-slate-700">عليك الانضمام للمجتمع أولاً حتى تتمكن من النشر ورؤية محتوياته.</div>`}
+                    <div>${isMember ? (cPosts.length ? cPosts.map(generatePostHTML).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>') : ''}</div>
                 </div>`;
-                setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
+                if(isMember) setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
             } else {
                 const myComms = allCommunities.filter(c => c.members.includes(currentUser.uid));
                 container.innerHTML = `
@@ -1423,7 +1491,7 @@
                     if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
                     else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
                 } else {
-                    actionBtn = `<div class="flex items-center gap-2 mx-auto md:mx-0"><button onclick="openChatRoom('${tUser.uid}'); switchTab('messages')" class="text-sm bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-300 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button><button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 dark:bg-emerald-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-400 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button></div>`;
+                    actionBtn = `<div class="flex items-center gap-2 mx-auto md:mx-0"><button onclick="goToChat('${tUser.uid}')" class="text-sm bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-300 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button><button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 dark:bg-emerald-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-400 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button></div>`;
                 }
 
                 let socialHtml = '', waHtml = '', statsHtml = '';
@@ -1482,47 +1550,6 @@
             div.innerHTML = `<select class="s-plat w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-800 dark:text-slate-100"><option value="facebook">فيسبوك</option><option value="youtube">يوتيوب</option><option value="tiktok">تيك توك</option><option value="instagram">انستجرام</option><option value="twitter">تويتر</option></select><input type="url" class="s-url flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none text-slate-800 dark:text-slate-100"><button onclick="this.parentElement.remove()" class="text-rose-500 dark:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button>`;
             document.getElementById('ep-socials').appendChild(div); lucide.createIcons();
         }
-
-        window.performSearch = () => {
-            const val = document.getElementById('search-input').value.trim().toUpperCase();
-            const msg = document.getElementById('search-msg'); const cont = document.getElementById('search-result-container');
-            msg.innerText = ''; cont.innerHTML = '';
-            if(!val) return;
-            if(val === userData.myTabId.toUpperCase()) { msg.innerText = 'لا يمكنك إضافة نفسك.'; return; }
-            const u = allUsers.find(x => x.myTabId.toUpperCase() === val);
-            if(u) {
-                cont.innerHTML = `
-                <div class="bg-emerald-50/50 dark:bg-emerald-900/20 p-6 rounded-3xl border border-emerald-200 dark:border-emerald-800/50 flex flex-col md:flex-row items-center gap-6 cursor-pointer hover:shadow-md transition-shadow" onclick="viewProfile('${u.uid}')">
-                    <img src="${u.photoUrl}" class="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 object-cover bg-white dark:bg-slate-800">
-                    <div class="flex-1 text-center md:text-right"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h3><p class="text-sm text-slate-500 dark:text-slate-400 mt-2">${u.bio}</p></div>
-                    <button onclick="event.stopPropagation(); sendFriendReq('${u.uid}')" class="bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 transition-colors">طلب إضافة</button>
-                </div>`;
-            } else msg.innerText = 'لم يتم العثور على حساب.';
-        }
-        window.sendFriendReq = async (toUid) => {
-            const msg = document.getElementById('search-msg');
-            if((userData.friends||[]).includes(toUid)) { msg.innerText = 'موجود مسبقاً.'; return; }
-            if(friendRequests.find(r => r.from === currentUser.uid && r.to === toUid)) { msg.innerText = 'أرسلت طلباً مسبقاً.'; return; }
-            try { await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), {from: currentUser.uid, to: toUid, status: 'pending', createdAt: new Date().toISOString()}); msg.innerText = 'تم إرسال الطلب.'; } catch(e) { msg.innerText = 'خطأ'; }
-        }
-
-        function renderRequestsTab() {
-            const reqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending');
-            const cont = document.getElementById('requests-list');
-            
-            const validReqs = reqs.map(r => ({ r, u: allUsers.find(x => x.uid === r.from) })).filter(item => item.u);
-
-            if(!validReqs.length) cont.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد طلبات</p>';
-            else cont.innerHTML = validReqs.map(({r, u}) => {
-                return `<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" onclick="viewProfile('${u.uid}')"><div class="flex items-center gap-4"><img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800"><span class="font-bold text-sm text-slate-800 dark:text-slate-100">${u.displayName}</span></div><div class="flex gap-2"><button onclick="event.stopPropagation(); acceptReq('${r.id}', '${r.from}')" class="bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 p-2 rounded-full transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button><button onclick="event.stopPropagation(); declineReq('${r.id}')" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>`;
-            }).join('');
-        }
-        window.acceptReq = async (reqId, fromUid) => {
-            await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
-            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayUnion(fromUid) });
-            await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) });
-        }
-        window.declineReq = async (reqId) => { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); }
 
     </script>
 </body>
