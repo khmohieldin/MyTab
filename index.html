@@ -1051,6 +1051,16 @@
             setPostColor('white', 'color-picker-container', 'create-post-container');
         }
 
+        window.removeFriend = async (friendUid) => {
+            if(!confirm('هل أنت متأكد من إلغاء الصداقة وإزالة هذا الشخص من مساحتك؟')) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayRemove(friendUid) });
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', friendUid), { friends: arrayRemove(currentUser.uid) });
+            } catch (e) {
+                alert('حدث خطأ أثناء إلغاء الصداقة.');
+            }
+        }
+
         function renderFriendsTab() {
             const container = document.getElementById('friends-list-container');
             const fIds = userData.friends || [];
@@ -1070,7 +1080,12 @@
                             <p class="text-xs text-slate-500 font-mono">${u.myTabId}</p>
                         </div>
                     </div>
-                    <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 group-hover:text-emerald-600"></i>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation(); removeFriend('${u.uid}')" class="text-rose-500 hover:bg-rose-100 p-2 rounded-lg transition-colors hidden group-hover:flex items-center gap-1 text-xs font-bold" title="إلغاء الصداقة">
+                            <i data-lucide="user-minus" class="w-4 h-4"></i> إزالة
+                        </button>
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 group-hover:text-emerald-600"></i>
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -1215,7 +1230,7 @@
                     if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 text-slate-500 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
                     else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
                 } else {
-                    actionBtn = `<button class="text-sm bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 mx-auto md:mx-0 cursor-default"><i data-lucide="check-circle" class="w-4 h-4"></i> صديق بالمساحة</button>`;
+                    actionBtn = `<button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 hover:bg-rose-100 hover:text-rose-700 text-emerald-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 mx-auto md:mx-0 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button>`;
                 }
 
                 let socialHtml = '', waHtml = '', statsHtml = '';
