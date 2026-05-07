@@ -1479,6 +1479,7 @@
                     </div>
                 </div>`;
             }).join('');
+            lucide.createIcons();
         }
 
         let isEditingProfile = false;
@@ -1709,9 +1710,20 @@
         function renderMessagesList() {
             const list = document.getElementById('chat-friends-list');
             const friends = userData.friends || [];
-            if (!friends.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء للمراسلة بعد.</p></div>'; return; }
-            const chats = friends.map(fUid => { const fInfo = allUsers.find(u => u.uid === fUid); if (!fInfo) return null; const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); const lastMsg = fMsgs[0]; const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length; return { uid: fUid, info: fInfo, lastMsg: lastMsg, unreadCount: unreadCount, lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 }; }).filter(Boolean).sort((a,b) => b.lastTime - a.lastTime);
-            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4>${c.lastMsg ? `<span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span>` : ''}</div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg ? (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)) : 'ابدأ المحادثة الآن...'}</p></div></div>`).join('');
+            if (!friends.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء بالمساحة بعد.</p></div>'; return; }
+            
+            const chats = friends.map(fUid => { 
+                const fInfo = allUsers.find(u => u.uid === fUid); 
+                if (!fInfo) return null; 
+                const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); 
+                const lastMsg = fMsgs[0]; 
+                const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length; 
+                return { uid: fUid, info: fInfo, lastMsg: lastMsg, unreadCount: unreadCount, lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 }; 
+            }).filter(c => c && c.lastMsg).sort((a,b) => b.lastTime - a.lastTime);
+            
+            if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
+            
+            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
@@ -1749,11 +1761,20 @@
             if (isAtBottom || html.includes('hand')) msgsArea.scrollTop = msgsArea.scrollHeight;
         }
 
+        window.deleteEntireChat = async (uid) => {
+            if (!confirm('هل أنت متأكد من حذف هذه المحادثة بالكامل وإزالتها من القائمة؟ (سيتم الحذف نهائياً)')) return;
+            const msgsToDelete = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === uid) || (m.senderId === uid && m.receiverId === currentUser.uid));
+            try { await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)))); } catch(e) { alert('حدث خطأ أثناء مسح المحادثة'); }
+        }
+
         window.clearChat = async () => {
             if (!activeChatFriendId) return;
-            if (!confirm('هل أنت متأكد من مسح جميع الرسائل بينك وبين هذا الصديق؟ (سيتم الحذف نهائياً)')) return;
+            if (!confirm('هل أنت متأكد من مسح جميع الرسائل بينك وبين هذا الصديق وإزالته من قائمة الرسائل؟ (سيتم الحذف نهائياً)')) return;
             const msgsToDelete = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === activeChatFriendId) || (m.senderId === activeChatFriendId && m.receiverId === currentUser.uid));
-            try { await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)))); } catch(e) { alert('حدث خطأ أثناء مسح المحادثة'); }
+            try { 
+                await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id))));
+                closeChatRoom();
+            } catch(e) { alert('حدث خطأ أثناء مسح المحادثة'); }
         }
 
         window.deleteMessage = async (msgId) => {
