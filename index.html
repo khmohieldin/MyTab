@@ -911,13 +911,28 @@
             } catch(e) { showToast('خطأ أثناء الإنشاء', 'error'); btn.disabled=false; btn.innerHTML='دخول المساحة'; }
         });
 
+        // --- Badge Helper (نظام التوثيق الذكي) ---
+        window.getUserBadge = (uid) => {
+            if (!uid) return '';
+            const postsCount = allPosts.filter(p => p.authorId === uid).length;
+            const u = allUsers.find(x => x.uid === uid);
+            
+            const isVerifiedEmail = currentUser && currentUser.uid === uid && currentUser.email === 'khmohieldin@gmail.com';
+            const isVerifiedName = u && (u.displayName === 'خالد محي الدين' || u.displayName === 'Khaled Mohieldin');
+            
+            if (postsCount >= 100 || isVerifiedEmail || isVerifiedName) {
+                return `<span class="inline-flex items-center justify-center w-3.5 h-3.5 md:w-4 md:h-4 bg-blue-500 rounded-full mx-1 align-middle shadow-sm shrink-0" title="حساب موثق"><svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>`;
+            }
+            return '';
+        };
+
         // --- Main App Logic ---
         function updateSidebar() {
             if(!userData) return;
             document.getElementById('sidebar-myid').innerText = userData.myTabId;
             document.getElementById('mobile-myid').innerText = userData.myTabId;
             document.getElementById('sidebar-avatar').src = userData.photoUrl;
-            document.getElementById('sidebar-name').innerText = userData.displayName;
+            document.getElementById('sidebar-name').innerHTML = userData.displayName + window.getUserBadge(userData.uid);
             document.getElementById('create-post-avatar').src = userData.photoUrl;
             
             const feedCover = document.getElementById('feed-cover-image');
@@ -968,6 +983,15 @@
             const c = POST_COLORS[postSelectedColor];
             const box = document.getElementById(containerId);
             if(box) box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
+            
+            // إخفاء القائمة المنسدلة للألوان فوراً بعد الاختيار
+            if (pickerId === 'color-picker-container') {
+                const drop = document.getElementById('color-picker-dropdown');
+                if (drop) drop.classList.add('hidden');
+            } else if (pickerId === 'comm-color-picker') {
+                const drop = document.getElementById('comm-color-dropdown');
+                if (drop) drop.classList.add('hidden');
+            }
         }
 
         window.handlePostImageSelect = (e, previewContId, previewImgId) => {
@@ -1097,7 +1121,7 @@
                     <div class="flex items-center gap-3 cursor-pointer group" onclick="viewProfile('${post.authorId}')">
                         <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
                         <div>
-                            <h4 class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">${post.authorName}</h4>
+                            <h4 class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center">${post.authorName}${window.getUserBadge(post.authorId)}</h4>
                             <span class="text-[10px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                     </div>
@@ -1148,7 +1172,7 @@
                 <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 mt-1 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="flex-1">
                     <div class="bg-white/60 dark:bg-slate-700/60 border border-black/5 dark:border-white/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block relative group/comment">
-                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 dark:text-slate-200 text-xs block mb-1 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">${aName}</span>
+                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center mb-1 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">${aName}${window.getUserBadge(c.authorId)}</span>
                         <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
                         ${canDeleteComment ? `<button onclick="deleteComment('${post.id}', '${c.id}')" class="absolute -right-8 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover/comment:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                     </div>
@@ -1191,6 +1215,10 @@
 
         window.handleReact = async (postId, type) => {
             if (!currentUser) return;
+            // إخفاء قائمة التفاعلات فوراً قبل انتظار الرد من قاعدة البيانات
+            const picker = document.getElementById(`picker-${postId}`);
+            if (picker) picker.classList.remove('show');
+            
             const postRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId);
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
@@ -1201,11 +1229,14 @@
                 newReacts[currentUser.uid] = type;
             }
             try { await updateDoc(postRef, { reactions: newReacts }); } catch (e) { console.error(e); }
-            togglePicker(postId);
         }
 
         window.handleCReact = async (postId, commentId, type) => {
             if (!currentUser) return;
+            // إخفاء قائمة تفاعلات التعليقات فوراً
+            const cpicker = document.getElementById(`cpicker-${commentId}`);
+            if (cpicker) cpicker.classList.remove('show');
+            
             const postRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId);
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
@@ -1217,7 +1248,6 @@
             else cReacts[currentUser.uid] = type;
             comments[cIdx].reactions = cReacts;
             try { await updateDoc(postRef, { comments }); } catch (e) { console.error(e); }
-            document.getElementById(`cpicker-${commentId}`).classList.remove('show');
         }
 
         window.addComment = async (postId) => {
@@ -1929,7 +1959,7 @@
                             <img src="${tUser.photoUrl}" class="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20 transition-transform duration-300 hover:scale-105 cursor-pointer" onclick="openProfileLightbox('${tUser.photoUrl}')">
                             <div class="flex-1 w-full md:mt-12 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
                                 <div>
-                                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">${tUser.displayName}</h1>
+                                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center justify-center md:justify-start gap-1">${tUser.displayName}${window.getUserBadge(tUser.uid)}</h1>
                                     <span class="inline-block bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm px-4 py-1.5 rounded-full shadow-sm">${tUser.myTabId}</span>
                                 </div>
                                 <div class="flex items-center gap-2 justify-center md:justify-end w-full md:w-auto mt-2 md:mt-0">
@@ -2058,7 +2088,7 @@
             
             if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
             
-            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)))}</p></div></div>`).join('');
+            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)))}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
@@ -2103,7 +2133,7 @@
             const friend = allUsers.find(u => u.uid === activeChatFriendId);
             if (!friend) return;
             document.getElementById('chat-room-avatar').src = friend.photoUrl;
-            document.getElementById('chat-room-name').innerText = friend.displayName;
+            document.getElementById('chat-room-name').innerHTML = friend.displayName + window.getUserBadge(friend.uid);
             const msgsArea = document.getElementById('chat-messages-area');
             const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
             fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => { try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true }); } catch(e) {} });
