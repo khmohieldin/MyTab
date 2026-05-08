@@ -763,6 +763,11 @@
                     renderRegSocials();
                 } else {
                     userData = userSnap.data();
+                    if (userData.isBanned) {
+                        await signOut(auth);
+                        showToast('لقد تم حظر حسابك من قبل الإدارة.', 'error');
+                        return;
+                    }
                     viewingUid = currentUser.uid;
                     
                     if (window.isSuperAdmin()) {
@@ -792,8 +797,16 @@
             
             const u1 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'users'), (snap) => {
                 allUsers = snap.docs.map(d => d.data());
+                if (!currentUser) return;
                 const current = snap.docs.find(d => d.uid === currentUser.uid);
-                if(current) userData = current;
+                if(current) {
+                    userData = current;
+                    if (userData.isBanned) {
+                        signOut(auth);
+                        showToast('تم حظر حسابك من قبل الإدارة.', 'error');
+                        return;
+                    }
+                }
                 updateSidebar();
                 renderAll();
             }, (error) => console.error(error));
@@ -1237,9 +1250,17 @@
                     <td class="px-4 py-3 font-mono text-sm text-slate-500">${u.myTabId}</td>
                     <td class="px-4 py-3 text-sm text-slate-500">${dateJoined}</td>
                     <td class="px-4 py-3 text-center">
-                        <button onclick="window.adminViewUser('${u.uid}')" class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:hover:bg-amber-900/60 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-1 mx-auto">
-                            <i data-lucide="eye" class="w-4 h-4"></i> تصفح خفي
-                        </button>
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="window.adminViewUser('${u.uid}')" class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:hover:bg-amber-900/60 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-1" title="تصفح خفي">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.adminToggleBanUser('${u.uid}', ${u.isBanned || false})" class="${u.isBanned ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/40 dark:text-orange-400'} px-2 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-1" title="${u.isBanned ? 'فك الحظر' : 'حظر'}">
+                                <i data-lucide="${u.isBanned ? 'unlock' : 'lock'}" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.adminDeleteUser('${u.uid}')" class="bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60 px-2 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-1" title="حذف المستخدم ومحتوياته">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 `;
@@ -1281,6 +1302,37 @@
                     showToast('تمت إزالة الغلاف العام', 'success');
                 } catch(e) {
                     showToast('حدث خطأ', 'error');
+                }
+            });
+        };
+
+        window.adminToggleBanUser = async (uid, currentBanState) => {
+            if (uid === currentUser.uid) return showToast('لا يمكنك حظر نفسك!', 'error');
+            const actionStr = currentBanState ? 'فك الحظر عن' : 'حظر';
+            showConfirm(`هل أنت متأكد من ${actionStr} هذا المستخدم؟`, async () => {
+                try {
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', uid), {
+                        isBanned: !currentBanState
+                    });
+                    showToast(`تم ${actionStr} المستخدم بنجاح`, 'success');
+                } catch (e) {
+                    showToast('حدث خطأ أثناء تنفيذ الإجراء', 'error');
+                }
+            });
+        };
+
+        window.adminDeleteUser = async (uid) => {
+            if (uid === currentUser.uid) return showToast('لا يمكنك حذف نفسك!', 'error');
+            showConfirm('هل أنت متأكد من حذف هذا المستخدم وجميع منشوراته نهائياً؟ لا يمكن التراجع عن هذا الإجراء.', async () => {
+                try {
+                    const userPosts = allPosts.filter(p => p.authorId === uid);
+                    for (let p of userPosts) {
+                        await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id));
+                    }
+                    await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', uid));
+                    showToast('تم حذف المستخدم ومحتوياته بنجاح', 'success');
+                } catch (e) {
+                    showToast('حدث خطأ أثناء الحذف', 'error');
                 }
             });
         };
