@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="closeEditModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <textarea id="edit-modal-input" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 resize-none mb-4" rows="4"></textarea>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeEditModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button>
+                <button id="edit-modal-save" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors shadow-sm flex items-center gap-2">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTab - مساحتك الآمنة</title>
@@ -418,7 +432,7 @@
                 <div id="tab-content-singlepost" class="tab-content hidden pb-10">
                     <div class="flex items-center gap-3 mb-6">
                         <button onclick="switchTab('notifications')" class="text-slate-500 hover:text-emerald-600 transition-colors bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">عرض المنشور</h2>
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">عرض المنشور <span id="single-post-source-label" class="text-xs font-medium text-slate-400 dark:text-slate-500"></span></h2>
                     </div>
                     <div id="single-post-container"></div>
                 </div>
@@ -645,6 +659,8 @@
         let activeChatFriendId = null; 
         let currentSinglePostId = null;
         let isAuthLoginMode = true;
+        let editingItemId = null;
+        let editingItemType = null;
         let postSelectedColor = 'white';
         let postImageFile = null;
         let regSocialLinks = [];
@@ -1179,7 +1195,7 @@
                             <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                     </div>
-                    ${canDelete ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors"><i data-lucide="trash-2" class="w-[15px] h-[15px]"></i></button>` : ''}
+                    ${canDelete ? `<div class="flex items-center gap-1">${isMine ? `<button onclick="openEditModal('${post.id}', 'post')" class="text-slate-400 hover:text-emerald-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="تعديل"><i data-lucide="edit-3" class="w-[15px] h-[15px]"></i></button>` : ''}<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="حذف"><i data-lucide="trash-2" class="w-[15px] h-[15px]"></i></button></div>` : ''}
                 </div>
                 ${post.title ? `<h3 class="text-lg md:text-xl font-extrabold mb-2 text-slate-900 dark:text-white border-r-4 border-emerald-500 pr-2.5">${post.title}</h3>` : ''}
                 <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[14px] md:text-[15px]" dir="auto">${formatPostContent(post.content)}</div>
@@ -1203,7 +1219,7 @@
                     </button>
                 </div>
                 <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
-                    <div class="space-y-2 mb-3 max-h-60 overflow-y-auto pr-1">${commentsHTML}</div>
+                    <div class="space-y-2 mb-3 pr-1">${commentsHTML}</div>
                     <div class="flex gap-2 items-center">
                         <input type="text" id="${idPrefix}c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-white/80 dark:bg-slate-800/80 border border-black/10 dark:border-slate-600 rounded-xl px-3 py-1.5 text-[13px] md:text-[14px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-800 dark:text-slate-100 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') addComment('${post.id}', '${idPrefix}')">
                         <button onclick="addComment('${post.id}', '${idPrefix}')" class="bg-emerald-600 hover:bg-emerald-700 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors"><i data-lucide="send" class="w-[14px] h-[14px] rtl:-scale-x-100"></i></button>
@@ -1233,25 +1249,31 @@
             const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
 
             return `
-            <div id="${idPrefix}comment-${c.id}" class="flex gap-2 items-start group relative scroll-mt-32 mb-1.5">
-                <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-7 h-7 md:w-8 md:h-8 rounded-full border border-black/10 dark:border-white/10 mt-0.5 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity">
-                <div class="flex-1 min-w-0">
-                    <div class="bg-white/60 dark:bg-slate-700/60 border border-black/5 dark:border-white/5 px-3 py-2 rounded-2xl rounded-tr-none inline-block relative group/comment">
-                        <span onclick="viewProfile('${c.authorId}')" class="font-bold text-slate-800 dark:text-slate-200 text-[12px] md:text-[13px] flex items-center mb-0.5 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors gap-1">${aName}${window.getUserBadge(c.authorId)}</span>
-                        <p class="text-slate-700 dark:text-slate-300 text-[13px] leading-snug break-words">${c.text}</p>
-                        ${canDeleteComment ? `<button onclick="deleteComment('${post.id}', '${c.id}')" class="absolute -right-7 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover/comment:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full" title="حذف التعليق"><i data-lucide="trash-2" class="w-[14px] h-[14px]"></i></button>` : ''}
-                    </div>
-                    <div class="flex items-center gap-3 mt-0.5 px-2 relative">
-                        <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors hover:underline ${myR?getRColor(myR):'text-slate-500 dark:text-slate-400'}">تفاعل</button>
-                        <button onclick="replyToComment('${post.id}', '${aName}', '${idPrefix}')" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors hover:underline">رد</button>
-                        <span class="text-[10px] text-slate-400 dark:text-slate-500">${new Date(c.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
-                        ${tR>0 ? `<div onclick="showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-0.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm rounded-full px-1 py-0.5 absolute left-2 -top-3 text-[10px] text-slate-500 dark:text-slate-400 cursor-pointer hover:scale-110 transition-transform"><i data-lucide="heart" class="w-3 h-3 text-rose-500 dark:text-rose-400 fill-current"></i><span class="ml-0.5 font-bold">${tR}</span></div>`:''}
-                        
-                        <div id="${idPrefix}cpicker-${c.id}" class="reaction-picker absolute -top-10 right-0 bg-white dark:bg-slate-800 shadow-lg border border-slate-100 dark:border-slate-700 rounded-full px-2 py-1.5 gap-2 z-10">
-                            <button onclick="handleCReact('${post.id}', '${c.id}', 'like', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-[18px] h-[18px] text-blue-500 dark:text-blue-400"></i></button>
-                            <button onclick="handleCReact('${post.id}', '${c.id}', 'heart', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-[18px] h-[18px] text-rose-500 dark:text-rose-400 fill-current"></i></button>
+            <div id="${idPrefix}comment-${c.id}" class="flex gap-2 items-start group relative scroll-mt-32 mb-1.5 w-full">
+                <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-7 h-7 md:w-8 md:h-8 rounded-full border border-black/10 dark:border-white/10 mt-0.5 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity shrink-0">
+                <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                        <div class="bg-white/60 dark:bg-slate-700/60 border border-black/5 dark:border-white/5 px-3 py-2 rounded-2xl rounded-tr-none inline-block relative cursor-pointer hover:bg-white/80 dark:hover:bg-slate-700/80 transition-colors" onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')">
+                            <span onclick="event.stopPropagation(); viewProfile('${c.authorId}')" class="font-bold text-slate-800 dark:text-slate-200 text-[12px] md:text-[13px] flex items-center mb-0.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors gap-1">${aName}${window.getUserBadge(c.authorId)}</span>
+                            <p class="text-slate-700 dark:text-slate-300 text-[13px] leading-snug break-words">${c.text}</p>
+                            
+                            <div id="${idPrefix}cpicker-${c.id}" class="reaction-picker absolute -top-12 right-0 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-full px-3 py-2 gap-2 z-20" onclick="event.stopPropagation()">
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '👍', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">👍</button>
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '❤️', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">❤️</button>
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '😂', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😂</button>
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '😮', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😮</button>
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '😢', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😢</button>
+                                <button onclick="handleCReact('${post.id}', '${c.id}', '🙏', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">🙏</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mt-0.5 px-2 relative">
+                            <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[11px] font-bold transition-colors hover:underline ${myR?'text-emerald-600 dark:text-emerald-400':'text-slate-500 dark:text-slate-400'}">${myR && !['like','heart','sad','angry'].includes(myR) ? myR : 'تفاعل'}</button>
+                            <button onclick="replyToComment('${post.id}', '${aName}', '${idPrefix}')" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors hover:underline">رد</button>
+                            <span class="text-[10px] text-slate-400 dark:text-slate-500">${new Date(c.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                            ${tR>0 ? `<div onclick="showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-0.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm rounded-full px-1 py-0.5 absolute left-2 -top-3 text-[10px] text-slate-500 dark:text-slate-400 cursor-pointer hover:scale-110 transition-transform"><i data-lucide="heart" class="w-3 h-3 text-rose-500 dark:text-rose-400 fill-current"></i><span class="ml-0.5 font-bold">${tR}</span></div>`:''}
                         </div>
                     </div>
+                    ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${c.authorId === currentUser.uid ? `<button onclick="openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
                 </div>
             </div>`;
         }
@@ -1271,6 +1293,7 @@
             if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 dark:text-rose-400 fill-current"></i>';
             if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500 dark:text-amber-400"></i>';
             if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600 dark:text-red-400"></i>';
+            if(['👍','❤️','😂','😮','😢','🙏'].includes(type)) return `<span class="text-xl leading-none">${type}</span>`;
             return '';
         }
 
@@ -1386,6 +1409,68 @@
                 try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId)); showToast('تم الحذف', 'success'); } catch (e) { showToast('حدث خطأ أثناء الحذف', 'error'); }
             });
         }
+
+        window.openEditModal = (id, type) => {
+            editingItemId = id;
+            editingItemType = type;
+            let currentText = '';
+            
+            if (type === 'post') {
+                const post = allPosts.find(p => p.id === id);
+                if (post) currentText = post.content || '';
+                document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل المنشور';
+            } else {
+                for (let p of allPosts) {
+                    const c = (p.comments || []).find(x => x.id === id);
+                    if (c) { currentText = c.text || ''; break; }
+                }
+                document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل التعليق';
+            }
+            
+            document.getElementById('edit-modal-input').value = currentText;
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
+            lucide.createIcons();
+        }
+
+        window.closeEditModal = () => {
+            const modal = document.getElementById('edit-modal');
+            modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            editingItemId = null; editingItemType = null;
+        }
+
+        document.getElementById('edit-modal-save').addEventListener('click', async () => {
+            if (!editingItemId) return;
+            const newText = document.getElementById('edit-modal-input').value.trim();
+            const btn = document.getElementById('edit-modal-save');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+            
+            try {
+                if (editingItemType === 'post') {
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', editingItemId), { content: newText });
+                    showToast('تم تعديل المنشور بنجاح', 'success');
+                } else if (editingItemType === 'comment') {
+                    let targetPost = null;
+                    let cIdx = -1;
+                    for (let p of allPosts) {
+                        cIdx = (p.comments || []).findIndex(x => x.id === editingItemId);
+                        if (cIdx !== -1) { targetPost = p; break; }
+                    }
+                    if (targetPost) {
+                        const newComments = [...targetPost.comments];
+                        newComments[cIdx].text = newText;
+                        await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', targetPost.id), { comments: newComments });
+                        showToast('تم تعديل التعليق بنجاح', 'success');
+                    }
+                }
+                closeEditModal();
+            } catch (e) {
+                showToast('حدث خطأ أثناء التعديل', 'error');
+            }
+            btn.disabled = false; btn.innerText = 'حفظ التعديلات';
+        });
 
         window.openLightbox = (url) => {
             document.getElementById('lightbox-img').src = url;
@@ -2381,10 +2466,21 @@
                     const sp = allPosts.find(p => p.id === m.content);
                     let sharedHtml = '';
                     if(sp) {
+                        let contextBadge = '';
+                        if (sp.communityId) {
+                            const comm = allCommunities.find(c => c.id === sp.communityId);
+                            contextBadge = `<div class="text-[10px] bg-emerald-100/80 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0" title="مشاركة من مجتمع"><i data-lucide="layers" class="w-3 h-3"></i> <span class="truncate max-w-[80px] md:max-w-[100px]">${comm ? comm.name : 'مجتمع'}</span></div>`;
+                        } else {
+                            contextBadge = `<div class="text-[10px] bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0" title="مشاركة من المساحة العامة"><i data-lucide="home" class="w-3 h-3"></i> المساحة العامة</div>`;
+                        }
+                        
                         sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="openSinglePost('${sp.id}')">
-                            <div class="flex items-center gap-2 mb-2">
-                                <img src="${sp.authorPhoto}" class="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 object-cover">
-                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${sp.authorName}</span>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <img src="${sp.authorPhoto}" class="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 object-cover shrink-0">
+                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${sp.authorName}</span>
+                                </div>
+                                ${contextBadge}
                             </div>
                             ${sp.title ? `<h4 class="font-extrabold text-sm mb-1 line-clamp-1 text-slate-900 dark:text-white border-r-2 border-emerald-500 pr-1.5">${sp.title}</h4>` : ''}
                             <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">${sp.content || 'يحتوي على مرفقات'}</p>
@@ -2549,11 +2645,22 @@
         window.renderSinglePostTab = () => {
             if(!currentSinglePostId) return;
             const container = document.getElementById('single-post-container');
+            const sourceLabel = document.getElementById('single-post-source-label');
             const post = allPosts.find(p => p.id === currentSinglePostId);
+            
             if(post) {
                 container.innerHTML = generatePostHTML(post, 'notif-');
+                if (sourceLabel) {
+                    if (post.communityId) {
+                        const comm = allCommunities.find(c => c.id === post.communityId);
+                        sourceLabel.innerText = `• من مجتمع: ${comm ? comm.name : 'خاص'}`;
+                    } else {
+                        sourceLabel.innerText = '• من المساحة العامة';
+                    }
+                }
             } else {
                 container.innerHTML = '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><p class="text-slate-500">هذا المنشور غير متاح أو تم حذفه.</p></div>';
+                if (sourceLabel) sourceLabel.innerText = '';
             }
             lucide.createIcons();
         };
