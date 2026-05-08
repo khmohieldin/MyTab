@@ -1855,7 +1855,7 @@
 
             if (activeArchiveDate) {
                 createBox.classList.add('hidden');
-                const archPosts = allFeedPosts.filter(p => p.createdAt.split('T')[0] === activeArchiveDate);
+                const archPosts = allFeedPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === activeArchiveDate);
                 list.innerHTML = `
                     <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
                         <div class="flex items-center gap-3">
@@ -1868,12 +1868,12 @@
                 `;
             } else {
                 createBox.classList.remove('hidden');
-                const todayPosts = allFeedPosts.filter(p => p.createdAt.split('T')[0] === today);
-                const olderPosts = allFeedPosts.filter(p => p.createdAt.split('T')[0] !== today);
+                const todayPosts = allFeedPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === today);
+                const olderPosts = allFeedPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') !== today);
 
                 const archiveGroups = {};
                 olderPosts.forEach(p => {
-                    const d = p.createdAt.split('T')[0];
+                    const d = new Date(p.createdAt).toLocaleDateString('en-CA');
                     if (!archiveGroups[d]) archiveGroups[d] = 0;
                     archiveGroups[d]++;
                 });
