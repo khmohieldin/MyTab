@@ -1726,6 +1726,8 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
+        let postToShareId = null;
+
         window.openShareModal = (postId) => {
             postToShareId = postId;
             const list = document.getElementById('share-friends-list');
