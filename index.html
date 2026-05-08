@@ -206,8 +206,14 @@
                     <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
                     <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button>
+                    
                     <div class="relative w-full">
-                        <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button>
+                        <button onclick="switchTab('notifications')" id="nav-notifications" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell-ring" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الإشعارات</span></button>
+                        <span id="notif-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
+                    </div>
+
+                    <div class="relative w-full">
+                        <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
                     
@@ -393,6 +399,24 @@
                 <div id="tab-content-requests" class="tab-content hidden">
                     <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">طلبات الانضمام</h2>
                     <div id="requests-list" class="space-y-4"></div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div id="tab-content-notifications" class="tab-content hidden">
+                    <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="bell" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الإشعارات</h2>
+                        <button onclick="markAllNotifsRead()" class="text-sm font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors">تحديد الكل كمقروء</button>
+                    </div>
+                    <div id="notifications-list" class="space-y-3"></div>
+                </div>
+
+                <!-- Single Post Tab -->
+                <div id="tab-content-singlepost" class="tab-content hidden pb-10">
+                    <div class="flex items-center gap-3 mb-6">
+                        <button onclick="switchTab('notifications')" class="text-slate-500 hover:text-emerald-600 transition-colors bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">عرض المنشور</h2>
+                    </div>
+                    <div id="single-post-container"></div>
                 </div>
 
             </div>
@@ -610,6 +634,7 @@
         let friendRequests = [];
         let allCommunities = [];
         let allMessages = []; 
+        let allNotifications = []; 
         let activeTabStr = 'feed';
         let viewingUid = null;
         let activeCommunityId = null;
@@ -731,7 +756,13 @@
                 }
             }, (error) => console.error(error));
 
-            unsubs.push(u1, u2, u3, u4, u5);
+            const u6 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications'), (snap) => {
+                allNotifications = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                updateBadge();
+                if(activeTabStr === 'notifications') renderNotificationsTab();
+            }, (error) => console.error(error));
+
+            unsubs.push(u1, u2, u3, u4, u5, u6);
         }
 
         // --- View Management ---
@@ -762,7 +793,7 @@
             if (tab !== 'profile') viewingUid = currentUser.uid;
             
             activeTabStr = tab;
-            ['feed', 'profile', 'search', 'requests', 'friends', 'communities', 'messages'].forEach(t => {
+            ['feed', 'profile', 'search', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost'].forEach(t => {
                 const tc = document.getElementById(`tab-content-${t}`);
                 if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -965,6 +996,12 @@
             if(msgBadge) {
                 if(unreadMsgs>0) { msgBadge.classList.remove('hidden'); msgBadge.innerText=unreadMsgs; } else msgBadge.classList.add('hidden');
             }
+
+            const unreadNotifs = allNotifications.filter(n => n.to === currentUser.uid && !n.read).length;
+            const notifBadge = document.getElementById('notif-badge');
+            if(notifBadge) {
+                if(unreadNotifs>0) { notifBadge.classList.remove('hidden'); notifBadge.innerText=unreadNotifs; } else notifBadge.classList.add('hidden');
+            }
         }
 
         window.copyMyId = () => { navigator.clipboard.writeText(userData.myTabId).then(()=>showToast('تم نسخ المعرف بنجاح!', 'success')).catch(()=>{showToast('فشل النسخ', 'error')}); }
@@ -1054,6 +1091,7 @@
             if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
             if(activeTabStr==='search') performSearch();
+            if(activeTabStr==='notifications') renderNotificationsTab();
             if(activeTabStr==='messages') {
                 if(activeChatFriendId) renderChatRoom();
                 else renderMessagesList();
@@ -1116,7 +1154,7 @@
             let commentsHTML = comments.map(cm => generateCommentHTML(cm, post, canDelete)).join('');
 
             return `
-            <div class="rounded-3xl p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-6">
+            <div id="post-view-${post.id}" class="rounded-3xl p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-6 scroll-mt-24">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3 cursor-pointer group" onclick="viewProfile('${post.authorId}')">
                         <img src="${post.authorPhoto}" class="w-10 h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
@@ -1168,7 +1206,7 @@
             const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
 
             return `
-            <div class="flex gap-3 items-start group relative">
+            <div id="comment-${c.id}" class="flex gap-3 items-start group relative scroll-mt-32">
                 <img src="${aPic}" onclick="viewProfile('${c.authorId}')" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 mt-1 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="flex-1">
                     <div class="bg-white/60 dark:bg-slate-700/60 border border-black/5 dark:border-white/5 p-3 rounded-2xl rounded-tr-none text-sm inline-block relative group/comment">
@@ -1215,7 +1253,6 @@
 
         window.handleReact = async (postId, type) => {
             if (!currentUser) return;
-            // إخفاء قائمة التفاعلات فوراً قبل انتظار الرد من قاعدة البيانات
             const picker = document.getElementById(`picker-${postId}`);
             if (picker) picker.classList.remove('show');
             
@@ -1223,17 +1260,24 @@
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
             let newReacts = { ...post.reactions };
+            const isNewReact = newReacts[currentUser.uid] !== type;
             if (newReacts[currentUser.uid] === type) {
                 delete newReacts[currentUser.uid];
             } else {
                 newReacts[currentUser.uid] = type;
             }
-            try { await updateDoc(postRef, { reactions: newReacts }); } catch (e) { console.error(e); }
+            try { 
+                await updateDoc(postRef, { reactions: newReacts }); 
+                if (isNewReact && post.authorId !== currentUser.uid) {
+                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
+                        to: post.authorId, from: currentUser.uid, type: 'react_post', postId: postId, read: false, createdAt: new Date().toISOString()
+                    });
+                }
+            } catch (e) { console.error(e); }
         }
 
         window.handleCReact = async (postId, commentId, type) => {
             if (!currentUser) return;
-            // إخفاء قائمة تفاعلات التعليقات فوراً
             const cpicker = document.getElementById(`cpicker-${commentId}`);
             if (cpicker) cpicker.classList.remove('show');
             
@@ -1243,11 +1287,22 @@
             const comments = [...post.comments];
             const cIdx = comments.findIndex(c => c.id === commentId);
             if (cIdx === -1) return;
-            let cReacts = { ...(comments[cIdx].reactions || {}) };
+            
+            const targetComment = comments[cIdx];
+            let cReacts = { ...(targetComment.reactions || {}) };
+            const isNewReact = cReacts[currentUser.uid] !== type;
+
             if (cReacts[currentUser.uid] === type) delete cReacts[currentUser.uid];
             else cReacts[currentUser.uid] = type;
             comments[cIdx].reactions = cReacts;
-            try { await updateDoc(postRef, { comments }); } catch (e) { console.error(e); }
+            try { 
+                await updateDoc(postRef, { comments }); 
+                if (isNewReact && targetComment.authorId !== currentUser.uid) {
+                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
+                        to: targetComment.authorId, from: currentUser.uid, type: 'react_comment', postId: postId, commentId: commentId, read: false, createdAt: new Date().toISOString()
+                    });
+                }
+            } catch (e) { console.error(e); }
         }
 
         window.addComment = async (postId) => {
@@ -1267,6 +1322,22 @@
             try {
                 await updateDoc(postRef, { comments: arrayUnion(newComment) });
                 input.value = '';
+                
+                // 1. Notify Post Author
+                if (post.authorId !== currentUser.uid) {
+                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
+                        to: post.authorId, from: currentUser.uid, type: 'comment', postId: postId, commentId: newComment.id, read: false, createdAt: new Date().toISOString()
+                    });
+                }
+                
+                // 2. Notify other commenters (نظام الردود المتشعبة)
+                const otherCommenters = [...new Set(post.comments.map(c => c.authorId))].filter(id => id !== currentUser.uid && id !== post.authorId);
+                for(let uid of otherCommenters) {
+                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
+                        to: uid, from: currentUser.uid, type: 'reply', postId: postId, commentId: newComment.id, read: false, createdAt: new Date().toISOString()
+                    });
+                }
+
             } catch (e) { showToast('حدث خطأ أثناء إضافة التعليق', 'error'); }
         }
 
@@ -1301,7 +1372,6 @@
         let isProfilePressing = false;
 
         const startProfilePress = (e) => {
-            // Check if the touched/clicked element is a rounded profile image
             if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
                 isProfilePressing = true;
                 const src = e.target.src;
@@ -1449,6 +1519,78 @@
                 closeShareModal();
             } catch(e) { showToast('فشل الإرسال', 'error'); }
         }
+
+        // --- Notification Renderers ---
+        window.renderNotificationsTab = () => {
+            const list = document.getElementById('notifications-list');
+            const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (!myNotifs.length) {
+                list.innerHTML = '<div class="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell-off" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد إشعارات حالياً.</p></div>';
+                return;
+            }
+
+            list.innerHTML = myNotifs.map(n => {
+                const u = allUsers.find(x => x.uid === n.from);
+                if (!u) return '';
+                const bgClass = n.read ? 'bg-white dark:bg-slate-800' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800';
+                
+                let actionText = '';
+                let iconHtml = '';
+                if(n.type === 'comment') { actionText = 'علق على منشورك'; iconHtml = '<i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+                else if(n.type === 'react_post') { actionText = 'تفاعل مع منشورك'; iconHtml = '<i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-emerald-500"></i>'; }
+                else if(n.type === 'react_comment') { actionText = 'تفاعل مع تعليقك'; iconHtml = '<i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500"></i>'; }
+                else if(n.type === 'reply') { actionText = 'قام بالرد والتعليق أيضاً'; iconHtml = '<i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+
+                return `<div onclick="openSinglePost('${n.postId}', '${n.id}', ${n.commentId ? `'${n.commentId}'` : null})" class="${bgClass} p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
+                    <div class="flex items-center gap-3 md:gap-4">
+                        <div class="relative shrink-0">
+                            <img src="${u.photoUrl}" class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600">
+                            <div class="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-slate-100 dark:border-slate-700">${iconHtml}</div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200"><span class="font-bold">${u.displayName}</span> ${actionText}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${new Date(n.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</p>
+                        </div>
+                    </div>
+                    ${!n.read ? `<div class="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-sm shrink-0"></div>` : ''}
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        window.markAllNotifsRead = async () => {
+            const unread = allNotifications.filter(n => n.to === currentUser.uid && !n.read);
+            unread.forEach(async n => {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id), { read: true }); } catch(e) {}
+            });
+            showToast('تم تحديد الكل كمقروء', 'success');
+        };
+
+        window.openSinglePost = async (postId, notifId = null, targetCommentId = null) => {
+            if(notifId) {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), { read: true }); } catch(e) {}
+            }
+            switchTab('singlepost');
+            const container = document.getElementById('single-post-container');
+            const post = allPosts.find(p => p.id === postId);
+            if(post) {
+                container.innerHTML = generatePostHTML(post);
+                lucide.createIcons();
+                if(targetCommentId) {
+                    setTimeout(() => {
+                        const cEl = document.getElementById(`comment-${targetCommentId}`);
+                        if(cEl) {
+                            cEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+                            cEl.classList.add('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl', 'transition-colors', 'duration-1000');
+                            setTimeout(() => cEl.classList.remove('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl'), 2000);
+                        }
+                    }, 300);
+                }
+            } else {
+                container.innerHTML = '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><p class="text-slate-500">هذا المنشور غير متاح أو تم حذفه.</p></div>';
+            }
+        };
 
         // --- Charter Logic ---
         window.showCharterModal = () => { 
@@ -2172,7 +2314,7 @@
                     let sharedHtml = '';
                     if(sp) {
                         const clickAction = sp.communityId ? `viewCommunity('${sp.communityId}')` : `switchTab('feed')`;
-                        sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="${clickAction}; setTimeout(()=> { const el = document.getElementById('picker-${sp.id}'); if(el) el.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 400);">
+                        sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="${clickAction}; setTimeout(()=> { const el = document.getElementById('post-view-${sp.id}'); if(el) el.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 400);">
                             <div class="flex items-center gap-2 mb-2">
                                 <img src="${sp.authorPhoto}" class="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 object-cover">
                                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${sp.authorName}</span>
@@ -2289,6 +2431,79 @@
         }
 
         window.toggleStickerPicker = () => { const picker = document.getElementById('sticker-picker'); picker.classList.toggle('hidden'); if (!picker.classList.contains('hidden') && picker.innerHTML === '') { const stickers = ['😀','😂','🥰','😎','😭','😡','👍','👎','❤️','💔','🔥','✨','🎉','👋','🙏','🤔','🤐','😴','🤢','🤮','🤠','🥳','🥸','👀']; picker.innerHTML = stickers.map(s => `<button onclick="sendMessage('sticker', '${s}')" class="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors hover:scale-125">${s}</button>`).join(''); } }
+
+        // --- Notification Renderers ---
+        window.renderNotificationsTab = () => {
+            const list = document.getElementById('notifications-list');
+            const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (!myNotifs.length) {
+                list.innerHTML = '<div class="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell-off" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد إشعارات حالياً.</p></div>';
+                return;
+            }
+
+            list.innerHTML = myNotifs.map(n => {
+                const u = allUsers.find(x => x.uid === n.from);
+                if (!u) return '';
+                const bgClass = n.read ? 'bg-white dark:bg-slate-800' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800';
+                
+                let actionText = '';
+                let iconHtml = '';
+                if(n.type === 'comment') { actionText = 'علق على منشورك'; iconHtml = '<i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+                else if(n.type === 'react_post') { actionText = 'تفاعل مع منشورك'; iconHtml = '<i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-emerald-500"></i>'; }
+                else if(n.type === 'react_comment') { actionText = 'تفاعل مع تعليقك'; iconHtml = '<i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500"></i>'; }
+                else if(n.type === 'reply') { actionText = 'قام بالرد والتعليق أيضاً'; iconHtml = '<i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+
+                return `<div onclick="openSinglePost('${n.postId}', '${n.id}', ${n.commentId ? `'${n.commentId}'` : null})" class="${bgClass} p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
+                    <div class="flex items-center gap-3 md:gap-4">
+                        <div class="relative shrink-0">
+                            <img src="${u.photoUrl}" class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600">
+                            <div class="absolute -bottom-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-slate-100 dark:border-slate-700">${iconHtml}</div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200"><span class="font-bold">${u.displayName}</span> ${actionText}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${new Date(n.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</p>
+                        </div>
+                    </div>
+                    ${!n.read ? `<div class="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-sm shrink-0"></div>` : ''}
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        window.markAllNotifsRead = async () => {
+            const unread = allNotifications.filter(n => n.to === currentUser.uid && !n.read);
+            unread.forEach(async n => {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id), { read: true }); } catch(e) {}
+            });
+            showToast('تم تحديد الكل كمقروء', 'success');
+        };
+
+        window.openSinglePost = async (postId, notifId = null, targetCommentId = null) => {
+            if(notifId) {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), { read: true }); } catch(e) {}
+            }
+            switchTab('singlepost');
+            const container = document.getElementById('single-post-container');
+            const post = allPosts.find(p => p.id === postId);
+            if(post) {
+                container.innerHTML = generatePostHTML(post);
+                lucide.createIcons();
+                if(targetCommentId) {
+                    setTimeout(() => {
+                        const cEl = document.getElementById(`comment-${targetCommentId}`);
+                        if(cEl) {
+                            cEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+                            cEl.classList.add('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl', 'transition-colors', 'duration-1000');
+                            setTimeout(() => cEl.classList.remove('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl'), 2000);
+                        }
+                    }, 300);
+                }
+            } else {
+                container.innerHTML = '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><p class="text-slate-500">هذا المنشور غير متاح أو تم حذفه.</p></div>';
+            }
+        };
+
     </script>
 </body>
 </html>
