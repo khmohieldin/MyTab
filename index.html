@@ -116,6 +116,14 @@
                 <button onclick="closeCreateCommModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <div class="space-y-4">
+                <div class="mb-2">
+                    <label class="text-sm text-slate-700 dark:text-slate-300 mb-1 block">غلاف المجتمع</label>
+                    <div class="relative group h-24 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img id="comm-cover-preview" src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick="document.getElementById('comm-cover-input').click()"><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                    </div>
+                    <input type="file" id="comm-cover-input" accept="image/*" class="hidden" onchange="handleCommCoverSelect(event)">
+                </div>
                 <div class="flex flex-col items-center mb-4">
                     <div class="relative group">
                         <img id="comm-icon-preview" src="https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128" class="w-20 h-20 rounded-2xl object-cover shadow-sm bg-emerald-100 dark:bg-emerald-900/50 transition-all">
@@ -2542,20 +2550,32 @@
                 let commColorClass = comm.color || 'bg-slate-100 dark:bg-slate-800';
                 if (!commColorClass.includes('dark:')) commColorClass += ' dark:bg-slate-800';
 
+                let coverImg = comm.coverUrl || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop';
+
                 container.innerHTML = `
                 <div class="flex items-center justify-between gap-2 mb-6">
                     <button onclick="window.closeCommunityView()" class="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors whitespace-nowrap"><i data-lucide="arrow-right" class="w-5 h-5"></i> <span class="hidden sm:inline">عودة للمجتمعات</span><span class="sm:hidden">عودة</span></button>
                     ${topActionBtn}
                 </div>
-                <div class="${commColorClass} p-6 md:p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden transition-colors">
-                    <img src="${comm.iconUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover shadow-md bg-white dark:bg-slate-800 border border-white/50 relative z-10">
-                    <div class="flex-1 text-center md:text-right relative z-10">
-                        <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white drop-shadow-sm">${comm.name}</h2>
-                        <p class="text-slate-700 dark:text-slate-200 mt-2 max-w-xl font-medium">${comm.description || 'لا يوجد وصف.'}</p>
-                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                            <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length} أعضاء</span>
-                            <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
-                            ${isAdmin ? `<button onclick="window.showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors mb-8 relative group/comm">
+                    <div class="w-full h-32 md:h-48 relative overflow-hidden">
+                        <img src="${coverImg}" class="w-full h-full object-cover transition-transform duration-700 group-hover/comm:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent pointer-events-none"></div>
+                    </div>
+                    <div class="p-6 md:p-8 relative z-10 ${commColorClass}">
+                        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start text-center md:text-right -mt-16 md:-mt-20">
+                            <img src="${comm.iconUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20">
+                            <div class="flex-1 w-full md:mt-8 flex flex-col md:flex-row md:items-start justify-between gap-4 md:gap-6">
+                                <div>
+                                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white drop-shadow-sm mb-2">${comm.name}</h2>
+                                    <p class="text-slate-700 dark:text-slate-200 max-w-xl font-medium text-sm md:text-base">${comm.description || 'لا يوجد وصف.'}</p>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 mt-2 md:mt-0">
+                                    <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length}</span>
+                                    <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
+                                    ${isAdmin ? `<button onclick="window.showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2697,8 +2717,13 @@
         }
 
         window.showCreateCommModal = () => document.getElementById('create-comm-modal').classList.remove('hidden');
-        window.closeCreateCommModal = () => { document.getElementById('create-comm-modal').classList.add('hidden'); window.tmpCommImgFile = null; document.getElementById('comm-icon-preview').src='https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128'; }
+        window.closeCreateCommModal = () => { document.getElementById('create-comm-modal').classList.add('hidden'); window.tmpCommImgFile = null; window.tmpCommCoverFile = null; document.getElementById('comm-icon-preview').src='https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128'; document.getElementById('comm-cover-preview').src='https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop'; }
         
+        window.handleCommCoverSelect = (e) => {
+            const file = e.target.files[0];
+            if(file) { window.tmpCommCoverFile = file; document.getElementById('comm-cover-preview').src = URL.createObjectURL(file); }
+        }
+
         window.handleCommIconSelect = (e) => {
             const file = e.target.files[0];
             if(file) { window.tmpCommImgFile = file; document.getElementById('comm-icon-preview').src = URL.createObjectURL(file); }
@@ -2712,9 +2737,11 @@
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             try {
                 let iconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=fff&rounded=true&size=128`;
+                let coverUrl = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop';
                 if(window.tmpCommImgFile) iconUrl = await uploadToImgbb(window.tmpCommImgFile);
+                if(window.tmpCommCoverFile) coverUrl = await uploadToImgbb(window.tmpCommCoverFile);
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities')), {
-                    name, description: desc, iconUrl, color: document.getElementById('comm-color').value,
+                    name, description: desc, iconUrl, coverUrl, color: document.getElementById('comm-color').value,
                     isPrivate: document.getElementById('comm-privacy').value === 'private',
                     creatorId: currentUser.uid, members: [currentUser.uid], joinRequests: [], createdAt: new Date().toISOString()
                 });
