@@ -205,7 +205,7 @@
                     <button onclick="switchTab('communities')" id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="layers" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المجتمعات</span></button>
                     <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
-                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">إضافة صديق</span></button>
+                    <button onclick="switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button>
                     <div class="relative w-full">
                         <button onclick="switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
@@ -286,7 +286,8 @@
                         <div class="flex gap-3 md:gap-4">
                             <img id="create-post-avatar" src="" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="viewMyProfile()">
                             <div class="flex-1 min-w-0">
-                                <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-2 text-base md:text-lg" rows="3" placeholder="بماذا تفكر؟ (مسموح بروابط يوتيوب/تيك توك)"></textarea>
+                                <input type="text" id="post-title" class="w-full bg-transparent border-b border-black/5 dark:border-white/5 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 font-bold text-lg md:text-xl mb-2 pb-2 placeholder-slate-400 transition-colors" placeholder="عنوان المنشور (اختياري)">
+                                <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-1 text-base md:text-lg" rows="3" placeholder="بماذا تفكر؟ استخدم # للهاشتاج أو ضع روابط"></textarea>
                                 
                                 <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block max-w-full">
                                     <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm max-w-full object-contain">
@@ -305,7 +306,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button onclick="submitPost()" id="submit-post-btn" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-1.5 md:gap-2 transition-colors shrink-0 ml-auto shadow-sm">
+                                    <button onclick="submitPost(null, 'post-content', 'submit-post-btn', 'post-image-preview-container', 'post-image-preview', 'post-image-input', 'post-title')" id="submit-post-btn" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-1.5 md:gap-2 transition-colors shrink-0 ml-auto shadow-sm">
                                         <i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> <span>نشر</span>
                                     </button>
                                 </div>
@@ -348,9 +349,9 @@
 
                             <div class="flex items-center gap-2">
                                 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
-                                <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة"><i data-lucide="image" class="w-6 h-6"></i></button>
+                                <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-6 h-6"></i></button>
                                 <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
-                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا..." class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') sendMessage('text')">
+                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا... أو ضع روابط" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') sendMessage('text')">
                                 <button onclick="sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
                             </div>
                         </div>
@@ -377,14 +378,13 @@
 
                 <!-- Search Tab -->
                 <div id="tab-content-search" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">إضافة صديق</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="search" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> بحث واستكشاف</h2>
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8 transition-colors">
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">أدخل المعرف السري (MYT-XXXXX) للشخص الذي تريد إضافته لمساحتك.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">ابحث عن أشخاص (بالاسم أو معرف MYT)، منشورات، أو هاشتاجات.</p>
                         <div class="flex gap-3">
-                            <input type="text" id="search-input" placeholder="MYT-12345" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-mono focus:border-emerald-500 outline-none uppercase text-slate-800 dark:text-slate-100 transition-colors">
-                            <button onclick="performSearch()" class="bg-slate-800 dark:bg-slate-700 text-white px-6 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors"><i data-lucide="search" class="w-5 h-5"></i></button>
+                            <input type="text" id="search-input" placeholder="اكتب للبحث... (مثال: #تقنية أو MYT-12345)" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 transition-colors" onkeydown="if(event.key==='Enter') performSearch()">
+                            <button onclick="performSearch()" class="bg-slate-800 dark:bg-slate-700 text-white px-6 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors shadow-sm"><i data-lucide="search" class="w-5 h-5"></i></button>
                         </div>
-                        <p id="search-msg" class="text-sm text-emerald-600 dark:text-emerald-400 mt-3"></p>
                     </div>
                     <div id="search-result-container"></div>
                 </div>
@@ -410,10 +410,10 @@
         <button class="absolute top-6 right-6 text-emerald-100 hover:text-white transition-colors p-2 bg-emerald-800/50 rounded-full hover:bg-emerald-700/80" onclick="closeProfileLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
         <div class="relative group cursor-default" onclick="event.stopPropagation()">
             <img id="profile-lightbox-img" src="" class="w-64 h-64 md:w-80 md:h-80 object-cover rounded-full shadow-[0_0_50px_rgba(16,185,129,0.4)] border-4 border-emerald-300/30 relative z-10">
-            <!-- Glassy Green Overlay (الغطاء الزجاجي الأخضر اللامع) -->
+            <!-- Glassy Green Overlay -->
             <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-600/40 via-emerald-400/10 to-white/10 pointer-events-none z-20 mix-blend-overlay"></div>
             <div class="absolute inset-0 rounded-full shadow-[inset_0_0_40px_rgba(16,185,129,0.9)] pointer-events-none z-20"></div>
-            <!-- Outer Glow (الوهج الخارجي) -->
+            <!-- Outer Glow -->
             <div class="absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl pointer-events-none z-0 scale-110"></div>
         </div>
     </div>
@@ -426,6 +426,18 @@
                 <button onclick="closeReactorsModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="reactors-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+    </div>
+
+    <!-- Share Post Modal -->
+    <div id="share-post-modal" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeShareModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" id="share-post-modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">مشاركة في رسالة خاصة</h3>
+                <button onclick="closeShareModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">اختر صديقاً لإرسال هذا المنشور إليه:</p>
+            <div id="share-friends-list" class="overflow-y-auto space-y-2 pr-2"></div>
         </div>
     </div>
 
@@ -483,7 +495,7 @@
         </div>
     </div>
 
-    <!-- Space Charter Modal (ميثاق المساحة المحدث) -->
+    <!-- Space Charter Modal -->
     <div id="charter-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-md transition-opacity">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh] border dark:border-slate-700 transform transition-all">
             <div class="flex items-center justify-center mb-6">
@@ -524,7 +536,7 @@
         import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configs & Environment Setup ---
-        const IMGBB_API_KEY = "8ef1d841b117d4d6bc14f2cf8bb82bdb"; // Note: Kept client-side for this demo structure
+        const IMGBB_API_KEY = "8ef1d841b117d4d6bc14f2cf8bb82bdb";
         
         // Environment Fallback for Firebase
         let parsedFirebaseConfig;
@@ -549,7 +561,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Toast & Modal Systems (Replacing alert & confirm) ---
+        // --- Toast & Modal Systems ---
         window.showToast = (msg, type = 'info') => {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -585,10 +597,6 @@
                 modal.querySelector('div').classList.add('scale-95');
                 setTimeout(() => modal.classList.add('hidden'), 300);
             };
-
-            // Remove old listeners to prevent multiple fires
-            btnCancel.onclick = null;
-            btnOk.onclick = null;
 
             btnCancel.onclick = () => { closeModal(); };
             btnOk.onclick = () => { closeModal(); onConfirm(); };
@@ -644,15 +652,12 @@
             const isDark = document.documentElement.classList.contains('dark');
             const iconName = isDark ? 'sun' : 'moon';
             const text = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
-            
             const desktopIcon = document.getElementById('theme-icon');
             const desktopText = document.getElementById('theme-text');
             const mobileIcon = document.getElementById('mobile-theme-icon');
-            
             if(desktopIcon) desktopIcon.setAttribute('data-lucide', iconName);
             if(desktopText) desktopText.innerText = text;
             if(mobileIcon) mobileIcon.setAttribute('data-lucide', iconName);
-            
             lucide.createIcons();
         }
 
@@ -678,9 +683,7 @@
                     updateSidebar();
                     renderAll();
                     
-                    if (!localStorage.getItem('mytab_charter_accepted')) {
-                        showCharterModal();
-                    }
+                    if (!localStorage.getItem('mytab_charter_accepted')) showCharterModal();
                 }
             } else {
                 userData = null;
@@ -737,8 +740,6 @@
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(viewId).classList.remove('hidden');
-            
-            // Add subtle entrance animation
             if(viewId !== 'loading-view') {
                 const el = document.getElementById(viewId);
                 el.classList.add('opacity-0', 'transition-opacity', 'duration-500');
@@ -770,7 +771,6 @@
             const tcAct = document.getElementById(`tab-content-${tab}`);
             if(tcAct) {
                 tcAct.classList.remove('hidden');
-                // Tab transition
                 tcAct.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-300');
                 setTimeout(() => tcAct.classList.remove('opacity-0', 'translate-y-4'), 50);
             }
@@ -784,17 +784,8 @@
             renderAll();
         }
 
-        window.goToChat = (uid) => {
-            activeChatFriendId = uid;
-            switchTab('messages');
-            openChatRoom(uid);
-        }
-
-        window.viewProfile = (uid) => {
-            viewingUid = uid;
-            isEditingProfile = false;
-            switchTab('profile');
-        }
+        window.goToChat = (uid) => { activeChatFriendId = uid; switchTab('messages'); openChatRoom(uid); }
+        window.viewProfile = (uid) => { viewingUid = uid; isEditingProfile = false; switchTab('profile'); }
         window.viewMyProfile = () => viewProfile(currentUser.uid);
 
         // --- Authentication Functions ---
@@ -810,9 +801,8 @@
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
 
             try {
-                if (isAuthLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
+                if (isAuthLoginMode) await signInWithEmailAndPassword(auth, email, password);
+                else {
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
                     await sendEmailVerification(cred.user);
                 }
@@ -821,7 +811,6 @@
                 if (error.code === 'auth/email-already-in-use') errText.innerText = 'البريد مستخدم مسبقاً.';
                 else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') errText.innerText = 'بيانات الدخول غير صحيحة.';
                 else if (error.code === 'auth/weak-password') errText.innerText = 'كلمة المرور ضعيفة جداً.';
-                else if (error.code === 'auth/unauthorized-domain') errText.innerText = 'عذراً، هذا النطاق غير مصرح به. يرجى إضافته في إعدادات Firebase.';
                 else errText.innerText = 'حدث خطأ. تأكد من البيانات.';
             }
             btn.disabled = false; btn.innerHTML = `<i data-lucide="mail" class="w-5 h-5"></i> <span>${isAuthLoginMode?'دخول':'إنشاء حساب'}</span>`;
@@ -835,8 +824,7 @@
             try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { 
                 if (error.code !== 'auth/popup-closed-by-user') {
                     errDiv.classList.remove('hidden');
-                    if (error.code === 'auth/unauthorized-domain') errText.innerText = 'النطاق الحالي غير مصرح به لاستخدام جوجل.';
-                    else errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
+                    errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
                 }
             }
         }
@@ -899,9 +887,7 @@
         function generateUniqueId() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let result = 'MYT-';
-            for (let i = 0; i < 8; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
+            for (let i = 0; i < 8; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
             return result;
         }
 
@@ -909,31 +895,19 @@
             e.preventDefault();
             const btn = document.getElementById('reg-submit-btn');
             btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
-            
             const gender = document.getElementById('reg-gender').value;
             const avatarUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
-
             const newUserData = {
-                uid: currentUser.uid,
-                myTabId: generateUniqueId(),
-                displayName: document.getElementById('reg-name').value,
-                gender: gender,
-                birthDate: document.getElementById('reg-dob').value,
-                phoneNumber: document.getElementById('reg-phone').value,
-                socialLinks: regSocialLinks.filter(l => l.url.trim()!==''),
-                bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
-                photoUrl: avatarUrl,
-                coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
+                uid: currentUser.uid, myTabId: generateUniqueId(), displayName: document.getElementById('reg-name').value, gender: gender,
+                birthDate: document.getElementById('reg-dob').value, phoneNumber: document.getElementById('reg-phone').value,
+                socialLinks: regSocialLinks.filter(l => l.url.trim()!==''), bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
+                photoUrl: avatarUrl, coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
                 friends: [], isPrivate: true, isAdmin: false, createdAt: new Date().toISOString()
             };
-
             try {
                 await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), newUserData);
-                userData = newUserData;
-                viewingUid = currentUser.uid;
-                showView('main-layout');
-                setupDataListeners();
-                showToast('مرحباً بك في مساحتك!', 'success');
+                userData = newUserData; viewingUid = currentUser.uid;
+                showView('main-layout'); setupDataListeners(); showToast('مرحباً بك في مساحتك!', 'success');
             } catch(e) { showToast('خطأ أثناء الإنشاء', 'error'); btn.disabled=false; btn.innerHTML='دخول المساحة'; }
         });
 
@@ -1002,7 +976,6 @@
                 postImageFile = file;
                 document.getElementById(previewContId).classList.remove('hidden');
                 document.getElementById(previewImgId).src = URL.createObjectURL(file);
-                // force white color when image selected
                 setPostColor('white', previewContId.includes('comm') ? 'comm-color-picker' : 'color-picker-container', previewContId.includes('comm') ? 'create-comm-post-container' : 'create-post-container');
             }
         }
@@ -1013,9 +986,12 @@
             document.getElementById(inputId).value = '';
         }
 
-        window.submitPost = async (commId = null, contentId = 'post-content', btnId = 'submit-post-btn', imgContId = 'post-image-preview-container', imgPreviewId = 'post-image-preview', imgInputId = 'post-image-input') => {
+        window.submitPost = async (commId = null, contentId = 'post-content', btnId = 'submit-post-btn', imgContId = 'post-image-preview-container', imgPreviewId = 'post-image-preview', imgInputId = 'post-image-input', titleId = 'post-title') => {
             const content = document.getElementById(contentId).value;
-            if(!content.trim() && !postImageFile) return;
+            const titleEl = document.getElementById(titleId);
+            const titleStr = titleEl ? titleEl.value.trim() : '';
+
+            if(!content.trim() && !postImageFile && !titleStr) return;
             const btn = document.getElementById(btnId);
             btn.disabled=true; btn.innerHTML='<i class="loader"></i> جاري...';
             
@@ -1025,15 +1001,16 @@
                 
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
                     authorId: currentUser.uid, authorName: userData.displayName, authorPhoto: userData.photoUrl,
-                    content: content, imageUrl: imgUrl, colorId: postSelectedColor,
+                    title: titleStr, content: content, imageUrl: imgUrl, colorId: postSelectedColor,
                     communityId: commId,
                     createdAt: new Date().toISOString(), reactions: {}, comments: []
                 });
                 document.getElementById(contentId).value = '';
+                if(titleEl) titleEl.value = '';
                 removePostImage(imgContId, imgPreviewId, imgInputId);
                 showToast('تم النشر بنجاح', 'success');
             } catch(e) { showToast('حدث خطأ أثناء النشر', 'error'); }
-            btn.disabled=false; btn.innerHTML='<i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
+            btn.disabled=false; btn.innerHTML='<i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
             lucide.createIcons();
         }
 
@@ -1052,6 +1029,7 @@
             if(activeTabStr==='profile') renderProfileTab();
             if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
+            if(activeTabStr==='search') performSearch();
             if(activeTabStr==='messages') {
                 if(activeChatFriendId) renderChatRoom();
                 else renderMessagesList();
@@ -1063,6 +1041,19 @@
             const ytMatch = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
             const tkMatch = text.match(/(?:https?:\/\/)?(?:www\.)?tiktok\.com\/.*\/video\/(\d+)/);
             return { ytId: ytMatch?ytMatch[1]:null, tkId: tkMatch?tkMatch[1]:null };
+        }
+
+        function formatPostContent(text) {
+            if (!text) return '';
+            let formatted = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline" onclick="event.stopPropagation()">$1</a>');
+            formatted = formatted.replace(/(#[\w\u0600-\u06FF_]+)/g, '<span class="text-blue-600 dark:text-blue-400 font-bold cursor-pointer hover:underline" onclick="event.stopPropagation(); searchHashtag(\'$1\')">$1</span>');
+            return formatted;
+        }
+
+        function formatMessageContent(text, isMe) {
+            if (!text) return '';
+            const linkColor = isMe ? 'text-emerald-100 hover:text-white' : 'text-blue-500 dark:text-blue-400 hover:text-blue-600';
+            return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline font-bold ' + linkColor + '" onclick="event.stopPropagation()">$1</a>');
         }
 
         function generatePostHTML(post) {
@@ -1112,21 +1103,25 @@
                     </div>
                     ${canDelete ? `<button onclick="deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                 </div>
-                <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-4 px-1 text-lg" dir="auto">${post.content}</div>
+                ${post.title ? `<h3 class="text-xl md:text-2xl font-extrabold mb-3 text-slate-900 dark:text-white border-r-4 border-emerald-500 pr-3">${post.title}</h3>` : ''}
+                <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-4 px-1 text-base md:text-lg" dir="auto">${formatPostContent(post.content)}</div>
                 ${mediaHTML}
                 ${statsHTML}
-                <div class="flex items-center gap-2 relative">
+                <div class="flex flex-wrap items-center gap-2 relative">
                     <div id="picker-${post.id}" class="reaction-picker absolute -top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-3 py-2 gap-3 z-10 animate-in fade-in zoom-in duration-200">
                         <button onclick="handleReact('${post.id}', 'like')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-6 h-6 text-blue-500 dark:text-blue-400"></i></button>
                         <button onclick="handleReact('${post.id}', 'heart')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-6 h-6 text-rose-500 dark:text-rose-400 fill-current"></i></button>
                         <button onclick="handleReact('${post.id}', 'sad')" class="hover:scale-125 transition-transform"><i data-lucide="frown" class="w-6 h-6 text-amber-500 dark:text-amber-400"></i></button>
                         <button onclick="handleReact('${post.id}', 'angry')" class="hover:scale-125 transition-transform"><i data-lucide="angry" class="w-6 h-6 text-red-600 dark:text-red-400"></i></button>
                     </div>
-                    <button onclick="togglePicker('${post.id}')" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-medium transition-colors ${myReact ? getRColor(myReact) : 'text-slate-600 dark:text-slate-300'}">
-                        <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-5 h-5 ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تم التفاعل':'تفاعل'}</span>
+                    <button onclick="togglePicker('${post.id}')" class="flex-1 min-w-[80px] flex justify-center gap-1.5 py-2 rounded-xl text-sm bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold transition-colors ${myReact ? getRColor(myReact) : 'text-slate-600 dark:text-slate-300'}">
+                        <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-4 h-4 md:w-5 md:h-5 ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تفاعلت':'تفاعل'}</span>
                     </button>
-                    <button onclick="document.getElementById('c-input-${post.id}').focus()" class="flex-1 flex justify-center gap-2 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-medium transition-colors">
-                        <i data-lucide="message-square" class="w-5 h-5"></i> <span>${comments.length} تعليق</span>
+                    <button onclick="document.getElementById('c-input-${post.id}').focus()" class="flex-1 min-w-[80px] flex justify-center gap-1.5 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold transition-colors">
+                        <i data-lucide="message-square" class="w-4 h-4 md:w-5 md:h-5"></i> <span>تعليق</span>
+                    </button>
+                    <button onclick="openShareModal('${post.id}')" class="flex-1 min-w-[80px] flex justify-center gap-1.5 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold transition-colors">
+                        <i data-lucide="share-2" class="w-4 h-4 md:w-5 md:h-5"></i> <span>مشاركة</span>
                     </button>
                 </div>
                 <div class="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
@@ -1283,10 +1278,9 @@
                 profilePressTimer = setTimeout(() => {
                     if (isProfilePressing) {
                         openProfileLightbox(src);
-                        // Vibrate for 50ms on mobile devices for tactile feedback
                         if (navigator.vibrate) navigator.vibrate(50);
                     }
-                }, 500); // 500ms long press threshold
+                }, 500);
             }
         };
 
@@ -1295,27 +1289,20 @@
             clearTimeout(profilePressTimer);
         };
 
-        // Mobile touch events
         document.body.addEventListener('touchstart', startProfilePress, {passive: true});
         document.body.addEventListener('touchend', cancelProfilePress);
         document.body.addEventListener('touchmove', cancelProfilePress, {passive: true});
-        
-        // Desktop mouse events
         document.body.addEventListener('mousedown', startProfilePress);
         document.body.addEventListener('mouseup', cancelProfilePress);
         document.body.addEventListener('mousemove', cancelProfilePress);
 
-        // Prevent standard context menu (like "Save Image As") on profile images to allow long press
         document.body.addEventListener('contextmenu', (e) => {
-            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
-                e.preventDefault();
-            }
+            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) e.preventDefault();
         });
 
         window.openProfileLightbox = (url) => {
             document.getElementById('profile-lightbox-img').src = url;
             document.getElementById('profile-lightbox').classList.remove('hidden');
-            // Adding a slight entrance animation
             const lb = document.getElementById('profile-lightbox');
             lb.classList.add('opacity-0');
             setTimeout(() => lb.classList.remove('opacity-0'), 10);
@@ -1382,6 +1369,55 @@
             const modal = document.getElementById('reactors-modal');
             modal.querySelector('#reactors-modal-content').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // --- Share Logic ---
+        let postToShareId = null;
+        window.openShareModal = (postId) => {
+            postToShareId = postId;
+            const list = document.getElementById('share-friends-list');
+            const friends = userData.friends || [];
+            
+            if(!friends.length) {
+                list.innerHTML = '<div class="text-center py-6 text-slate-500"><i data-lucide="users" class="w-10 h-10 mx-auto mb-2 opacity-50"></i><p class="text-sm">يجب إضافة أصدقاء أولاً لتتمكن من مشاركة المنشورات معهم.</p></div>';
+            } else {
+                const validFriends = friends.map(uid => allUsers.find(x => x.uid === uid)).filter(Boolean);
+                list.innerHTML = validFriends.map(u => `
+                    <div class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0">
+                        <div class="flex items-center gap-3">
+                            <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800">
+                            <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
+                        </div>
+                        <button onclick="sendShare('${u.uid}')" class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1.5"><i data-lucide="send" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> إرسال</button>
+                    </div>
+                `).join('');
+            }
+            const modal = document.getElementById('share-post-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.querySelector('#share-post-modal-content').classList.remove('scale-95'); }, 10);
+            lucide.createIcons();
+        }
+
+        window.closeShareModal = () => {
+            const modal = document.getElementById('share-post-modal');
+            modal.querySelector('#share-post-modal-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        window.sendShare = async (friendUid) => {
+            if(!postToShareId) return;
+            try {
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), { 
+                    senderId: currentUser.uid, 
+                    receiverId: friendUid, 
+                    content: postToShareId, 
+                    type: 'post_share', 
+                    read: false, 
+                    createdAt: new Date().toISOString() 
+                });
+                showToast('تم إرسال المنشور في الرسائل بنجاح', 'success');
+                closeShareModal();
+            } catch(e) { showToast('فشل الإرسال', 'error'); }
         }
 
         // --- Charter Logic ---
@@ -1632,7 +1668,8 @@
                         <div class="flex gap-3 md:gap-4">
                             <img src="${userData.photoUrl}" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800">
                             <div class="flex-1 min-w-0">
-                                <textarea id="comm-post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-2 text-base md:text-lg" rows="3" placeholder="شارك شيئاً مع أعضاء هذا المجتمع..."></textarea>
+                                <input type="text" id="comm-post-title" class="w-full bg-transparent border-b border-black/5 dark:border-white/5 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 font-bold text-lg md:text-xl mb-2 pb-2 placeholder-slate-400 transition-colors" placeholder="عنوان المنشور (اختياري)">
+                                <textarea id="comm-post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-1 text-base md:text-lg" rows="3" placeholder="شارك شيئاً مع أعضاء هذا المجتمع... استخدم # للهاشتاج"></textarea>
                                 <div id="comm-image-preview-container" class="hidden relative mt-2 mb-4 inline-block max-w-full">
                                     <img id="comm-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm max-w-full object-contain">
                                     <button onclick="removePostImage('comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -1649,7 +1686,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button onclick="submitPost('${comm.id}', 'comm-post-content', 'submit-comm-post-btn', 'comm-image-preview-container', 'comm-image-preview', 'comm-image-input')" id="submit-comm-post-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-1.5 md:gap-2 shrink-0 ml-auto shadow-sm">
+                                    <button onclick="submitPost('${comm.id}', 'comm-post-content', 'submit-comm-post-btn', 'comm-image-preview-container', 'comm-image-preview', 'comm-image-input', 'comm-post-title')" id="submit-comm-post-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-1.5 md:gap-2 shrink-0 ml-auto shadow-sm">
                                         <i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> نشر
                                     </button>
                                 </div>
@@ -1928,20 +1965,58 @@
         }
 
         window.performSearch = () => {
-            const input = document.getElementById('search-input').value.trim().toUpperCase();
-            const msg = document.getElementById('search-msg');
+            const input = document.getElementById('search-input').value.trim();
             const container = document.getElementById('search-result-container');
+            const msg = document.getElementById('search-msg');
             msg.innerText = '';
             container.innerHTML = '';
-            if (!input) { msg.innerText = 'يرجى إدخال معرف للبحث'; msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; return; }
-            if (input === userData.myTabId) { msg.innerText = 'هذا هو المعرف الخاص بك!'; msg.className = 'text-sm text-emerald-600 dark:text-emerald-400 mt-3'; return; }
-            const foundUser = allUsers.find(u => u.myTabId === input);
-            if (!foundUser) { msg.innerText = 'لم يتم العثور على أي شخص بهذا المعرف.'; msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; return; }
-            const isFriend = (userData.friends || []).includes(foundUser.uid);
-            const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === foundUser.uid);
-            let btnHtml = isFriend ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">صديق بالمساحة</button>` : (isPending ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium cursor-not-allowed text-sm">تم إرسال الطلب</button>` : `<button onclick="sendFriendReq('${foundUser.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة صديق</button>`);
-            container.innerHTML = `<div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer" onclick="viewProfile('${foundUser.uid}')"><img src="${foundUser.photoUrl}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800"><div><h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">${foundUser.displayName}</h3><p class="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1">${foundUser.myTabId}</p></div></div>${btnHtml}</div>`;
+            
+            if (!input) { 
+                msg.innerText = 'يرجى إدخال كلمة للبحث (اسم، هاشتاج، الخ)'; 
+                msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; 
+                return; 
+            }
+
+            const lowerInput = input.toLowerCase();
+
+            let foundUsers = allUsers.filter(u => u.myTabId.toLowerCase().includes(lowerInput) || u.displayName.toLowerCase().includes(lowerInput));
+            let foundPosts = allPosts.filter(p => !p.communityId && ((p.title && p.title.toLowerCase().includes(lowerInput)) || (p.content && p.content.toLowerCase().includes(lowerInput))));
+
+            let html = '';
+
+            if(foundUsers.length) {
+                html += '<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 mb-4 border-r-4 border-emerald-500 pr-2">أشخاص</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">';
+                html += foundUsers.map(u => {
+                    const isMe = u.uid === currentUser.uid;
+                    const isFriend = (userData.friends || []).includes(u.uid);
+                    const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === u.uid);
+                    let btnHtml = isMe ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold">أنت</button>` : 
+                                  (isFriend ? `<button disabled class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-sm px-4 py-2 rounded-xl font-bold border border-emerald-100 dark:border-emerald-800">صديق بالمساحة</button>` : 
+                                  (isPending ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold cursor-not-allowed">طلب معلق</button>` : 
+                                  `<button onclick="sendFriendReq('${u.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-xl transition-colors font-bold shadow-sm flex items-center gap-1.5"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة</button>`));
+                    return `<div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer w-full md:w-auto" onclick="viewProfile('${u.uid}')"><img src="${u.photoUrl}" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800"><div><h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h4><p class="text-xs text-slate-500 font-mono mt-1">${u.myTabId}</p></div></div><div class="w-full md:w-auto flex justify-center">${btnHtml}</div></div>`;
+                }).join('');
+                html += '</div>';
+            }
+
+            if(foundPosts.length) {
+                html += '<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 mb-4 border-r-4 border-emerald-500 pr-2">منشورات</h3><div class="space-y-6">';
+                html += foundPosts.map(p => generatePostHTML(p)).join('');
+                html += '</div>';
+            }
+
+            if(!foundUsers.length && !foundPosts.length) {
+                html = '<div class="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="search-x" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لم يتم العثور على نتائج مطابقة.</p></div>';
+            }
+            
+            container.innerHTML = html;
             lucide.createIcons();
+        }
+
+        window.searchHashtag = (tag) => {
+            switchTab('search');
+            document.getElementById('search-input').value = tag;
+            performSearch();
         }
 
         window.sendFriendReq = async (uid) => {
@@ -1983,21 +2058,12 @@
             
             if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
             
-            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content))}</p></div></div>`).join('');
+            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)))}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
         window.openChatRoom = (uid) => { document.getElementById('messages-list-view').classList.add('hidden'); document.getElementById('chat-room-view').classList.remove('hidden'); renderChatRoom(); }
         window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); }
-
-        function formatMessageContent(text, isMe) {
-            if (!text) return '';
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const linkColor = isMe ? 'text-emerald-100 hover:text-white' : 'text-blue-500 dark:text-blue-400 hover:text-blue-600';
-            return text.replace(urlRegex, function(url) {
-                return '<a href="' + url + '" target="_blank" class="underline font-bold ' + linkColor + '" onclick="event.stopPropagation()">' + url + '</a>';
-            });
-        }
 
         window.chatImageBase64 = null;
 
@@ -2008,7 +2074,6 @@
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // تصغير الصورة قبل تحويلها لتفادي حد الـ 1 ميجا في قاعدة البيانات
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
                     let width = img.width; let height = img.height;
@@ -2072,6 +2137,23 @@
 
                 if (m.type === 'sticker') {
                     html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="text-[40px] leading-none mb-1 cursor-default hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                } else if (m.type === 'post_share') {
+                    const sp = allPosts.find(p => p.id === m.content);
+                    let sharedHtml = '';
+                    if(sp) {
+                        const clickAction = sp.communityId ? `viewCommunity('${sp.communityId}')` : `switchTab('feed')`;
+                        sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="${clickAction}; setTimeout(()=> { const el = document.getElementById('picker-${sp.id}'); if(el) el.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 400);">
+                            <div class="flex items-center gap-2 mb-2">
+                                <img src="${sp.authorPhoto}" class="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 object-cover">
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${sp.authorName}</span>
+                            </div>
+                            ${sp.title ? `<h4 class="font-extrabold text-sm mb-1 line-clamp-1 text-slate-900 dark:text-white border-r-2 border-emerald-500 pr-1.5">${sp.title}</h4>` : ''}
+                            <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">${sp.content || 'يحتوي على مرفقات'}</p>
+                        </div>`;
+                    } else {
+                        sharedHtml = `<div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-500 mt-2 border border-slate-200 dark:border-slate-700">هذا المنشور غير متوفر أو تم حذفه</div>`;
+                    }
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1.5 opacity-80 text-xs font-bold mb-1 border-b border-black/10 dark:border-white/10 pb-1"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'قمت بمشاركة منشور':'شارك منشوراً معك'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
                     const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
