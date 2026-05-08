@@ -405,6 +405,19 @@
         <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm" onclick="event.stopPropagation()">
     </div>
 
+    <!-- Profile Lightbox (Green Glass) -->
+    <div id="profile-lightbox" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-emerald-950/70 backdrop-blur-md p-4 cursor-zoom-out transition-opacity" onclick="closeProfileLightbox(event)">
+        <button class="absolute top-6 right-6 text-emerald-100 hover:text-white transition-colors p-2 bg-emerald-800/50 rounded-full hover:bg-emerald-700/80" onclick="closeProfileLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <div class="relative group cursor-default" onclick="event.stopPropagation()">
+            <img id="profile-lightbox-img" src="" class="w-64 h-64 md:w-80 md:h-80 object-cover rounded-full shadow-[0_0_50px_rgba(16,185,129,0.4)] border-4 border-emerald-300/30 relative z-10">
+            <!-- Glassy Green Overlay (الغطاء الزجاجي الأخضر اللامع) -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-600/40 via-emerald-400/10 to-white/10 pointer-events-none z-20 mix-blend-overlay"></div>
+            <div class="absolute inset-0 rounded-full shadow-[inset_0_0_40px_rgba(16,185,129,0.9)] pointer-events-none z-20"></div>
+            <!-- Outer Glow (الوهج الخارجي) -->
+            <div class="absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl pointer-events-none z-0 scale-110"></div>
+        </div>
+    </div>
+
     <!-- Reactors Modal -->
     <div id="reactors-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeReactorsModal()">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" id="reactors-modal-content" onclick="event.stopPropagation()">
@@ -1258,6 +1271,66 @@
             document.getElementById('lightbox-img').src = '';
         }
 
+        // --- Global Profile Image Long Press Logic ---
+        let profilePressTimer;
+        let isProfilePressing = false;
+
+        const startProfilePress = (e) => {
+            // Check if the touched/clicked element is a rounded profile image
+            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
+                isProfilePressing = true;
+                const src = e.target.src;
+                profilePressTimer = setTimeout(() => {
+                    if (isProfilePressing) {
+                        openProfileLightbox(src);
+                        // Vibrate for 50ms on mobile devices for tactile feedback
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }
+                }, 500); // 500ms long press threshold
+            }
+        };
+
+        const cancelProfilePress = () => {
+            isProfilePressing = false;
+            clearTimeout(profilePressTimer);
+        };
+
+        // Mobile touch events
+        document.body.addEventListener('touchstart', startProfilePress, {passive: true});
+        document.body.addEventListener('touchend', cancelProfilePress);
+        document.body.addEventListener('touchmove', cancelProfilePress, {passive: true});
+        
+        // Desktop mouse events
+        document.body.addEventListener('mousedown', startProfilePress);
+        document.body.addEventListener('mouseup', cancelProfilePress);
+        document.body.addEventListener('mousemove', cancelProfilePress);
+
+        // Prevent standard context menu (like "Save Image As") on profile images to allow long press
+        document.body.addEventListener('contextmenu', (e) => {
+            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
+                e.preventDefault();
+            }
+        });
+
+        window.openProfileLightbox = (url) => {
+            document.getElementById('profile-lightbox-img').src = url;
+            document.getElementById('profile-lightbox').classList.remove('hidden');
+            // Adding a slight entrance animation
+            const lb = document.getElementById('profile-lightbox');
+            lb.classList.add('opacity-0');
+            setTimeout(() => lb.classList.remove('opacity-0'), 10);
+        }
+
+        window.closeProfileLightbox = (e) => {
+            if(e) e.stopPropagation();
+            const lb = document.getElementById('profile-lightbox');
+            lb.classList.add('opacity-0');
+            setTimeout(() => {
+                lb.classList.add('hidden');
+                document.getElementById('profile-lightbox-img').src = '';
+            }, 300);
+        }
+
         // --- Modals Logic ---
         window.showReactors = (postId) => {
             const p = allPosts.find(x=>x.id===postId); if(!p || !p.reactions) return;
@@ -1783,13 +1856,18 @@
                 </div>`;
             } else {
                 let actionBtn = '';
+                const btnBaseClass = "px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full md:w-auto md:min-w-[130px] whitespace-nowrap";
+                
                 if (isMe) {
-                    actionBtn = `<button onclick="toggleEditProfile()" class="text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
+                    actionBtn = `<button onclick="toggleEditProfile()" class="${btnBaseClass} bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
                 } else if (!isFriend) {
-                    if (isPending) actionBtn = `<button disabled class="text-sm bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-2 rounded-xl font-medium mx-auto md:mx-0 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> تم إرسال الطلب</button>`;
-                    else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-colors font-medium flex items-center gap-2 mx-auto md:mx-0 shadow-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
+                    if (isPending) actionBtn = `<button disabled class="${btnBaseClass} bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed mx-auto md:mx-0"><i data-lucide="clock" class="w-4 h-4"></i> طلب معلق</button>`;
+                    else actionBtn = `<button onclick="sendFriendReq('${tUser.uid}')" class="${btnBaseClass} bg-emerald-600 hover:bg-emerald-700 text-white mx-auto md:mx-0"><i data-lucide="user-plus" class="w-4 h-4"></i> طلب إضافة</button>`;
                 } else {
-                    actionBtn = `<div class="flex items-center gap-2 mx-auto md:mx-0"><button onclick="goToChat('${tUser.uid}')" class="text-sm bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-300 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button><button onclick="removeFriend('${tUser.uid}')" class="text-sm bg-emerald-100 dark:bg-emerald-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-400 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition-colors group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button></div>`;
+                    actionBtn = `<div class="flex items-center gap-2 w-full md:w-auto justify-center mx-auto md:mx-0">
+                        <button onclick="goToChat('${tUser.uid}')" class="${btnBaseClass.replace('w-full', 'flex-1')} bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-300 text-blue-600 dark:text-blue-400"><i data-lucide="message-circle" class="w-4 h-4"></i> مراسلة</button>
+                        <button onclick="removeFriend('${tUser.uid}')" class="${btnBaseClass.replace('w-full', 'flex-1')} bg-emerald-100 dark:bg-emerald-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-400 text-emerald-700 dark:text-emerald-400 group" title="إلغاء الصداقة"><i data-lucide="check-circle" class="w-4 h-4 group-hover:hidden"></i><i data-lucide="user-minus" class="w-4 h-4 hidden group-hover:inline"></i> <span class="group-hover:hidden">صديق بالمساحة</span><span class="hidden group-hover:inline">إلغاء الصداقة</span></button>
+                    </div>`;
                 }
 
                 let socialHtml = '', waHtml = '', statsHtml = '';
@@ -1804,25 +1882,35 @@
                 const publicComms = allCommunities.filter(c => c.creatorId === tUser.uid && !c.isPrivate);
 
                 container.innerHTML = `
-                <div class="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200 dark:border-slate-700">
-                    <img src="${tUser.coverUrl}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                </div>
-                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 -mt-12 relative z-10 mx-4 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
-                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-right">
-                        <img src="${tUser.photoUrl}" class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-md bg-white dark:bg-slate-800 object-cover cursor-zoom-in -mt-16 md:-mt-20 shrink-0" onclick="openLightbox('${tUser.photoUrl}')">
-                        <div class="flex-1 w-full">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div><h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">${tUser.displayName}</h1><div class="flex gap-2 mt-1 flex-wrap justify-center md:justify-start"><p class="text-emerald-600 dark:text-emerald-400 font-mono text-sm bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 rounded-lg">${tUser.myTabId}</p></div></div>
-                                ${actionBtn}
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors group/profile mb-8">
+                    <div class="w-full h-40 md:h-56 relative overflow-hidden">
+                        <img src="${tUser.coverUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover/profile:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent pointer-events-none"></div>
+                    </div>
+                    <div class="p-6 md:p-8 relative z-10 bg-white dark:bg-slate-800">
+                        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start text-center md:text-right -mt-20 md:-mt-24">
+                            <img src="${tUser.photoUrl}" class="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20 transition-transform duration-300 hover:scale-105 cursor-pointer" onclick="openProfileLightbox('${tUser.photoUrl}')">
+                            <div class="flex-1 w-full md:mt-12 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                                <div>
+                                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">${tUser.displayName}</h1>
+                                    <span class="inline-block bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-sm px-4 py-1.5 rounded-full shadow-sm">${tUser.myTabId}</span>
+                                </div>
+                                <div class="flex items-center gap-2 justify-center md:justify-end w-full md:w-auto mt-2 md:mt-0">
+                                    ${actionBtn}
+                                </div>
                             </div>
-                            <p class="text-slate-600 dark:text-slate-300 mt-4 leading-relaxed max-w-2xl bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">${tUser.bio}</p>
-                            <div class="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">${waHtml}${socialHtml}</div>
+                        </div>
+                        <div class="mt-6 md:mt-8">
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-4 md:p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center md:text-right shadow-sm">${tUser.bio}</p>
+                            <div class="mt-5 flex flex-wrap gap-3 justify-center md:justify-start">
+                                ${waHtml}${socialHtml}
+                            </div>
                             ${statsHtml}
                         </div>
                     </div>
                 </div>
                 ${publicComms.length > 0 ? `
-                <div class="mt-8 mx-4">
+                <div class="mt-8">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 px-2 border-r-4 border-emerald-500 mr-2 mb-4">المجتمعات العامة</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${publicComms.map(c => generateCommunityCardHtml(c, true)).join('')}
