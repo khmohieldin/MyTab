@@ -1388,6 +1388,35 @@
             }
         }
 
+        window.playNotificationSound = () => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'sine';
+                // تردد مريح للأذن (صوت بيب ناعم يشبه فيسبوك)
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+                
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e) {
+                // تجاهل الخطأ إذا كان المتصفح يمنع الصوت التلقائي قبل تفاعل المستخدم
+            }
+        };
+
+        let lastTotalUnreadCount = -1;
+
         function updateBadge() {
             if(!currentUser) return;
             const incReqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending').length;
@@ -1405,6 +1434,13 @@
             if(notifBadge) {
                 if(unreadNotifs>0) { notifBadge.classList.remove('hidden'); notifBadge.innerText=unreadNotifs; } else notifBadge.classList.add('hidden');
             }
+
+            const currentTotal = incReqs + unreadMsgs + unreadNotifs;
+            // تشغيل الصوت فقط إذا زاد عدد الإشعارات (وليس عند التحميل الأول)
+            if (lastTotalUnreadCount !== -1 && currentTotal > lastTotalUnreadCount) {
+                window.playNotificationSound();
+            }
+            lastTotalUnreadCount = currentTotal;
         }
 
         window.copyMyId = () => { navigator.clipboard.writeText(userData.myTabId).then(()=>showToast('تم نسخ المعرف بنجاح!', 'success')).catch(()=>{showToast('فشل النسخ', 'error')}); }
