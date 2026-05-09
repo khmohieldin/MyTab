@@ -482,18 +482,23 @@
         </nav>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors">
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors h-full">
             
             <!-- Mobile Topbar -->
-            <div class="md:hidden flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
+            <div class="md:hidden flex justify-between items-center bg-white dark:bg-slate-800 p-3 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
                 <div class="flex items-center gap-3">
-                    <button onclick="copyMyId()" class="flex items-center gap-2 bg-slate-100/50 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                        <span id="mobile-myid" class="font-mono text-emerald-600 dark:text-emerald-400 font-bold text-sm"></span>
-                        <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i>
+                    <button onclick="window.toggleMobileMenu()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
+                    <h1 class="text-emerald-600 dark:text-emerald-400 font-extrabold text-2xl flex items-center gap-1.5 tracking-wide">
+                        <i data-lucide="shield" class="w-6 h-6"></i> MyTab
+                    </h1>
                 </div>
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" class="text-slate-500 dark:text-slate-400 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="moon" id="mobile-theme-icon" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyMyId()" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        <span id="mobile-myid" class="font-mono text-emerald-600 dark:text-emerald-400 font-bold text-sm"></span>
+                        <i data-lucide="copy" class="w-4 h-4 text-slate-400 dark:text-slate-300"></i>
+                    </button>
                 </div>
             </div>
 
@@ -1090,7 +1095,27 @@
             document.getElementById('auth-submit-text').innerText = isAuthLoginMode ? 'دخول' : 'إنشاء حساب';
         }
 
+        window.toggleMobileMenu = () => {
+            const sidebar = document.getElementById('sidebar-nav');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            if(sidebar && overlay) {
+                if(sidebar.classList.contains('translate-x-full')) {
+                    sidebar.classList.remove('translate-x-full');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                } else {
+                    sidebar.classList.add('translate-x-full');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                }
+            }
+        };
+
         window.switchTab = (tab, preserveState = false) => {
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar-nav');
+                if(sidebar && !sidebar.classList.contains('translate-x-full')) window.toggleMobileMenu();
+            }
             if (tab === 'communities' && !preserveState) activeCommunityId = null;
             if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null; 
             if (tab !== 'profile') {
@@ -3411,6 +3436,71 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
+        // --- Mobile Menu Logic Fix ---
+        window.toggleMobileMenu = () => {
+            let sidebar = document.getElementById('sidebar-nav');
+            if (!sidebar) {
+                sidebar = document.querySelector('nav');
+                if (sidebar) sidebar.id = 'sidebar-nav';
+            }
+            
+            let overlay = document.getElementById('mobile-sidebar-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'mobile-sidebar-overlay';
+                overlay.className = 'hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 transition-opacity duration-300 opacity-0';
+                overlay.onclick = window.toggleMobileMenu;
+                const mainLayout = document.getElementById('main-layout');
+                if (mainLayout && sidebar) {
+                    mainLayout.insertBefore(overlay, sidebar);
+                }
+            }
+
+            if(sidebar && overlay) {
+                // إجبار القائمة لتكون عائمة على الموبايل
+                sidebar.classList.remove('w-14');
+                sidebar.classList.add('fixed', 'right-0', 'inset-y-0', 'transform', 'md:translate-x-0', 'md:relative', 'z-50', 'transition-transform', 'duration-300', 'shadow-2xl');
+                
+                if (!sidebar.classList.contains('translate-x-full') && !sidebar.classList.contains('menu-opened')) {
+                     sidebar.classList.add('translate-x-full');
+                }
+
+                if(sidebar.classList.contains('translate-x-full')) {
+                    sidebar.classList.remove('translate-x-full');
+                    sidebar.classList.add('menu-opened');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                } else {
+                    sidebar.classList.add('translate-x-full');
+                    sidebar.classList.remove('menu-opened');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                }
+            }
+        };
+
+        // إغلاق القائمة تلقائياً عند اختيار تبويب
+        const _originalSwitchTab = window.switchTab;
+        window.switchTab = (tab, preserveState = false) => {
+            if (_originalSwitchTab) _originalSwitchTab(tab, preserveState);
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar-nav') || document.querySelector('nav');
+                if(sidebar && sidebar.classList.contains('menu-opened')) {
+                    window.toggleMobileMenu();
+                }
+            }
+        };
+
+        // إعداد مبدئي للقائمة عند تحميل الموقع في الموبايل
+        setTimeout(() => {
+            if(window.innerWidth < 768) {
+                const sidebar = document.querySelector('nav');
+                if (sidebar) {
+                    sidebar.classList.add('transform', 'translate-x-full', 'fixed', 'right-0', 'z-50');
+                    sidebar.classList.remove('w-14');
+                }
+            }
+        }, 100);
 
         // ===============================================================
 
