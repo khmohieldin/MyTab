@@ -32,6 +32,57 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // --- View Management Helper ---
+        function showView(viewId) {
+            ['loading-view', 'auth-view', 'verify-view', 'register-details-view', 'main-layout'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(viewId);
+            if(target) target.classList.remove('hidden');
+        }
+
+        // --- Auth Observer (The Engine) ---
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                if (!user.isAnonymous && user.providerData.some(p => p.providerId === 'password') && !user.emailVerified) {
+                    showView('verify-view');
+                    const emailDisp = document.getElementById('verify-email-display');
+                    if(emailDisp) emailDisp.innerText = user.email;
+                    return;
+                }
+                try {
+                    const userRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (!userSnap.exists()) {
+                        showView('register-details-view');
+                        if (typeof renderRegSocials === 'function') renderRegSocials();
+                    } else {
+                        userData = userSnap.data();
+                        if (userData.isBanned) {
+                            await signOut(auth);
+                            showToast('لقد تم حظر حسابك.', 'error');
+                            return;
+                        }
+                        viewingUid = currentUser.uid;
+                        if (window.isSuperAdmin()) {
+                            const navAdmin = document.getElementById('nav-admin');
+                            if(navAdmin) navAdmin.classList.remove('hidden');
+                        }
+                        setupDataListeners();
+                        showView('main-layout');
+                        updateSidebar();
+                        renderAll();
+                        if (!localStorage.getItem('mytab_charter_accepted')) window.showCharterModal();
+                    }
+                } catch(e) { console.error(e); showView('auth-view'); }
+            } else {
+                userData = null; viewingUid = null;
+                showView('auth-view');
+            }
+        });
+
         // --- Toast & Modal Systems ---
         window.showToast = (msg, type = 'info') => {
             const container = document.getElementById('toast-container');
@@ -378,8 +429,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 
         window.switchTab = (tab, preserveState = false) => {
             if(window.innerWidth < 768) {
-                const sidebar = document.getElementById('sidebar-nav');
-                if(sidebar && !sidebar.classList.contains('translate-x-full')) window.toggleMobileMenu();
+                const sidebar = document.getElementById('sidebar-nav') || document.querySelector('nav');
+                if(sidebar && sidebar.classList.contains('menu-opened')) {
+                    window.toggleMobileMenu();
+                }
             }
             if (tab === 'communities' && !preserveState) activeCommunityId = null;
             if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null; 
