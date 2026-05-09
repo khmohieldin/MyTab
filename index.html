@@ -1,90 +1,63 @@
-<!-- Tailwind CSS with Dark Mode config -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {}
+
+    <!-- Tailwind CSS with Dark Mode config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {}
+            }
         }
-    }
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-</script>
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-<!-- Google Fonts (Cairo) -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-    body {
-        font-family: 'Cairo', sans-serif;
-    }
-
-    ::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-
-    .dark ::-webkit-scrollbar-thumb {
-        background: #475569;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-
-    .dark ::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
-    }
-
-    .loader {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #059669;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-    }
-
-    .dark .loader {
-        border-color: #334155;
-        border-top-color: #34d399;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    .reaction-picker {
-        display: none;
-    }
-
-    .reaction-picker.show {
-        display: flex;
-    }
-</style>
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Cropper.js for Image Cropping -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #059669; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        .dark .loader { border-color: #334155; border-top-color: #34d399; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .reaction-picker { display: none; }
+        .reaction-picker.show { display: flex; }
+    </style>
 </head>
-
 <body dir="rtl" class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
 
     <!-- ================= MODALS & TOASTS ================= -->
     <div id="toast-container" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <div id="crop-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="crop" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> ضبط الصورة</h3>
+                <button onclick="closeCropModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 min-h-0 w-full bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden mb-4 relative" style="height: 400px; max-height: 50vh;">
+                <img id="crop-image-target" src="" class="block max-w-full" style="max-height: 100%;">
+            </div>
+            <div class="flex justify-end gap-3 shrink-0">
+                <button onclick="closeCropModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button>
+                <button id="crop-save-btn" onclick="confirmCrop()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors shadow-sm flex items-center justify-center gap-2 min-w-[120px]"><i data-lucide="crop" class="w-4 h-4"></i> قص وحفظ</button>
+            </div>
+        </div>
+    </div>
 
     <div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="closeEditModal()">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
@@ -227,38 +200,38 @@
     <div id="why-mytab-modal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-md transition-opacity">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl relative overflow-y-auto max-h-[90vh] border dark:border-slate-700 transform transition-all scale-95 opacity-0 duration-300" onclick="event.stopPropagation()">
             <button onclick="closeWhyMyTabModal()" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors p-2 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-
+            
             <div class="flex flex-col items-center mb-8 mt-2">
                 <div class="bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/50 dark:to-teal-900/50 p-4 rounded-full mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
                     <i data-lucide="leaf" class="w-10 h-10 text-emerald-600 dark:text-emerald-400"></i>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 text-center">لماذا أنشأنا <span class="text-emerald-600 dark:text-emerald-400">MyTab</span>؟</h2>
             </div>
-
+            
             <div class="space-y-5 text-[15px] md:text-base text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                 <p>في عالم أصبحت فيه منصات التواصل مليئة بالضوضاء والانتشار المبالغ فيه، بدأ الإنسان يفقد إحساسه الحقيقي بالراحة والانتماء. كل يوم تتسع دوائر المعارف بشكل أكبر، وتزداد المقارنات والأحكام السريعة والنقد المستمر، حتى أصبحت بعض المساحات الرقمية مكانًا مرهقًا نفسيًا بدلًا من أن تكون مساحة للتعبير والراحة.</p>
-
+                
                 <p class="font-bold text-emerald-700 dark:text-emerald-400 text-lg py-1">لهذا تم إنشاء هذا الموقع بفكرة مختلفة تمامًا.</p>
-
+                
                 <div class="p-5 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border-r-4 border-emerald-500">
                     <p class="font-bold text-slate-800 dark:text-slate-200">الفكرة هنا ليست أن تصل إلى الجميع… بل أن تصل إلى الأشخاص الذين يشبهونك فعلًا.</p>
                 </div>
 
                 <p>هنا أنت لا تنشر من أجل الأرقام أو التفاعل العشوائي، بل تمتلك مساحتك الخاصة، وتشارك عليها أفكارك الحقيقية، مشاعرك، طموحاتك، اهتماماتك، وكل ما يعبر عنك أنت فقط. وأنت وحدك من يختار من يمكنه مشاهدة هذه الأفكار أو التفاعل معها أو الدخول إلى دائرتك الخاصة.</p>
-
+                
                 <p>هذا المكان صُمم ليكون أكثر هدوءًا وخصوصية، بعيدًا عن فكرة أن كل شيء يجب أن ينتشر للجميع. ولهذا لا توجد مشاركات خارجية أو نظام قائم على الانتشار العشوائي، لأن الهدف ليس استقطاب أكبر عدد ممكن من الناس… بل بناء مجتمع محدود، مريح، وهادئ، يجمع الأشخاص الذين يشعرون أنهم ينتمون لبعضهم فكريًا وإنسانيًا.</p>
-
+                
                 <p class="text-center font-bold text-slate-800 dark:text-slate-200 py-3">نحن لا نبحث هنا عن الضجيج، ولا عن الشهرة المؤقتة، ولا عن مجتمعات مزدحمة لا تشبهنا.</p>
-
+                
                 <p>أحيانًا كل ما يحتاجه الإنسان هو أن يهرب قليلًا من صخب السوشيال ميديا، من الزحام الرقمي، ومن الضغط المستمر للظهور والتفاعل والمقارنة. أن يجد مكانًا هادئًا يشعر فيه بالراحة، حتى لو لم يكن متواجدًا فيه كل يوم.</p>
-
+                
                 <p>ليس ضروريًا أن تقضي وقتك هنا دائمًا… لكن يكفي أن تعرف أن هناك مساحة يمكنك العودة إليها عندما تحتاج أن تكون على طبيعتك، وسط أشخاص يشبهونك، بدون تصنع، بدون ضوضاء، وبدون أحكام.</p>
-
+                
                 <div class="text-center mt-8 pb-2">
                     <p class="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-snug">هنا… أنت لا تحاول أن تلفت انتباه الجميع.<br>أنت فقط تكون نفسك.</p>
                 </div>
             </div>
-
+            
             <button onclick="closeWhyMyTabModal()" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-3.5 rounded-xl transition-colors mt-8">
                 العودة للتسجيل
             </button>
@@ -273,11 +246,11 @@
                 </div>
             </div>
             <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-5">ميثاق المساحة</h2>
-
+            
             <div class="text-slate-700 dark:text-slate-300 space-y-4 text-sm md:text-base leading-relaxed text-justify bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <p>مرحباً بك في مساحتك الآمنة. لقد بُنيت <strong>MyTab</strong> على فلسفة الخصوصية وحرية التعبير الإيجابية.</p>
                 <p>نحن نؤمن بأن هذه مملكتك الخاصة التي تديرها وتدعو إليها من تثق بهم. أفكارك، معتقداتك، وكل ما تشاركه هنا هو ملك لك وحدك، ونحن نحترم حريتك الشخصية.</p>
-
+                
                 <div class="bg-rose-50 dark:bg-rose-900/30 border-r-4 border-rose-500 p-4 rounded-xl mt-4">
                     <p class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-2"><i data-lucide="alert-octagon" class="w-5 h-5"></i> محظورات المنصة الأساسية:</p>
                     <ul class="text-rose-600 dark:text-rose-300 text-sm font-medium list-disc list-inside space-y-1.5">
@@ -288,10 +261,10 @@
                     </ul>
                     <p class="text-rose-700 dark:text-rose-400 text-xs mt-3 font-bold border-t border-rose-200 dark:border-rose-800/50 pt-2">مخالفة هذه الشروط تؤدي للحظر النهائي وإغلاق مساحتك بلا رجعة.</p>
                 </div>
-
+                
                 <p class="text-center font-bold text-emerald-700 dark:text-emerald-400 mt-4 text-sm md:text-base">باستثناء ذلك.. استمتع بمساحتك وتواصل مع من تحب بأمان!</p>
             </div>
-
+            
             <button onclick="acceptCharter()" class="w-full bg-slate-800 dark:bg-emerald-600 hover:bg-slate-900 dark:hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-colors mt-6 shadow-md flex justify-center items-center gap-2">
                 <i data-lucide="check-circle" class="w-5 h-5"></i> قرأت الميثاق وموافق عليه
             </button>
@@ -310,43 +283,38 @@
     <div id="auth-view" class="hidden min-h-screen bg-emerald-50 dark:bg-slate-900 flex flex-col items-center p-4 absolute inset-0 z-40 overflow-y-auto">
         <div class="flex-1 w-full flex items-center justify-center min-h-fit py-8">
             <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 dark:border-slate-700">
-                <div class="flex flex-col items-center mb-8">
-                    <i data-lucide="shield" class="w-16 h-16 text-emerald-600 dark:text-emerald-500 mb-4"></i>
-                    <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-wider">MyTab</h2>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">مساحتك الآمنة والخاصة</p>
+            <div class="flex flex-col items-center mb-8">
+                <i data-lucide="shield" class="w-16 h-16 text-emerald-600 dark:text-emerald-500 mb-4"></i>
+                <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-wider">MyTab</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">مساحتك الآمنة والخاصة</p>
+            </div>
+
+            <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                <button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+                <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white" onclick="switchAuthTab('register')">حساب جديد</button>
+            </div>
+
+            <div id="auth-error" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-xl text-sm mb-4 border border-rose-100 dark:border-rose-800/50 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> <span id="auth-error-text"></span>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required>
                 </div>
-
-                <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
-                    <button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400" onclick="switchAuthTab('login')">تسجيل الدخول</button>
-                    <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white" onclick="switchAuthTab('register')">حساب جديد</button>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label>
+                    <input type="password" id="auth-password" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required minlength="6">
                 </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2">
+                    <i data-lucide="mail" class="w-5 h-5"></i> <span id="auth-submit-text">دخول</span>
+                </button>
+            </form>
 
-                <div id="auth-error" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-xl text-sm mb-4 border border-rose-100 dark:border-rose-800/50 flex items-center gap-2">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> <span id="auth-error-text"></span>
-                </div>
-
-                <form id="auth-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
-                        <input type="email" id="auth-email" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label>
-                        <input type="password" id="auth-password" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required minlength="6">
-                    </div>
-                    <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2">
-                        <i data-lucide="mail" class="w-5 h-5"></i> <span id="auth-submit-text">دخول</span>
-                    </button>
-                </form>
-
-                <div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6">
-                    <button onclick="handleGoogleAuth()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex justify-center items-center gap-3">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                        </svg>
+            <div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6">
+                                    <button onclick="handleGoogleAuth()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex justify-center items-center gap-3">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                         المتابعة باستخدام Google
                     </button>
                 </div>
@@ -361,7 +329,7 @@
 
             </div>
         </div>
-
+        
         <footer class="w-full text-center mt-auto pb-4 shrink-0">
             <p class="text-[14px] font-bold text-slate-700 dark:text-slate-200 mb-4 drop-shadow-sm">حقوق النشر محفوظة MyTab &copy; 2026</p>
             <div class="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 font-medium">
@@ -447,7 +415,7 @@
 
     <!-- ================= MAIN LAYOUT ================= -->
     <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900">
-
+        
         <!-- Sidebar Navigation -->
         <nav class="w-14 md:w-64 bg-white dark:bg-slate-800 border-l border-emerald-100 dark:border-slate-700 flex flex-col justify-between py-4 md:py-6 shrink-0 z-10 shadow-sm overflow-y-auto transition-colors">
             <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-4 md:gap-8">
@@ -457,7 +425,7 @@
                 </div>
                 <div class="flex flex-col w-full gap-1 md:gap-2 px-1.5 md:px-0">
                     <button onclick="window.switchTab('feed')" id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium"><i data-lucide="home" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المساحات</span></button>
-
+                    
                     <div class="relative w-full">
                         <button onclick="window.switchTab('messages')" id="nav-messages" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="message-circle" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الرسائل</span></button>
                         <span id="msg-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
@@ -467,7 +435,7 @@
                     <button onclick="window.switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="window.viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
                     <button onclick="window.switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button>
-
+                    
                     <div class="relative w-full">
                         <button onclick="window.switchTab('notifications')" id="nav-notifications" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell-ring" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الإشعارات</span></button>
                         <span id="notif-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
@@ -477,7 +445,7 @@
                         <button onclick="window.switchTab('requests')" id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button>
                         <span id="req-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
                     </div>
-
+                    
                     <button onclick="window.switchTab('admin')" id="nav-admin" class="hidden nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30">
                         <i data-lucide="shield-alert" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">لوحة الإدارة</span>
                     </button>
@@ -516,7 +484,7 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors">
-
+            
             <!-- Mobile Topbar -->
             <div class="md:hidden flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
                 <div class="flex items-center gap-3">
@@ -531,7 +499,7 @@
             </div>
 
             <div class="max-w-2xl mx-auto w-full min-h-full p-4 md:p-8">
-
+                
                 <!-- Feed Tab -->
                 <div id="tab-content-feed" class="tab-content space-y-6">
                     <div class="w-full h-32 md:h-48 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200 dark:border-slate-700 mb-6 group transition-colors">
@@ -555,7 +523,7 @@
                             <div class="flex-1 min-w-0">
                                 <input type="text" id="post-title" class="w-full bg-transparent border-b border-black/5 dark:border-white/5 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 font-bold text-lg md:text-xl mb-2 pb-2 placeholder-slate-400 transition-colors" placeholder="عنوان المنشور (اختياري)">
                                 <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-1 text-base md:text-lg" rows="3" placeholder="بماذا تفكر؟ استخدم # للهاشتاج أو ضع روابط"></textarea>
-
+                                
                                 <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block max-w-full">
                                     <img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm max-w-full object-contain">
                                     <button onclick="removePostImage('post-image-preview-container', 'post-image-preview', 'post-image-input')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -588,28 +556,19 @@
                     <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-500 mb-6 flex items-center gap-2">
                         <i data-lucide="shield-alert" class="w-6 h-6"></i> لوحة التحكم الإدارية
                     </h2>
-
+                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
                             <div class="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-2xl"><i data-lucide="users" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i></div>
-                            <div>
-                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي الأعضاء</p>
-                                <h3 id="admin-stat-users" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
-                            </div>
+                            <div><p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي الأعضاء</p><h3 id="admin-stat-users" class="text-2xl font-black text-slate-800 dark:text-white">0</h3></div>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
                             <div class="bg-emerald-100 dark:bg-emerald-900/50 p-3 rounded-2xl"><i data-lucide="file-text" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i></div>
-                            <div>
-                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي المنشورات</p>
-                                <h3 id="admin-stat-posts" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
-                            </div>
+                            <div><p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي المنشورات</p><h3 id="admin-stat-posts" class="text-2xl font-black text-slate-800 dark:text-white">0</h3></div>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
                             <div class="bg-amber-100 dark:bg-amber-900/50 p-3 rounded-2xl"><i data-lucide="message-square" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i></div>
-                            <div>
-                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي التعليقات</p>
-                                <h3 id="admin-stat-comments" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
-                            </div>
+                            <div><p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي التعليقات</p><h3 id="admin-stat-comments" class="text-2xl font-black text-slate-800 dark:text-white">0</h3></div>
                         </div>
                     </div>
 
@@ -651,19 +610,15 @@
                 <!-- Messages Tab -->
                 <div id="tab-content-messages" class="tab-content hidden h-[85vh] flex-col relative">
                     <div id="messages-list-view" class="w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
-                        <div class="p-4 border-b border-slate-100 dark:border-slate-700">
-                            <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2>
-                        </div>
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700"><h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2></div>
                         <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50 dark:bg-slate-900/50"></div>
                     </div>
-
+                    
                     <div id="chat-room-view" class="hidden w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden absolute inset-0 z-10 transition-colors">
                         <div class="p-3 md:p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm shadow-sm z-10">
                             <button onclick="closeChatRoom()" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-500 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
                             <img id="chat-room-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
-                            <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
-                                <h3 id="chat-room-name" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"></h3>
-                            </div>
+                            <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)"><h3 id="chat-room-name" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"></h3></div>
                             <button onclick="clearChat()" class="p-2 bg-rose-50 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="مسح المحادثة"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                         </div>
                         <div id="chat-messages-area" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col relative pb-8"></div>
@@ -769,38 +724,13 @@
 
     <!-- ==================== LOGIC ==================== -->
     <script type="module">
-        import {
-            initializeApp
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            signInAnonymously,
-            signInWithCustomToken,
-            onAuthStateChanged,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            sendEmailVerification,
-            sendPasswordResetEmail,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import {
-            getFirestore,
-            collection,
-            doc,
-            setDoc,
-            getDoc,
-            onSnapshot,
-            deleteDoc,
-            updateDoc,
-            arrayUnion,
-            arrayRemove
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configs & Environment Setup ---
         const IMGBB_API_KEY = "8ef1d841b117d4d6bc14f2cf8bb82bdb";
-
+        
         let parsedFirebaseConfig;
         if (typeof __firebase_config !== 'undefined') {
             try {
@@ -819,7 +749,7 @@
                 measurementId: "G-1EQFC7QNVZ"
             };
         }
-
+        
         const firebaseConfig = parsedFirebaseConfig;
         const appIdStr = typeof __app_id !== 'undefined' ? __app_id : 'mytab-proto';
 
@@ -836,10 +766,8 @@
             toast.innerHTML = `<i data-lucide="${type==='error'?'alert-circle':(type==='success'?'check-circle':'info')}" class="w-5 h-5"></i> <span>${msg}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 10);
+            
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
             setTimeout(() => {
                 toast.classList.add('translate-y-10', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
@@ -851,10 +779,10 @@
             const text = document.getElementById('confirm-modal-text');
             const btnCancel = document.getElementById('confirm-modal-cancel');
             const btnOk = document.getElementById('confirm-modal-ok');
-
+            
             text.innerText = msg;
             modal.classList.remove('hidden');
-
+            
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
                 modal.querySelector('div').classList.remove('scale-95');
@@ -866,13 +794,8 @@
                 setTimeout(() => modal.classList.add('hidden'), 300);
             };
 
-            btnCancel.onclick = () => {
-                closeModal();
-            };
-            btnOk.onclick = () => {
-                closeModal();
-                onConfirm();
-            };
+            btnCancel.onclick = () => { closeModal(); };
+            btnOk.onclick = () => { closeModal(); onConfirm(); };
         }
 
         // --- State ---
@@ -882,9 +805,9 @@
         let allPosts = [];
         let friendRequests = [];
         let allCommunities = [];
-        let allMessages = [];
-        let allNotifications = [];
-        let globalSettings = {};
+        let allMessages = []; 
+        let allNotifications = []; 
+        let globalSettings = {}; 
 
         let activeTabStr = 'feed';
         let viewingUid = null;
@@ -892,33 +815,20 @@
         let activeArchiveDate = null;
         let activeArchiveYear = null;
         let activeArchiveMonth = null;
-        let activeChatFriendId = null;
+        let activeChatFriendId = null; 
         let currentSinglePostId = null;
 
         window.setArchiveLevel = (level, val) => {
-            if (level === 'year') {
-                activeArchiveYear = val;
-                activeArchiveMonth = null;
-                activeArchiveDate = null;
-            } else if (level === 'month') {
-                activeArchiveMonth = val;
-                activeArchiveDate = null;
-            } else if (level === 'day') {
-                activeArchiveDate = val;
-            } else {
-                activeArchiveYear = null;
-                activeArchiveMonth = null;
-                activeArchiveDate = null;
-            }
-
+            if (level === 'year') { activeArchiveYear = val; activeArchiveMonth = null; activeArchiveDate = null; }
+            else if (level === 'month') { activeArchiveMonth = val; activeArchiveDate = null; }
+            else if (level === 'day') { activeArchiveDate = val; }
+            else { activeArchiveYear = null; activeArchiveMonth = null; activeArchiveDate = null; }
+            
             if (activeTabStr === 'feed') renderFeedTab();
             else if (activeTabStr === 'profile') renderProfileTab();
             else if (activeTabStr === 'communities') window.renderCommunitiesTab();
-
-            if (val) window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            
+            if(val) window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         window.generateArchiveViewHtml = (posts, contextTitle) => {
@@ -926,10 +836,10 @@
                 const groups = {};
                 posts.forEach(p => {
                     const y = new Date(p.createdAt).getFullYear().toString();
-                    if (!groups[y]) groups[y] = 0;
+                    if(!groups[y]) groups[y] = 0;
                     groups[y]++;
                 });
-                if (Object.keys(groups).length === 0) return '';
+                if(Object.keys(groups).length === 0) return '';
                 const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
                 let html = `<div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> ${contextTitle} (السنوات)</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
                 Object.keys(groups).sort().reverse().forEach((y, idx) => {
@@ -942,11 +852,9 @@
                 yPosts.forEach(p => {
                     const d = new Date(p.createdAt);
                     const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
-                    const mName = d.toLocaleString('ar-EG', {
-                        month: 'long'
-                    });
+                    const mName = d.toLocaleString('ar-EG', {month:'long'});
                     const key = `${mStr}|${mName}`;
-                    if (!groups[key]) groups[key] = 0;
+                    if(!groups[key]) groups[key] = 0;
                     groups[key]++;
                 });
                 const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
@@ -964,12 +872,10 @@
                 const groups = {};
                 ymPosts.forEach(p => {
                     const dStr = new Date(p.createdAt).toLocaleDateString('en-CA');
-                    if (!groups[dStr]) groups[dStr] = 0;
+                    if(!groups[dStr]) groups[dStr] = 0;
                     groups[dStr]++;
                 });
-                const mName = new Date(`${activeArchiveYear}-${activeArchiveMonth}-01`).toLocaleString('ar-EG', {
-                    month: 'long'
-                });
+                const mName = new Date(`${activeArchiveYear}-${activeArchiveMonth}-01`).toLocaleString('ar-EG', {month:'long'});
                 const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
                 let html = `<div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> أرشيف ${mName} ${activeArchiveYear}</h3><div class="flex gap-2"><button onclick="window.setArchiveLevel('year', '${activeArchiveYear}')" class="flex-1 sm:flex-none text-sm bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl hover:bg-slate-200 font-bold flex justify-center items-center gap-1 transition-colors shadow-sm"><i data-lucide="arrow-right" class="w-4 h-4"></i> الشهور</button><button onclick="window.setArchiveLevel('reset')" class="flex-1 sm:flex-none text-sm bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl hover:bg-rose-50 hover:text-rose-600 font-bold flex justify-center items-center gap-1 transition-colors shadow-sm">إغلاق الأرشيف</button></div></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-4">`;
                 Object.keys(groups).sort().reverse().forEach((d, idx) => {
@@ -985,7 +891,7 @@
         let postSelectedColor = 'white';
         let postImageFile = null;
         let regSocialLinks = [];
-        let isAdminStealthMode = false;
+        let isAdminStealthMode = false; 
         let isEditingProfile = false;
 
         window.tmpCommImgFile = null;
@@ -993,36 +899,12 @@
         window.removeProfImg = false;
 
         const POST_COLORS = {
-            'white': {
-                bg: 'bg-white dark:bg-slate-800',
-                border: 'border-gray-200 dark:border-slate-700',
-                text: 'text-slate-800 dark:text-slate-100'
-            },
-            'green': {
-                bg: 'bg-emerald-100 dark:bg-emerald-900/40',
-                border: 'border-emerald-300 dark:border-emerald-700/50',
-                text: 'text-emerald-900 dark:text-emerald-100'
-            },
-            'yellow': {
-                bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-                border: 'border-yellow-300 dark:border-yellow-700/50',
-                text: 'text-yellow-900 dark:text-yellow-100'
-            },
-            'blue': {
-                bg: 'bg-blue-100 dark:bg-blue-900/40',
-                border: 'border-blue-300 dark:border-blue-700/50',
-                text: 'text-blue-900 dark:text-blue-100'
-            },
-            'gray': {
-                bg: 'bg-gray-100 dark:bg-slate-700',
-                border: 'border-gray-300 dark:border-slate-600',
-                text: 'text-gray-900 dark:text-gray-100'
-            },
-            'rose': {
-                bg: 'bg-rose-100 dark:bg-rose-900/40',
-                border: 'border-rose-300 dark:border-rose-700/50',
-                text: 'text-rose-900 dark:text-rose-100'
-            },
+            'white': { bg: 'bg-white dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-700', text: 'text-slate-800 dark:text-slate-100' },
+            'green': { bg: 'bg-emerald-100 dark:bg-emerald-900/40', border: 'border-emerald-300 dark:border-emerald-700/50', text: 'text-emerald-900 dark:text-emerald-100' },
+            'yellow': { bg: 'bg-yellow-100 dark:bg-yellow-900/40', border: 'border-yellow-300 dark:border-yellow-700/50', text: 'text-yellow-900 dark:text-yellow-100' },
+            'blue': { bg: 'bg-blue-100 dark:bg-blue-900/40', border: 'border-blue-300 dark:border-blue-700/50', text: 'text-blue-900 dark:text-blue-100' },
+            'gray': { bg: 'bg-gray-100 dark:bg-slate-700', border: 'border-gray-300 dark:border-slate-600', text: 'text-gray-900 dark:text-gray-100' },
+            'rose': { bg: 'bg-rose-100 dark:bg-rose-900/40', border: 'border-rose-300 dark:border-rose-700/50', text: 'text-rose-900 dark:text-rose-100' },
         };
 
         if (typeof lucide !== 'undefined') {
@@ -1055,9 +937,9 @@
             const desktopIcon = document.getElementById('theme-icon');
             const desktopText = document.getElementById('theme-text');
             const mobileIcon = document.getElementById('mobile-theme-icon');
-            if (desktopIcon) desktopIcon.setAttribute('data-lucide', iconName);
-            if (desktopText) desktopText.innerText = text;
-            if (mobileIcon) mobileIcon.setAttribute('data-lucide', iconName);
+            if(desktopIcon) desktopIcon.setAttribute('data-lucide', iconName);
+            if(desktopText) desktopText.innerText = text;
+            if(mobileIcon) mobileIcon.setAttribute('data-lucide', iconName);
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
@@ -1085,7 +967,7 @@
                         return;
                     }
                     viewingUid = currentUser.uid;
-
+                    
                     if (window.isSuperAdmin()) {
                         document.getElementById('nav-admin').classList.remove('hidden');
                     } else {
@@ -1096,7 +978,7 @@
                     showView('main-layout');
                     updateSidebar();
                     renderAll();
-
+                    
                     if (!localStorage.getItem('mytab_charter_accepted')) window.showCharterModal();
                 }
             } else {
@@ -1108,16 +990,14 @@
 
         // --- Listeners ---
         let unsubs = [];
-
         function setupDataListeners() {
-            unsubs.forEach(u => u());
-            unsubs = [];
-
+            unsubs.forEach(u => u()); unsubs = [];
+            
             const u1 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'users'), (snap) => {
                 allUsers = snap.docs.map(d => d.data());
                 if (!currentUser) return;
                 const current = snap.docs.find(d => d.uid === currentUser.uid);
-                if (current) {
+                if(current) {
                     userData = current;
                     if (userData.isBanned) {
                         signOut(auth);
@@ -1130,71 +1010,54 @@
             }, (error) => console.error(error));
 
             const u2 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'), (snap) => {
-                allPosts = snap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
+                allPosts = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 renderAll();
             }, (error) => console.error(error));
 
             const u3 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests'), (snap) => {
-                friendRequests = snap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
+                friendRequests = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 updateBadge();
-                if (activeTabStr === 'requests') renderRequestsTab();
+                if(activeTabStr === 'requests') renderRequestsTab();
             }, (error) => console.error(error));
 
             const u4 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities'), (snap) => {
-                allCommunities = snap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
-                if (activeTabStr === 'communities') window.renderCommunitiesTab();
-                if (activeTabStr === 'profile') renderProfileTab();
+                allCommunities = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if(activeTabStr === 'communities') window.renderCommunitiesTab();
+                if(activeTabStr === 'profile') renderProfileTab();
             }, (error) => console.error(error));
 
             const u5 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages'), (snap) => {
-                allMessages = snap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
+                allMessages = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 updateBadge();
-                if (activeTabStr === 'messages') {
-                    if (activeChatFriendId) window.renderChatRoom();
+                if(activeTabStr === 'messages') {
+                    if(activeChatFriendId) window.renderChatRoom();
                     else renderMessagesList();
                 }
             }, (error) => console.error(error));
 
             const u6 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications'), (snap) => {
-                allNotifications = snap.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
+                allNotifications = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 if (currentUser) {
-                    const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                     if (myNotifs.length > 30) {
                         const toDelete = myNotifs.slice(30);
                         toDelete.forEach(async n => {
-                            try {
-                                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id));
-                            } catch (e) {}
+                            try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id)); } catch(e) {}
                         });
                     }
                 }
                 updateBadge();
-                if (activeTabStr === 'notifications') window.renderNotificationsTab();
+                if(activeTabStr === 'notifications') window.renderNotificationsTab();
             }, (error) => console.error(error));
 
             const u7 = onSnapshot(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), (snap) => {
-                if (snap.exists()) {
+                if(snap.exists()) {
                     globalSettings = snap.data();
                 } else {
                     globalSettings = {};
                 }
-                updateSidebar();
-                if (activeTabStr === 'feed') renderFeedTab();
+                updateSidebar(); 
+                if(activeTabStr === 'feed') renderFeedTab();
             }, (error) => console.error(error));
 
             unsubs.push(u1, u2, u3, u4, u5, u6, u7);
@@ -1206,7 +1069,7 @@
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(viewId).classList.remove('hidden');
-            if (viewId !== 'loading-view') {
+            if(viewId !== 'loading-view') {
                 const el = document.getElementById(viewId);
                 el.classList.add('opacity-0', 'transition-opacity', 'duration-500');
                 setTimeout(() => el.classList.remove('opacity-0'), 50);
@@ -1224,19 +1087,19 @@
 
         window.switchTab = (tab, preserveState = false) => {
             if (tab === 'communities' && !preserveState) activeCommunityId = null;
-            if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null;
+            if (tab === 'messages' && !activeChatFriendId) activeChatFriendId = null; 
             if (tab !== 'profile') {
                 viewingUid = currentUser.uid;
                 isAdminStealthMode = false;
             }
             activeArchiveDate = null;
-
+            
             activeTabStr = tab;
             ['feed', 'profile', 'search', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
                 const tc = document.getElementById(`tab-content-${t}`);
-                if (tc) tc.classList.add('hidden');
+                if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
-                if (navBtn) {
+                if(navBtn) {
                     if (t === 'admin') {
                         const isHidden = !window.isSuperAdmin() ? 'hidden ' : '';
                         navBtn.className = `${isHidden}nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 font-medium' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30'}`;
@@ -1246,7 +1109,7 @@
                 }
             });
             const tcAct = document.getElementById(`tab-content-${tab}`);
-            if (tcAct) {
+            if(tcAct) {
                 tcAct.classList.remove('hidden');
                 tcAct.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-300');
                 setTimeout(() => tcAct.classList.remove('opacity-0', 'translate-y-4'), 50);
@@ -1261,24 +1124,10 @@
             renderAll();
         }
 
-        window.goToChat = (uid) => {
-            activeChatFriendId = uid;
-            window.switchTab('messages');
-            window.openChatRoom(uid);
-        }
-        window.viewProfile = (uid) => {
-            viewingUid = uid;
-            isEditingProfile = false;
-            isAdminStealthMode = false;
-            window.switchTab('profile');
-        }
+        window.goToChat = (uid) => { activeChatFriendId = uid; window.switchTab('messages'); window.openChatRoom(uid); }
+        window.viewProfile = (uid) => { viewingUid = uid; isEditingProfile = false; isAdminStealthMode = false; window.switchTab('profile'); }
         window.viewMyProfile = () => window.viewProfile(currentUser.uid);
-        window.adminViewUser = (uid) => {
-            viewingUid = uid;
-            isEditingProfile = false;
-            isAdminStealthMode = true;
-            window.switchTab('profile');
-        }
+        window.adminViewUser = (uid) => { viewingUid = uid; isEditingProfile = false; isAdminStealthMode = true; window.switchTab('profile'); }
 
         // --- Authentication Functions ---
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
@@ -1288,10 +1137,9 @@
             const errDiv = document.getElementById('auth-error');
             const errText = document.getElementById('auth-error-text');
             const btn = document.getElementById('auth-submit-btn');
-
+            
             errDiv.classList.add('hidden');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري...';
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
 
             try {
                 if (isAuthLoginMode) await signInWithEmailAndPassword(auth, email, password);
@@ -1306,8 +1154,7 @@
                 else if (error.code === 'auth/weak-password') errText.innerText = 'كلمة المرور ضعيفة جداً.';
                 else errText.innerText = 'حدث خطأ. تأكد من البيانات.';
             }
-            btn.disabled = false;
-            btn.innerHTML = `<i data-lucide="mail" class="w-5 h-5"></i> <span>${isAuthLoginMode?'دخول':'إنشاء حساب'}</span>`;
+            btn.disabled = false; btn.innerHTML = `<i data-lucide="mail" class="w-5 h-5"></i> <span>${isAuthLoginMode?'دخول':'إنشاء حساب'}</span>`;
             lucide.createIcons();
         });
 
@@ -1315,9 +1162,7 @@
             const errDiv = document.getElementById('auth-error');
             const errText = document.getElementById('auth-error-text');
             errDiv.classList.add('hidden');
-            try {
-                await signInWithPopup(auth, new GoogleAuthProvider());
-            } catch (error) {
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { 
                 if (error.code !== 'auth/popup-closed-by-user') {
                     errDiv.classList.remove('hidden');
                     errText.innerText = 'فشل تسجيل الدخول بواسطة جوجل.';
@@ -1325,46 +1170,31 @@
             }
         }
 
-        window.handleLogout = async () => {
-            await signOut(auth);
-        }
+        window.handleLogout = async () => { await signOut(auth); }
 
         window.resetMyPassword = async () => {
-            if (!currentUser || !currentUser.email) return;
+            if(!currentUser || !currentUser.email) return;
             const btn = document.getElementById('reset-pwd-btn');
             const msg = document.getElementById('pwd-msg');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري الإرسال...';
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإرسال...';
             try {
                 await sendPasswordResetEmail(auth, currentUser.email);
                 msg.innerText = 'تم إرسال رابط تغيير كلمة المرور إلى بريدك.';
                 msg.classList.remove('hidden');
                 showToast('تم إرسال رابط التغيير للبريد', 'success');
-            } catch (e) {
-                showToast('حدث خطأ أثناء محاولة إرسال الرابط.', 'error');
-            }
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور';
+            } catch(e) { showToast('حدث خطأ أثناء محاولة إرسال الرابط.', 'error'); }
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور';
             lucide.createIcons();
         }
 
         window.resendVerification = async () => {
-            try {
-                await sendEmailVerification(currentUser);
-                document.getElementById('verify-msg').innerText = 'تم إعادة الإرسال.';
-                document.getElementById('verify-msg').className = 'text-sm mb-4 text-emerald-600 dark:text-emerald-400';
-            } catch (e) {
-                document.getElementById('verify-msg').innerText = 'حدث خطأ.';
-                document.getElementById('verify-msg').className = 'text-sm mb-4 text-rose-600 dark:text-rose-400';
-            }
+            try { await sendEmailVerification(currentUser); document.getElementById('verify-msg').innerText='تم إعادة الإرسال.'; document.getElementById('verify-msg').className='text-sm mb-4 text-emerald-600 dark:text-emerald-400'; } 
+            catch(e) { document.getElementById('verify-msg').innerText='حدث خطأ.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600 dark:text-rose-400'; }
         }
         window.checkEmailVerified = async () => {
             await currentUser.reload();
-            if (auth.currentUser.emailVerified) window.location.reload();
-            else {
-                document.getElementById('verify-msg').innerText = 'لم يتم التأكيد بعد.';
-                document.getElementById('verify-msg').className = 'text-sm mb-4 text-rose-600 dark:text-rose-400';
-            }
+            if(auth.currentUser.emailVerified) window.location.reload();
+            else { document.getElementById('verify-msg').innerText='لم يتم التأكيد بعد.'; document.getElementById('verify-msg').className='text-sm mb-4 text-rose-600 dark:text-rose-400'; }
         }
 
         function getSocialOptionsHtml(selected) {
@@ -1377,21 +1207,10 @@
             `;
         }
 
-        window.addRegSocialLink = () => {
-            regSocialLinks.push({
-                platform: 'facebook',
-                url: ''
-            });
-            renderRegSocials();
-        }
-        window.removeRegSocial = (idx) => {
-            regSocialLinks.splice(idx, 1);
-            renderRegSocials();
-        }
-        window.updateRegSocial = (idx, field, val) => {
-            regSocialLinks[idx][field] = val;
-        }
-
+        window.addRegSocialLink = () => { regSocialLinks.push({platform:'facebook', url:''}); renderRegSocials(); }
+        window.removeRegSocial = (idx) => { regSocialLinks.splice(idx, 1); renderRegSocials(); }
+        window.updateRegSocial = (idx, field, val) => { regSocialLinks[idx][field] = val; }
+        
         function renderRegSocials() {
             const container = document.getElementById('reg-socials-container');
             container.innerHTML = regSocialLinks.map((link, idx) => `
@@ -1413,41 +1232,24 @@
             return result;
         }
 
-        document.getElementById('reg-form').addEventListener('submit', async (e) => {
+        document.getElementById('reg-form').addEventListener('submit', async(e) => {
             e.preventDefault();
             const btn = document.getElementById('reg-submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             const gender = document.getElementById('reg-gender').value;
             const avatarUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
             const newUserData = {
-                uid: currentUser.uid,
-                myTabId: generateUniqueId(),
-                displayName: document.getElementById('reg-name').value,
-                gender: gender,
-                birthDate: document.getElementById('reg-dob').value,
-                phoneNumber: document.getElementById('reg-phone').value,
-                socialLinks: regSocialLinks.filter(l => l.url.trim() !== ''),
-                bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
-                photoUrl: avatarUrl,
-                coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
-                friends: [],
-                isPrivate: true,
-                isAdmin: false,
-                createdAt: new Date().toISOString()
+                uid: currentUser.uid, myTabId: generateUniqueId(), displayName: document.getElementById('reg-name').value, gender: gender,
+                birthDate: document.getElementById('reg-dob').value, phoneNumber: document.getElementById('reg-phone').value,
+                socialLinks: regSocialLinks.filter(l => l.url.trim()!==''), bio: 'مرحباً بك في مساحتي الآمنة على MyTab.',
+                photoUrl: avatarUrl, coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop',
+                friends: [], isPrivate: true, isAdmin: false, createdAt: new Date().toISOString()
             };
             try {
                 await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), newUserData);
-                userData = newUserData;
-                viewingUid = currentUser.uid;
-                showView('main-layout');
-                setupDataListeners();
-                showToast('مرحباً بك في مساحتك!', 'success');
-            } catch (e) {
-                showToast('خطأ أثناء الإنشاء', 'error');
-                btn.disabled = false;
-                btn.innerHTML = 'دخول المساحة';
-            }
+                userData = newUserData; viewingUid = currentUser.uid;
+                showView('main-layout'); setupDataListeners(); showToast('مرحباً بك في مساحتك!', 'success');
+            } catch(e) { showToast('خطأ أثناء الإنشاء', 'error'); btn.disabled=false; btn.innerHTML='دخول المساحة'; }
         });
 
         // --- Badge Helper ---
@@ -1455,10 +1257,10 @@
             if (!uid) return '';
             const postsCount = allPosts.filter(p => p.authorId === uid).length;
             const u = allUsers.find(x => x.uid === uid);
-
+            
             const isVerifiedEmail = currentUser && currentUser.uid === uid && currentUser.email === 'khmohieldin@gmail.com';
             const isVerifiedName = u && (u.displayName === 'خالد محي الدين' || u.displayName === 'Khaled Mohieldin');
-
+            
             if (postsCount >= 100 || isVerifiedEmail || isVerifiedName) {
                 return `<span class="inline-flex items-center justify-center w-3.5 h-3.5 md:w-4 md:h-4 bg-blue-500 rounded-full mx-1 align-middle shadow-sm shrink-0" title="حساب موثق"><svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>`;
             }
@@ -1467,17 +1269,17 @@
 
         // --- Sidebar Logic ---
         function updateSidebar() {
-            if (!userData) return;
+            if(!userData) return;
             document.getElementById('sidebar-myid').innerText = userData.myTabId;
             document.getElementById('mobile-myid').innerText = userData.myTabId;
             document.getElementById('sidebar-avatar').src = userData.photoUrl;
             document.getElementById('sidebar-name').innerHTML = userData.displayName + window.getUserBadge(userData.uid);
             document.getElementById('create-post-avatar').src = userData.photoUrl;
-
+            
             const feedCover = document.getElementById('feed-cover-image');
             const feedAvatar = document.getElementById('feed-cover-avatar');
             const feedWelcome = document.getElementById('feed-welcome-name');
-
+            
             if (feedCover) {
                 if (globalSettings.feedCoverUrl && globalSettings.feedCoverUrl.trim() !== '') {
                     feedCover.src = globalSettings.feedCoverUrl;
@@ -1487,61 +1289,44 @@
             }
             if (feedAvatar && userData.photoUrl) feedAvatar.src = userData.photoUrl;
             if (feedWelcome && userData.displayName) feedWelcome.innerText = 'مرحباً، ' + userData.displayName.split(' ')[0];
-
+            
             const picker = document.getElementById('color-picker-container');
-            if (picker) {
+            if(picker) {
                 picker.innerHTML = Object.keys(POST_COLORS).map(id => {
                     const c = POST_COLORS[id];
                     const isSelected = postSelectedColor === id;
                     const selectedClass = isSelected ? 'border-slate-800 dark:border-slate-300 scale-110 shadow-md' : 'border-black/10 dark:border-white/10 opacity-70 hover:opacity-100';
-                    const bgClass = c.bg.split(' ')[0];
+                    const bgClass = c.bg.split(' ')[0]; 
                     return `<button onclick="setPostColor('${id}')" class="w-6 h-6 rounded-full border-2 ${bgClass==='bg-white'?'bg-white':bgClass.replace('100','400')} ${selectedClass} transition-all"></button>`;
                 }).join('');
             }
         }
 
         function updateBadge() {
-            if (!currentUser) return;
+            if(!currentUser) return;
             const incReqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending').length;
             const reqBadge = document.getElementById('req-badge');
-            if (incReqs > 0) {
-                reqBadge.classList.remove('hidden');
-                reqBadge.innerText = incReqs;
-            } else reqBadge.classList.add('hidden');
-
+            if(incReqs>0) { reqBadge.classList.remove('hidden'); reqBadge.innerText=incReqs; } else reqBadge.classList.add('hidden');
+            
             const unreadMsgs = allMessages.filter(m => m.receiverId === currentUser.uid && !m.read).length;
             const msgBadge = document.getElementById('msg-badge');
-            if (msgBadge) {
-                if (unreadMsgs > 0) {
-                    msgBadge.classList.remove('hidden');
-                    msgBadge.innerText = unreadMsgs;
-                } else msgBadge.classList.add('hidden');
+            if(msgBadge) {
+                if(unreadMsgs>0) { msgBadge.classList.remove('hidden'); msgBadge.innerText=unreadMsgs; } else msgBadge.classList.add('hidden');
             }
 
             const unreadNotifs = allNotifications.filter(n => n.to === currentUser.uid && !n.read).length;
             const notifBadge = document.getElementById('notif-badge');
-            if (notifBadge) {
-                if (unreadNotifs > 0) {
-                    notifBadge.classList.remove('hidden');
-                    notifBadge.innerText = unreadNotifs;
-                } else notifBadge.classList.add('hidden');
+            if(notifBadge) {
+                if(unreadNotifs>0) { notifBadge.classList.remove('hidden'); notifBadge.innerText=unreadNotifs; } else notifBadge.classList.add('hidden');
             }
         }
 
-        window.copyMyId = () => {
-            navigator.clipboard.writeText(userData.myTabId).then(() => showToast('تم نسخ المعرف بنجاح!', 'success')).catch(() => {
-                showToast('فشل النسخ', 'error')
-            });
-        }
-        window.copyAnyId = (id) => {
-            navigator.clipboard.writeText(id).then(() => showToast('تم نسخ المعرف بنجاح!', 'success')).catch(() => {
-                showToast('فشل النسخ', 'error')
-            });
-        }
-        window.setPostColor = (id, pickerId = 'color-picker-container', containerId = 'create-post-container') => {
-            postSelectedColor = id;
+        window.copyMyId = () => { navigator.clipboard.writeText(userData.myTabId).then(()=>showToast('تم نسخ المعرف بنجاح!', 'success')).catch(()=>{showToast('فشل النسخ', 'error')}); }
+        window.copyAnyId = (id) => { navigator.clipboard.writeText(id).then(()=>showToast('تم نسخ المعرف بنجاح!', 'success')).catch(()=>{showToast('فشل النسخ', 'error')}); }
+        window.setPostColor = (id, pickerId = 'color-picker-container', containerId = 'create-post-container') => { 
+            postSelectedColor = id; 
             const picker = document.getElementById(pickerId);
-            if (picker) {
+            if(picker) {
                 picker.innerHTML = Object.keys(POST_COLORS).map(colorId => {
                     const c = POST_COLORS[colorId];
                     const isSelected = postSelectedColor === colorId;
@@ -1552,8 +1337,8 @@
             }
             const c = POST_COLORS[postSelectedColor];
             const box = document.getElementById(containerId);
-            if (box) box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
-
+            if(box) box.className = `rounded-3xl p-4 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border}`;
+            
             if (pickerId === 'color-picker-container') {
                 const drop = document.getElementById('color-picker-dropdown');
                 if (drop) drop.classList.add('hidden');
@@ -1565,7 +1350,7 @@
 
         window.handlePostImageSelect = (e, previewContId, previewImgId) => {
             const file = e.target.files[0];
-            if (file) {
+            if(file) {
                 postImageFile = file;
                 document.getElementById(previewContId).classList.remove('hidden');
                 document.getElementById(previewImgId).src = URL.createObjectURL(file);
@@ -1584,67 +1369,52 @@
             const titleEl = document.getElementById(titleId);
             const titleStr = titleEl ? titleEl.value.trim() : '';
 
-            if (!content.trim() && !postImageFile && !titleStr) return;
+            if(!content.trim() && !postImageFile && !titleStr) return;
             const btn = document.getElementById(btnId);
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري...';
-
+            btn.disabled=true; btn.innerHTML='<i class="loader"></i> جاري...';
+            
             try {
                 let imgUrl = null;
-                if (postImageFile) imgUrl = await uploadToImgbb(postImageFile);
-
+                if(postImageFile) imgUrl = await uploadToImgbb(postImageFile);
+                
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
-                    authorId: currentUser.uid,
-                    authorName: userData.displayName,
-                    authorPhoto: userData.photoUrl,
-                    title: titleStr,
-                    content: content,
-                    imageUrl: imgUrl,
-                    colorId: postSelectedColor,
+                    authorId: currentUser.uid, authorName: userData.displayName, authorPhoto: userData.photoUrl,
+                    title: titleStr, content: content, imageUrl: imgUrl, colorId: postSelectedColor,
                     communityId: commId,
-                    createdAt: new Date().toISOString(),
-                    reactions: {},
-                    comments: []
+                    createdAt: new Date().toISOString(), reactions: {}, comments: []
                 });
                 document.getElementById(contentId).value = '';
-                if (titleEl) titleEl.value = '';
+                if(titleEl) titleEl.value = '';
                 window.removePostImage(imgContId, imgPreviewId, imgInputId);
                 showToast('تم النشر بنجاح', 'success');
-            } catch (e) {
-                showToast('حدث خطأ أثناء النشر', 'error');
-            }
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
+            } catch(e) { showToast('حدث خطأ أثناء النشر', 'error'); }
+            btn.disabled=false; btn.innerHTML='<i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> <span>نشر</span>';
             lucide.createIcons();
         }
 
         async function uploadToImgbb(file) {
-            const fd = new FormData();
-            fd.append("image", file);
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                method: "POST",
-                body: fd
-            });
+            const fd = new FormData(); fd.append("image", file);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method:"POST", body:fd });
             const data = await res.json();
-            if (data.success) return data.data.url;
+            if(data.success) return data.data.url;
             throw new Error();
         }
 
         // --- Renderers ---
         function renderAll() {
-            if (activeTabStr === 'feed') renderFeedTab();
-            if (activeTabStr === 'communities') window.renderCommunitiesTab();
-            if (activeTabStr === 'profile') renderProfileTab();
-            if (activeTabStr === 'friends') renderFriendsTab();
-            if (activeTabStr === 'requests') renderRequestsTab();
-            if (activeTabStr === 'search') window.performSearch();
-            if (activeTabStr === 'notifications') window.renderNotificationsTab();
-            if (activeTabStr === 'singlepost') window.renderSinglePostTab();
-            if (activeTabStr === 'messages') {
-                if (activeChatFriendId) window.renderChatRoom();
+            if(activeTabStr==='feed') renderFeedTab();
+            if(activeTabStr==='communities') window.renderCommunitiesTab();
+            if(activeTabStr==='profile') renderProfileTab();
+            if(activeTabStr==='friends') renderFriendsTab();
+            if(activeTabStr==='requests') renderRequestsTab();
+            if(activeTabStr==='search') window.performSearch();
+            if(activeTabStr==='notifications') window.renderNotificationsTab();
+            if(activeTabStr==='singlepost') window.renderSinglePostTab();
+            if(activeTabStr==='messages') {
+                if(activeChatFriendId) window.renderChatRoom();
                 else renderMessagesList();
             }
-            if (activeTabStr === 'admin') renderAdminTab();
+            if(activeTabStr==='admin') renderAdminTab();
             lucide.createIcons();
         }
 
@@ -1695,7 +1465,7 @@
                 </tr>
                 `;
             }).join('');
-
+            
             lucide.createIcons();
         }
 
@@ -1705,24 +1475,20 @@
             if (!file) return showToast('يرجى اختيار صورة أولاً', 'error');
 
             const btn = document.getElementById('admin-save-cover-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري...';
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
 
             try {
                 const imgUrl = await uploadToImgbb(file);
                 await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
                     ...globalSettings,
                     feedCoverUrl: imgUrl
-                }, {
-                    merge: true
-                });
+                }, { merge: true });
                 showToast('تم تحديث الغلاف العام بنجاح!', 'success');
                 fileInput.value = '';
-            } catch (e) {
+            } catch(e) {
                 showToast('حدث خطأ أثناء الرفع', 'error');
             }
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> رفع وحفظ';
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> رفع وحفظ';
             lucide.createIcons();
         };
 
@@ -1732,11 +1498,9 @@
                     await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
                         ...globalSettings,
                         feedCoverUrl: ''
-                    }, {
-                        merge: true
-                    });
+                    }, { merge: true });
                     showToast('تمت إزالة الغلاف العام', 'success');
-                } catch (e) {
+                } catch(e) {
                     showToast('حدث خطأ', 'error');
                 }
             });
@@ -1777,10 +1541,7 @@
         function extractEmbeds(text) {
             const ytMatch = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
             const tkMatch = text.match(/(?:https?:\/\/)?(?:www\.)?tiktok\.com\/.*\/video\/(\d+)/);
-            return {
-                ytId: ytMatch ? ytMatch[1] : null,
-                tkId: tkMatch ? tkMatch[1] : null
-            };
+            return { ytId: ytMatch?ytMatch[1]:null, tkId: tkMatch?tkMatch[1]:null };
         }
 
         function formatPostContent(text) {
@@ -1805,10 +1566,7 @@
                 if (comm && comm.creatorId === currentUser.uid) canDelete = true;
             }
 
-            const {
-                ytId,
-                tkId
-            } = extractEmbeds(post.content || '');
+            const {ytId, tkId} = extractEmbeds(post.content||'');
             const reactions = post.reactions || {};
             const myReact = reactions[currentUser.uid];
             const tReact = Object.keys(reactions).length;
@@ -1819,17 +1577,17 @@
             let shareNames = '';
             if (shareCount > 0) {
                 const names = [...new Set(reposts.map(r => r.authorId === currentUser.uid ? "أنت" : r.authorName.split(' ')[0]))];
-                if (names.length <= 2) shareNames = names.join(' و ');
+                if(names.length <= 2) shareNames = names.join(' و ');
                 else shareNames = `${names[0]} و ${names.length-1} آخرين`;
             }
 
             let mediaHTML = '';
-            if (post.imageUrl) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm relative group cursor-zoom-in" onclick="window.openLightbox('${post.imageUrl}')"><img src="${post.imageUrl}" class="w-full max-h-[500px] object-cover"><div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors flex items-center justify-center"><i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i></div></div>`;
-            if (ytId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
-            if (tkId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[325px] h-[600px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
+            if(post.imageUrl) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm relative group cursor-zoom-in" onclick="window.openLightbox('${post.imageUrl}')"><img src="${post.imageUrl}" class="w-full max-h-[500px] object-cover"><div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors flex items-center justify-center"><i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i></div></div>`;
+            if(ytId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
+            if(tkId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[325px] h-[600px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
             let statsHTML = '';
-            if (tReact > 0 || shareCount > 0) {
+            if(tReact > 0 || shareCount > 0) {
                 statsHTML = `<div class="flex items-center justify-between mb-2 px-1 border-b border-black/5 dark:border-white/5 pb-2 mt-2">
                     <div onclick="window.showReactors('${post.id}')" class="flex items-center gap-1.5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors w-fit px-1">
                         ${tReact > 0 ? `
@@ -1848,7 +1606,7 @@
             const comments = post.comments || [];
             const topComments = comments.filter(c => !c.parentId);
             const replies = comments.filter(c => c.parentId);
-
+            
             let commentsHTML = topComments.map(tc => {
                 const threadReplies = replies.filter(r => r.parentId === tc.id);
                 let threadHTML = generateCommentHTML(tc, post, canDelete, idPrefix, tc.id);
@@ -1932,13 +1690,13 @@
 
         function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentId = null) {
             const author = allUsers.find(u => u.uid === c.authorId);
-            const aName = c.authorId === currentUser.uid ? 'أنت' : (author ? author.displayName : 'صديق');
-            const aPic = author ? author.photoUrl : `https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
+            const aName = c.authorId === currentUser.uid ? 'أنت' : (author?author.displayName:'صديق');
+            const aPic = author?author.photoUrl:`https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
             const reacts = c.reactions || {};
             const myR = reacts[currentUser.uid];
             const tR = Object.keys(reacts).length;
             const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
-
+            
             const isReply = c.parentId != null;
             const avatarSize = isReply ? 'w-6 h-6 md:w-7 md:h-7' : 'w-8 h-8 md:w-9 md:h-9';
 
@@ -1974,36 +1732,20 @@
 
         function getReactorNames(r) {
             const uids = Object.keys(r || {});
-            if (!uids.length) return '';
-            const names = uids.map(id => id === currentUser.uid ? "أنت" : (allUsers.find(u => u.uid === id)?.displayName.split(' ')[0] || "مستخدم"));
-            if (names.length <= 2) return names.join(' و ');
+            if(!uids.length) return '';
+            const names = uids.map(id => id===currentUser.uid ? "أنت" : (allUsers.find(u=>u.uid===id)?.displayName.split(' ')[0]||"مستخدم"));
+            if(names.length<=2) return names.join(' و ');
             return `${names[0]} و ${names.length-1} آخرين`;
         }
-
-        function getRColor(type) {
-            return {
-                like: 'text-blue-500 dark:text-blue-400',
-                heart: 'text-rose-500 dark:text-rose-400',
-                sad: 'text-amber-500 dark:text-amber-400',
-                angry: 'text-red-600 dark:text-red-400'
-            } [type] || 'text-slate-500 dark:text-slate-400';
-        }
-
-        function getRIconName(type) {
-            return {
-                like: 'thumbs-up',
-                heart: 'heart',
-                sad: 'frown',
-                angry: 'angry'
-            } [type] || 'thumbs-up';
-        }
-
+        function getRColor(type) { return {like:'text-blue-500 dark:text-blue-400', heart:'text-rose-500 dark:text-rose-400', sad:'text-amber-500 dark:text-amber-400', angry:'text-red-600 dark:text-red-400'}[type] || 'text-slate-500 dark:text-slate-400'; }
+        function getRIconName(type) { return {like:'thumbs-up', heart:'heart', sad:'frown', angry:'angry'}[type] || 'thumbs-up'; }
+        
         window.getReactionIconStr = (type) => {
-            if (type === 'like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500 dark:text-blue-400"></i>';
-            if (type === 'heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 dark:text-rose-400 fill-current"></i>';
-            if (type === 'sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500 dark:text-amber-400"></i>';
-            if (type === 'angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600 dark:text-red-400"></i>';
-            if (['👍', '❤️', '😂', '😮', '😢', '🙏'].includes(type)) return `<span class="text-xl leading-none">${type}</span>`;
+            if(type==='like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500 dark:text-blue-400"></i>';
+            if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 dark:text-rose-400 fill-current"></i>';
+            if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500 dark:text-amber-400"></i>';
+            if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600 dark:text-red-400"></i>';
+            if(['👍','❤️','😂','😮','😢','🙏'].includes(type)) return `<span class="text-xl leading-none">${type}</span>`;
             return '';
         }
 
@@ -2016,77 +1758,54 @@
             if (!currentUser) return;
             const picker = document.getElementById(`${idPrefix}picker-${postId}`);
             if (picker) picker.classList.remove('show');
-
+            
             const postRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId);
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
-            let newReacts = {
-                ...post.reactions
-            };
+            let newReacts = { ...post.reactions };
             const isNewReact = newReacts[currentUser.uid] !== type;
             if (newReacts[currentUser.uid] === type) {
                 delete newReacts[currentUser.uid];
             } else {
                 newReacts[currentUser.uid] = type;
             }
-            try {
-                await updateDoc(postRef, {
-                    reactions: newReacts
-                });
+            try { 
+                await updateDoc(postRef, { reactions: newReacts }); 
                 if (isNewReact && post.authorId !== currentUser.uid) {
                     await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: post.authorId,
-                        from: currentUser.uid,
-                        type: 'react_post',
-                        postId: postId,
-                        read: false,
-                        createdAt: new Date().toISOString()
+                        to: post.authorId, from: currentUser.uid, type: 'react_post', postId: postId, read: false, createdAt: new Date().toISOString()
                     });
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         window.handleCReact = async (postId, commentId, type, idPrefix = '') => {
             if (!currentUser) return;
             const cpicker = document.getElementById(`${idPrefix}cpicker-${commentId}`);
             if (cpicker) cpicker.classList.remove('show');
-
+            
             const postRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId);
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
             const comments = [...post.comments];
             const cIdx = comments.findIndex(c => c.id === commentId);
             if (cIdx === -1) return;
-
+            
             const targetComment = comments[cIdx];
-            let cReacts = {
-                ...(targetComment.reactions || {})
-            };
+            let cReacts = { ...(targetComment.reactions || {}) };
             const isNewReact = cReacts[currentUser.uid] !== type;
 
             if (cReacts[currentUser.uid] === type) delete cReacts[currentUser.uid];
             else cReacts[currentUser.uid] = type;
             comments[cIdx].reactions = cReacts;
-            try {
-                await updateDoc(postRef, {
-                    comments
-                });
+            try { 
+                await updateDoc(postRef, { comments }); 
                 if (isNewReact && targetComment.authorId !== currentUser.uid) {
                     await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: targetComment.authorId,
-                        from: currentUser.uid,
-                        type: 'react_comment',
-                        postId: postId,
-                        commentId: commentId,
-                        read: false,
-                        createdAt: new Date().toISOString()
+                        to: targetComment.authorId, from: currentUser.uid, type: 'react_comment', postId: postId, commentId: commentId, read: false, createdAt: new Date().toISOString()
                     });
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         window.addComment = async (postId, idPrefix = '') => {
@@ -2104,46 +1823,30 @@
                 createdAt: new Date().toISOString(),
                 reactions: {}
             };
-
+            
             if (input.dataset.parentId) {
                 newComment.parentId = input.dataset.parentId;
             }
 
             try {
-                await updateDoc(postRef, {
-                    comments: arrayUnion(newComment)
-                });
+                await updateDoc(postRef, { comments: arrayUnion(newComment) });
                 input.value = '';
                 input.dataset.parentId = '';
-
+                
                 if (post.authorId !== currentUser.uid) {
                     await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: post.authorId,
-                        from: currentUser.uid,
-                        type: 'comment',
-                        postId: postId,
-                        commentId: newComment.id,
-                        read: false,
-                        createdAt: new Date().toISOString()
+                        to: post.authorId, from: currentUser.uid, type: 'comment', postId: postId, commentId: newComment.id, read: false, createdAt: new Date().toISOString()
                     });
                 }
-
+                
                 const otherCommenters = [...new Set(post.comments.map(c => c.authorId))].filter(id => id !== currentUser.uid && id !== post.authorId);
-                for (let uid of otherCommenters) {
+                for(let uid of otherCommenters) {
                     await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: uid,
-                        from: currentUser.uid,
-                        type: 'reply',
-                        postId: postId,
-                        commentId: newComment.id,
-                        read: false,
-                        createdAt: new Date().toISOString()
+                        to: uid, from: currentUser.uid, type: 'reply', postId: postId, commentId: newComment.id, read: false, createdAt: new Date().toISOString()
                     });
                 }
 
-            } catch (e) {
-                showToast('حدث خطأ أثناء إضافة التعليق', 'error');
-            }
+            } catch (e) { showToast('حدث خطأ أثناء إضافة التعليق', 'error'); }
         }
 
         window.deleteComment = async (postId, commentId) => {
@@ -2152,25 +1855,13 @@
                 const post = allPosts.find(p => p.id === postId);
                 if (!post) return;
                 const comments = post.comments.filter(c => c.id !== commentId);
-                try {
-                    await updateDoc(postRef, {
-                        comments
-                    });
-                    showToast('تم الحذف بنجاح', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء الحذف', 'error');
-                }
+                try { await updateDoc(postRef, { comments }); showToast('تم الحذف بنجاح', 'success'); } catch (e) { showToast('حدث خطأ أثناء الحذف', 'error'); }
             });
         }
 
         window.deletePost = async (postId) => {
             showConfirm('هل تريد حذف هذا المنشور نهائياً؟', async () => {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId));
-                    showToast('تم الحذف', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء الحذف', 'error');
-                }
+                try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId)); showToast('تم الحذف', 'success'); } catch (e) { showToast('حدث خطأ أثناء الحذف', 'error'); }
             });
         }
 
@@ -2178,7 +1869,7 @@
             editingItemId = id;
             editingItemType = type;
             let currentText = '';
-
+            
             if (type === 'post') {
                 const post = allPosts.find(p => p.id === id);
                 if (post) currentText = post.content || '';
@@ -2186,62 +1877,46 @@
             } else {
                 for (let p of allPosts) {
                     const c = (p.comments || []).find(x => x.id === id);
-                    if (c) {
-                        currentText = c.text || '';
-                        break;
-                    }
+                    if (c) { currentText = c.text || ''; break; }
                 }
                 document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل التعليق';
             }
-
+            
             document.getElementById('edit-modal-input').value = currentText;
             const modal = document.getElementById('edit-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('div').classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
             lucide.createIcons();
         }
 
         window.closeEditModal = () => {
             const modal = document.getElementById('edit-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('div').classList.add('scale-95');
+            modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
-            editingItemId = null;
-            editingItemType = null;
+            editingItemId = null; editingItemType = null;
         }
 
         document.getElementById('edit-modal-save').addEventListener('click', async () => {
             if (!editingItemId) return;
             const newText = document.getElementById('edit-modal-input').value.trim();
             const btn = document.getElementById('edit-modal-save');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري...';
-
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+            
             try {
                 if (editingItemType === 'post') {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', editingItemId), {
-                        content: newText
-                    });
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', editingItemId), { content: newText });
                     showToast('تم تعديل المنشور بنجاح', 'success');
                 } else if (editingItemType === 'comment') {
                     let targetPost = null;
                     let cIdx = -1;
                     for (let p of allPosts) {
                         cIdx = (p.comments || []).findIndex(x => x.id === editingItemId);
-                        if (cIdx !== -1) {
-                            targetPost = p;
-                            break;
-                        }
+                        if (cIdx !== -1) { targetPost = p; break; }
                     }
                     if (targetPost) {
                         const newComments = [...targetPost.comments];
                         newComments[cIdx].text = newText;
-                        await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', targetPost.id), {
-                            comments: newComments
-                        });
+                        await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', targetPost.id), { comments: newComments });
                         showToast('تم تعديل التعليق بنجاح', 'success');
                     }
                 }
@@ -2249,15 +1924,14 @@
             } catch (e) {
                 showToast('حدث خطأ أثناء التعديل', 'error');
             }
-            btn.disabled = false;
-            btn.innerText = 'حفظ التعديلات';
+            btn.disabled = false; btn.innerText = 'حفظ التعديلات';
         });
 
         let profilePressTimer;
         let isProfilePressing = false;
 
         const startProfilePress = (e) => {
-            if (e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
+            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) {
                 isProfilePressing = true;
                 const src = e.target.src;
                 profilePressTimer = setTimeout(() => {
@@ -2274,18 +1948,14 @@
             clearTimeout(profilePressTimer);
         };
 
-        document.body.addEventListener('touchstart', startProfilePress, {
-            passive: true
-        });
+        document.body.addEventListener('touchstart', startProfilePress, {passive: true});
         document.body.addEventListener('touchend', cancelProfilePress);
-        document.body.addEventListener('touchmove', cancelProfilePress, {
-            passive: true
-        });
+        document.body.addEventListener('touchmove', cancelProfilePress, {passive: true});
         document.body.addEventListener('mousedown', startProfilePress);
         document.body.addEventListener('mouseup', cancelProfilePress);
         document.body.addEventListener('mousemove', cancelProfilePress);
         document.body.addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) e.preventDefault();
+            if(e.target.tagName === 'IMG' && e.target.classList.contains('rounded-full')) e.preventDefault();
         });
 
         window.openProfileLightbox = (url) => {
@@ -2297,7 +1967,7 @@
         }
 
         window.closeProfileLightbox = (e) => {
-            if (e) e.stopPropagation();
+            if(e) e.stopPropagation();
             const lb = document.getElementById('profile-lightbox');
             lb.classList.add('opacity-0');
             setTimeout(() => {
@@ -2305,24 +1975,22 @@
                 document.getElementById('profile-lightbox-img').src = '';
             }, 300);
         }
-
+        
         window.openLightbox = (url) => {
             document.getElementById('lightbox-img').src = url;
             document.getElementById('lightbox').classList.remove('hidden');
         }
         window.closeLightbox = (e) => {
-            if (e) e.stopPropagation();
+            if(e) e.stopPropagation();
             document.getElementById('lightbox').classList.add('hidden');
             document.getElementById('lightbox-img').src = '';
         }
 
         window.showReactors = (postId) => {
-            const p = allPosts.find(x => x.id === postId);
-            if (!p || !p.reactions) return;
+            const p = allPosts.find(x=>x.id===postId); if(!p || !p.reactions) return;
             const list = document.getElementById('reactors-list');
             list.innerHTML = Object.keys(p.reactions).map(uid => {
-                const u = allUsers.find(x => x.uid === uid);
-                if (!u) return '';
+                const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
                 const rType = p.reactions[uid];
                 return `
                 <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 p-3 rounded-xl transition-colors border-b border-slate-50 dark:border-slate-700 last:border-0" onclick="window.closeReactorsModal(); window.viewProfile('${uid}')">
@@ -2333,25 +2001,20 @@
                     <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${window.getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
-            if (!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
-
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
+            
             const modal = document.getElementById('reactors-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('#reactors-modal-content').classList.remove('scale-95');
-            }, 10);
+            modal.classList.remove('hidden'); 
+            setTimeout(() => { modal.querySelector('#reactors-modal-content').classList.remove('scale-95'); }, 10);
             lucide.createIcons();
         }
 
         window.showCommentReactors = (postId, commentId) => {
-            const p = allPosts.find(x => x.id === postId);
-            if (!p) return;
-            const c = (p.comments || []).find(x => x.id === commentId);
-            if (!c || !c.reactions) return;
+            const p = allPosts.find(x=>x.id===postId); if(!p) return;
+            const c = (p.comments||[]).find(x=>x.id===commentId); if(!c || !c.reactions) return;
             const list = document.getElementById('reactors-list');
             list.innerHTML = Object.keys(c.reactions).map(uid => {
-                const u = allUsers.find(x => x.uid === uid);
-                if (!u) return '';
+                const u = allUsers.find(x=>x.uid===uid); if(!u) return '';
                 const rType = c.reactions[uid];
                 return `
                 <div class="flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 p-3 rounded-xl transition-colors border-b border-slate-50 dark:border-slate-700 last:border-0" onclick="window.closeReactorsModal(); window.viewProfile('${uid}')">
@@ -2362,21 +2025,17 @@
                     <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${window.getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
-            if (!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
             const modal = document.getElementById('reactors-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('#reactors-modal-content').classList.remove('scale-95');
-            }, 10);
+            modal.classList.remove('hidden'); 
+            setTimeout(() => { modal.querySelector('#reactors-modal-content').classList.remove('scale-95'); }, 10);
             lucide.createIcons();
         }
 
         window.closeReactorsModal = () => {
             const modal = document.getElementById('reactors-modal');
             modal.querySelector('#reactors-modal-content').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
         let postToShareId = null;
@@ -2385,8 +2044,8 @@
             postToShareId = postId;
             const list = document.getElementById('share-friends-list');
             const friends = userData.friends || [];
-
-            if (!friends.length) {
+            
+            if(!friends.length) {
                 list.innerHTML = '<div class="text-center py-6 text-slate-500"><i data-lucide="users" class="w-10 h-10 mx-auto mb-2 opacity-50"></i><p class="text-sm">يجب إضافة أصدقاء أولاً لتتمكن من مشاركة المنشورات معهم.</p></div>';
             } else {
                 const validFriends = friends.map(uid => allUsers.find(x => x.uid === uid)).filter(Boolean);
@@ -2402,18 +2061,14 @@
             }
             const modal = document.getElementById('share-post-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('#share-post-modal-content').classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { modal.querySelector('#share-post-modal-content').classList.remove('scale-95'); }, 10);
             lucide.createIcons();
         }
 
         window.closeShareModal = () => {
             const modal = document.getElementById('share-post-modal');
             modal.querySelector('#share-post-modal-content').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
         let postToRepostId = null;
@@ -2423,10 +2078,7 @@
             document.getElementById('repost-modal-input').value = '';
             const modal = document.getElementById('repost-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('div').classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
 
@@ -2439,14 +2091,13 @@
         };
 
         window.confirmRepost = async () => {
-            if (!postToRepostId) return;
+            if(!postToRepostId) return;
             const op = allPosts.find(p => p.id === postToRepostId);
             if (!op) return;
-
+            
             const btn = document.getElementById('repost-modal-save');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري...';
-
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+            
             const userContent = document.getElementById('repost-modal-input').value.trim();
 
             try {
@@ -2457,10 +2108,10 @@
                 const originalContent = op.isRepost ? op.originalContent : (op.content || '');
                 const originalTitle = op.isRepost ? op.originalTitle : (op.title || '');
                 const imageUrl = op.imageUrl || null;
-
+                
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
-                    authorId: currentUser.uid,
-                    authorName: userData.displayName,
+                    authorId: currentUser.uid, 
+                    authorName: userData.displayName, 
                     authorPhoto: userData.photoUrl,
                     isRepost: true,
                     originalPostId: originalId,
@@ -2470,49 +2121,41 @@
                     originalContent: originalContent,
                     originalTitle: originalTitle,
                     content: userContent,
-                    imageUrl: imageUrl,
-                    colorId: op.colorId || 'white',
-                    communityId: null,
-                    createdAt: new Date().toISOString(),
-                    reactions: {},
+                    imageUrl: imageUrl, 
+                    colorId: op.colorId || 'white', 
+                    communityId: null, 
+                    createdAt: new Date().toISOString(), 
+                    reactions: {}, 
                     comments: []
                 });
                 showToast('تمت المشاركة على صفحتك بنجاح', 'success');
-
+                
                 if (originalAuthorId !== currentUser.uid) {
                     await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: originalAuthorId,
-                        from: currentUser.uid,
-                        type: 'repost',
-                        postId: originalId,
-                        read: false,
-                        createdAt: new Date().toISOString()
+                        to: originalAuthorId, from: currentUser.uid, type: 'repost', postId: originalId, read: false, createdAt: new Date().toISOString()
                     });
                 }
                 window.closeRepostModal();
-            } catch (e) {
+            } catch(e) {
                 showToast('حدث خطأ أثناء المشاركة', 'error');
             }
-            btn.disabled = false;
-            btn.innerText = 'مشاركة الآن';
+            btn.disabled = false; btn.innerText = 'مشاركة الآن';
         };
 
         window.sendShare = async (friendUid) => {
-            if (!postToShareId) return;
+            if(!postToShareId) return;
             try {
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), {
-                    senderId: currentUser.uid,
-                    receiverId: friendUid,
-                    content: postToShareId,
-                    type: 'post_share',
-                    read: false,
-                    createdAt: new Date().toISOString()
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), { 
+                    senderId: currentUser.uid, 
+                    receiverId: friendUid, 
+                    content: postToShareId, 
+                    type: 'post_share', 
+                    read: false, 
+                    createdAt: new Date().toISOString() 
                 });
                 showToast('تم إرسال المنشور في الرسائل بنجاح', 'success');
                 window.closeShareModal();
-            } catch (e) {
-                showToast('فشل الإرسال', 'error');
-            }
+            } catch(e) { showToast('فشل الإرسال', 'error'); }
         }
 
         window.setArchiveDate = (date) => {
@@ -2520,23 +2163,20 @@
             if (activeTabStr === 'feed') renderFeedTab();
             else if (activeTabStr === 'profile') renderProfileTab();
             else if (activeTabStr === 'communities') window.renderCommunitiesTab();
-
+            
             if (date) {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 showToast(`عرض أرشيف يوم ${date}`, 'info');
             }
         };
 
         function renderFeedTab() {
             const friends = userData.friends || [];
-            const allFeedPosts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+            const allFeedPosts = allPosts.filter(p => !p.communityId && (p.authorId === currentUser.uid || friends.includes(p.authorId))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+            
             const list = document.getElementById('feed-posts-list');
             const createBox = document.getElementById('create-post-container');
-            const today = new Date().toLocaleDateString('en-CA');
+            const today = new Date().toLocaleDateString('en-CA'); 
 
             if (activeArchiveDate) {
                 createBox.classList.add('hidden');
@@ -2564,10 +2204,10 @@
                 });
 
                 const archiveColors = [
-                    'from-blue-500 to-indigo-600',
-                    'from-purple-500 to-fuchsia-600',
-                    'from-emerald-500 to-teal-600',
-                    'from-rose-500 to-pink-600',
+                    'from-blue-500 to-indigo-600', 
+                    'from-purple-500 to-fuchsia-600', 
+                    'from-emerald-500 to-teal-600', 
+                    'from-rose-500 to-pink-600', 
                     'from-amber-500 to-orange-600'
                 ];
 
@@ -2608,7 +2248,7 @@
                     ${archiveHtml}
                 `;
             }
-
+            
             window.setPostColor('white', 'color-picker-container', 'create-post-container');
             lucide.createIcons();
         }
@@ -2616,23 +2256,17 @@
         window.removeFriend = async (friendUid) => {
             showConfirm('هل أنت متأكد من إلغاء الصداقة وإزالة هذا الشخص من مساحتك؟', async () => {
                 try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
-                        friends: arrayRemove(friendUid)
-                    });
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', friendUid), {
-                        friends: arrayRemove(currentUser.uid)
-                    });
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayRemove(friendUid) });
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', friendUid), { friends: arrayRemove(currentUser.uid) });
                     showToast('تم إلغاء الصداقة', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء إلغاء الصداقة.', 'error');
-                }
+                } catch (e) { showToast('حدث خطأ أثناء إلغاء الصداقة.', 'error'); }
             });
         }
 
         function renderFriendsTab() {
             const container = document.getElementById('friends-list-container');
             const fIds = userData.friends || [];
-
+            
             const validFriends = fIds.map(uid => allUsers.find(x => x.uid === uid)).filter(Boolean);
 
             if (!validFriends.length) {
@@ -2660,24 +2294,84 @@
             lucide.createIcons();
         }
 
-        window.toggleEditProfile = () => {
-            isEditingProfile = !isEditingProfile;
-            if (!isEditingProfile) {
-                window.tmpProfImgFile = null;
-                window.removeProfImg = false;
-            }
-            renderAll();
+        window.toggleEditProfile = () => { 
+            isEditingProfile = !isEditingProfile; 
+            if (!isEditingProfile) { window.tmpProfImgFile = null; window.removeProfImg = false; }
+            renderAll(); 
         }
+
+        window.cropperInstance = null;
 
         window.handleProfileImageSelect = (e) => {
             const file = e.target.files[0];
-            if (file) {
-                window.tmpProfImgFile = file;
-                window.removeProfImg = false;
-                document.getElementById('edit-profile-avatar-preview').src = URL.createObjectURL(file);
-            }
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('crop-image-target').src = event.target.result;
+                const modal = document.getElementById('crop-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
+                
+                if (window.cropperInstance) {
+                    window.cropperInstance.destroy();
+                }
+                
+                const image = document.getElementById('crop-image-target');
+                window.cropperInstance = new Cropper(image, {
+                    aspectRatio: 1, // مربع 1:1 ليناسب البروفايل الدائري
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            };
+            reader.readAsDataURL(file);
+            e.target.value = ''; // إعادة تعيين الحقل
         }
 
+        window.closeCropModal = () => {
+            const modal = document.getElementById('crop-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                if(window.cropperInstance) { 
+                    window.cropperInstance.destroy(); 
+                    window.cropperInstance = null; 
+                } 
+            }, 300);
+        }
+
+        window.confirmCrop = () => {
+            if (!window.cropperInstance) return;
+            const btn = document.getElementById('crop-save-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i>';
+            
+            const canvas = window.cropperInstance.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            canvas.toBlob((blob) => {
+                const file = new File([blob], "profile_cropped.jpg", { type: "image/jpeg", lastModified: Date.now() });
+                window.tmpProfImgFile = file;
+                window.removeProfImg = false;
+                document.getElementById('edit-profile-avatar-preview').src = canvas.toDataURL('image/jpeg');
+                window.closeCropModal();
+                btn.disabled = false; btn.innerHTML = '<i data-lucide="crop" class="w-4 h-4"></i> قص وحفظ';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 'image/jpeg', 0.9);
+        }
+        
         window.removeProfilePhoto = () => {
             window.tmpProfImgFile = null;
             window.removeProfImg = true;
@@ -2687,8 +2381,7 @@
 
         window.saveProfile = async () => {
             const btn = document.getElementById('save-prof-btn');
-            btn.disabled = true;
-            btn.innerHTML = 'جاري...';
+            btn.disabled=true; btn.innerHTML='جاري...';
             try {
                 let pUrl = userData.photoUrl;
                 if (window.tmpProfImgFile) {
@@ -2697,7 +2390,7 @@
                     const gender = document.getElementById('ep-gender').value;
                     pUrl = `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.uid}-${gender}&backgroundColor=10b981`;
                 }
-
+                
                 const sLinksRaw = Array.from(document.querySelectorAll('.edit-social-row')).map(row => ({
                     platform: row.querySelector('.s-plat').value,
                     url: row.querySelector('.s-url').value
@@ -2710,33 +2403,31 @@
                     gender: document.getElementById('ep-gender').value,
                     birthDate: document.getElementById('ep-dob').value,
                     photoUrl: pUrl,
-                    socialLinks: sLinksRaw.filter(l => l.url.trim() !== '')
+                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
                 });
                 isEditingProfile = false;
                 window.tmpProfImgFile = null;
                 window.removeProfImg = false;
                 showToast('تم تحديث البيانات', 'success');
-            } catch (e) {
-                showToast('خطأ في الحفظ', 'error');
-            }
+            } catch(e) { showToast('خطأ في الحفظ', 'error'); }
             renderAll();
         }
 
-        function renderProfileTab() {
+                function renderProfileTab() {
             const container = document.getElementById('profile-view-container');
             const postsContainer = document.getElementById('profile-posts-list');
             const postsSectionHeader = document.getElementById('profile-posts-header');
-
+            
             const tUser = allUsers.find(u => u.uid === viewingUid) || userData;
             const isMe = tUser.uid === currentUser.uid;
             const isFriend = (userData.friends || []).includes(tUser.uid);
             const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
-
+            
             const canView = isMe || isFriend || isAdminStealthMode;
 
             if (canView) {
-                const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+                const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                
                 let postsHtml = '';
                 if (!myP.length) {
                     postsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
@@ -2768,7 +2459,7 @@
                 postsSectionHeader.classList.add('hidden');
             }
 
-            if (isMe && isEditingProfile) {
+            if(isMe && isEditingProfile) {
                 container.innerHTML = `
                 <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 relative z-10 shadow-sm border border-slate-100 dark:border-slate-700 mt-4 transition-colors">
                     <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إعدادات حسابي</h3>
@@ -2828,7 +2519,7 @@
             } else {
                 let actionBtn = '';
                 const btnBaseClass = "px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full md:w-auto md:min-w-[130px] whitespace-nowrap";
-
+                
                 if (isMe) {
                     actionBtn = `<button onclick="window.toggleEditProfile()" class="${btnBaseClass} bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
                 } else if (!isFriend) {
@@ -2841,16 +2532,8 @@
                     </div>`;
                 }
 
-                const priv = tUser.privacySettings || {
-                    showPhone: 'public',
-                    showGender: 'public',
-                    showDob: 'full',
-                    showAddress: 'public'
-                };
-                let socialHtml = '',
-                    waHtml = '',
-                    statsHtml = '',
-                    infoCardsHtml = '';
+                const priv = tUser.privacySettings || { showPhone: 'public', showGender: 'public', showDob: 'full', showAddress: 'public' };
+                let socialHtml = '', waHtml = '', statsHtml = '', infoCardsHtml = '';
 
                 if (canView) {
                     let infos = [];
@@ -2861,7 +2544,7 @@
                         let dobDisplay = tUser.birthDate;
                         if (!isMe && priv.showDob === 'partial') {
                             const dateObj = new Date(tUser.birthDate);
-                            dobDisplay = `${dateObj.getDate()} ${dateObj.toLocaleString('ar-EG', { month: 'long' })}`;
+                            dobDisplay = `${dateObj.getDate()} ${dateObj.toLocaleString('ar-EG', { month: 'long' })}`; 
                         }
                         infos.push(`<div class="flex items-center justify-center md:justify-start gap-2 bg-slate-50 dark:bg-slate-700/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-600"><i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i><span class="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200" dir="ltr">${dobDisplay}</span></div>`);
                     }
@@ -2872,7 +2555,7 @@
                         infoCardsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 mb-5">${infos.join('')}</div>`;
                     }
 
-                    socialHtml = (tUser.socialLinks || []).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:text-emerald-600 transition-colors shadow-sm"><i data-lucide="link" class="w-4 h-4"></i></a>`).join('');
+                    socialHtml = (tUser.socialLinks||[]).map(l => `<a href="${l.url}" target="_blank" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:text-emerald-600 transition-colors shadow-sm"><i data-lucide="link" class="w-4 h-4"></i></a>`).join('');
                     if (tUser.phoneNumber && (isMe || priv.showPhone !== 'private')) {
                         waHtml = `<a href="https://wa.me/${String(tUser.phoneNumber).replace(/\D/g,'')}" target="_blank" class="flex items-center justify-center gap-1.5 bg-[#25D366] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:scale-105 transition-transform"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> واتساب</a>`;
                     }
@@ -2880,7 +2563,7 @@
                 } else {
                     statsHtml = `<div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6 text-center md:text-right text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center md:justify-start gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> هذا الحساب خاص، المحتوى غير متاح للغرباء.</div>`;
                 }
-
+                
                 let stealthBadge = '';
                 if (isAdminStealthMode) {
                     stealthBadge = `<div class="absolute top-4 left-4 bg-amber-500/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 z-30" title="أنت تتصفح هذا الحساب كمدير منصة (تصفح خفي)"><i data-lucide="eye" class="w-4 h-4"></i> تصفح خفي للمدير</div>`;
@@ -2888,11 +2571,7 @@
 
                 const publicComms = allCommunities.filter(c => c.creatorId === tUser.uid && !c.isPrivate);
 
-                window.copyAnyId = (id) => {
-                    navigator.clipboard.writeText(id).then(() => showToast('تم النسخ!', 'success')).catch(() => {
-                        showToast('فشل', 'error')
-                    });
-                }
+                window.copyAnyId = (id) => { navigator.clipboard.writeText(id).then(()=>showToast('تم النسخ!', 'success')).catch(()=>{showToast('فشل', 'error')}); }
 
                 container.innerHTML = `
                 <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors group/profile mb-8 relative">
@@ -2939,13 +2618,11 @@
             }
             lucide.createIcons();
         }
-
+        
         window.addEPSocial = () => {
-            const div = document.createElement('div');
-            div.className = 'edit-social-row flex gap-2 mb-2';
+            const div = document.createElement('div'); div.className = 'edit-social-row flex gap-2 mb-2';
             div.innerHTML = `<select class="s-plat w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-800 dark:text-slate-100 transition-colors">${getSocialOptionsHtml('facebook')}</select><input type="url" class="s-url flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none text-slate-800 dark:text-slate-100 transition-colors"><button onclick="this.parentElement.remove()" class="text-rose-500 dark:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button>`;
-            document.getElementById('ep-socials').appendChild(div);
-            lucide.createIcons();
+            document.getElementById('ep-socials').appendChild(div); lucide.createIcons();
         }
 
         window.performSearch = () => {
@@ -2955,15 +2632,15 @@
                 const input = inputEl.value.trim();
                 const container = document.getElementById('search-result-container');
                 const msg = document.getElementById('search-msg');
-                if (msg) msg.innerText = '';
-                if (container) container.innerHTML = '';
-
-                if (!input) {
-                    if (msg) {
-                        msg.innerText = 'يرجى إدخال كلمة للبحث (اسم، هاشتاج، الخ)';
-                        msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3';
+                if(msg) msg.innerText = '';
+                if(container) container.innerHTML = '';
+                
+                if (!input) { 
+                    if(msg) {
+                        msg.innerText = 'يرجى إدخال كلمة للبحث (اسم، هاشتاج، الخ)'; 
+                        msg.className = 'text-sm text-rose-600 dark:text-rose-400 mt-3'; 
                     }
-                    return;
+                    return; 
                 }
 
                 const lowerInput = String(input).toLowerCase();
@@ -2983,34 +2660,34 @@
 
                 let html = '';
 
-                if (foundUsers.length) {
+                if(foundUsers.length) {
                     html += '<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 mb-4 border-r-4 border-emerald-500 pr-2">أشخاص</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">';
                     html += foundUsers.map(u => {
                         const isMe = currentUser && u.uid === currentUser.uid;
                         const isFriend = userData && (userData.friends || []).includes(u.uid);
                         const isPending = friendRequests.some(r => currentUser && r.from === currentUser.uid && r.to === u.uid);
-                        let btnHtml = isMe ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold">أنت</button>` :
-                            (isFriend ? `<button disabled class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-sm px-4 py-2 rounded-xl font-bold border border-emerald-100 dark:border-emerald-800">صديق بالمساحة</button>` :
-                                (isPending ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold cursor-not-allowed">طلب معلق</button>` :
-                                    `<button onclick="window.sendFriendReq('${u.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-xl transition-colors font-bold shadow-sm flex items-center gap-1.5"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة</button>`));
+                        let btnHtml = isMe ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold">أنت</button>` : 
+                                      (isFriend ? `<button disabled class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-sm px-4 py-2 rounded-xl font-bold border border-emerald-100 dark:border-emerald-800">صديق بالمساحة</button>` : 
+                                      (isPending ? `<button disabled class="bg-slate-100 dark:bg-slate-700 text-slate-500 text-sm px-4 py-2 rounded-xl font-bold cursor-not-allowed">طلب معلق</button>` : 
+                                      `<button onclick="window.sendFriendReq('${u.uid}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-xl transition-colors font-bold shadow-sm flex items-center gap-1.5"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة</button>`));
                         return `<div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer w-full md:w-auto" onclick="window.viewProfile('${u.uid}')"><img src="${u.photoUrl || ''}" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800"><div><h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName || 'مستخدم'}</h4><p class="text-xs text-slate-500 font-mono mt-1">${u.myTabId || ''}</p></div></div><div class="w-full md:w-auto flex justify-center">${btnHtml}</div></div>`;
                     }).join('');
                     html += '</div>';
                 }
 
-                if (foundPosts.length) {
+                if(foundPosts.length) {
                     html += '<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 mb-4 border-r-4 border-emerald-500 pr-2">منشورات</h3><div class="space-y-6">';
                     html += foundPosts.map(p => generatePostHTML(p, 'search-')).join('');
                     html += '</div>';
                 }
 
-                if (!foundUsers.length && !foundPosts.length) {
+                if(!foundUsers.length && !foundPosts.length) {
                     html = '<div class="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="search-x" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لم يتم العثور على نتائج مطابقة.</p></div>';
                 }
-
-                if (container) container.innerHTML = html;
+                
+                if(container) container.innerHTML = html;
                 lucide.createIcons();
-            } catch (err) {
+            } catch(err) {
                 console.error('Search error:', err);
                 const msg = document.getElementById('search-msg');
                 if (msg) {
@@ -3027,102 +2704,50 @@
         }
 
         window.sendFriendReq = async (uid) => {
-            try {
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), {
-                    from: currentUser.uid,
-                    to: uid,
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                });
-                showToast('تم إرسال طلب الصداقة بنجاح!', 'success');
-                if (activeTabStr === 'search') window.performSearch();
-                if (activeTabStr === 'profile') renderProfileTab();
-            } catch (e) {
-                showToast('حدث خطأ أثناء الإرسال.', 'error');
-            }
+            try { 
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests')), { from: currentUser.uid, to: uid, status: 'pending', createdAt: new Date().toISOString() }); 
+                showToast('تم إرسال طلب الصداقة بنجاح!', 'success'); 
+                if (activeTabStr === 'search') window.performSearch(); 
+                if (activeTabStr === 'profile') renderProfileTab(); 
+            } catch (e) { showToast('حدث خطأ أثناء الإرسال.', 'error'); }
         }
 
         function renderRequestsTab() {
             const list = document.getElementById('requests-list');
             const incReqs = friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending');
-            if (!incReqs.length) {
-                list.innerHTML = '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد طلبات صداقة معلقة.</p></div>';
-                return;
-            }
-            list.innerHTML = incReqs.map(req => {
-                const u = allUsers.find(x => x.uid === req.from);
-                if (!u) return '';
-                return `<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer w-full sm:w-auto" onclick="window.viewProfile('${u.uid}')"><img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800"><div><h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h4><p class="text-xs text-slate-500 dark:text-slate-400">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</p></div></div><div class="flex gap-2 w-full sm:w-auto"><button onclick="window.acceptFriendReq('${req.id}', '${u.uid}')" class="flex-1 sm:flex-none bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">قبول</button><button onclick="window.rejectFriendReq('${req.id}')" class="flex-1 sm:flex-none bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">رفض</button></div></div>`;
-            }).join('');
+            if (!incReqs.length) { list.innerHTML = '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد طلبات صداقة معلقة.</p></div>'; return; }
+            list.innerHTML = incReqs.map(req => { const u = allUsers.find(x => x.uid === req.from); if (!u) return ''; return `<div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors"><div class="flex items-center gap-4 cursor-pointer w-full sm:w-auto" onclick="window.viewProfile('${u.uid}')"><img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800"><div><h4 class="font-bold text-slate-800 dark:text-slate-100">${u.displayName}</h4><p class="text-xs text-slate-500 dark:text-slate-400">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</p></div></div><div class="flex gap-2 w-full sm:w-auto"><button onclick="window.acceptFriendReq('${req.id}', '${u.uid}')" class="flex-1 sm:flex-none bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">قبول</button><button onclick="window.rejectFriendReq('${req.id}')" class="flex-1 sm:flex-none bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors">رفض</button></div></div>`; }).join('');
             lucide.createIcons();
         }
 
         window.acceptFriendReq = async (reqId, fromUid) => {
-            try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
-                    friends: arrayUnion(fromUid)
-                });
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), {
-                    friends: arrayUnion(currentUser.uid)
-                });
-                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
-                showToast('تم قبول الصداقة', 'success');
-            } catch (e) {
-                showToast('حدث خطأ', 'error');
-            }
+            try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), { friends: arrayUnion(fromUid) }); await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', fromUid), { friends: arrayUnion(currentUser.uid) }); await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); showToast('تم قبول الصداقة', 'success'); } catch(e) { showToast('حدث خطأ', 'error'); }
         }
 
-        window.rejectFriendReq = async (reqId) => {
-            try {
-                await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId));
-            } catch (e) {
-                showToast('حدث خطأ', 'error');
-            }
-        }
+        window.rejectFriendReq = async (reqId) => { try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests', reqId)); } catch(e) { showToast('حدث خطأ', 'error'); } }
 
         function renderMessagesList() {
             const list = document.getElementById('chat-friends-list');
             const friends = userData.friends || [];
-            if (!friends.length) {
-                list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء بالمساحة بعد.</p></div>';
-                return;
-            }
-
-            const chats = friends.map(fUid => {
-                const fInfo = allUsers.find(u => u.uid === fUid);
-                if (!fInfo) return null;
-                const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                const lastMsg = fMsgs[0];
-                const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length;
-                return {
-                    uid: fUid,
-                    info: fInfo,
-                    lastMsg: lastMsg,
-                    unreadCount: unreadCount,
-                    lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0
-                };
-            }).filter(c => c && c.lastMsg).sort((a, b) => b.lastTime - a.lastTime);
-
-            if (!chats.length) {
-                list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>';
-                return;
-            }
-
+            if (!friends.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm">ليس لديك أصدقاء بالمساحة بعد.</p></div>'; return; }
+            
+            const chats = friends.map(fUid => { 
+                const fInfo = allUsers.find(u => u.uid === fUid); 
+                if (!fInfo) return null; 
+                const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === fUid) || (m.senderId === fUid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); 
+                const lastMsg = fMsgs[0]; 
+                const unreadCount = fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).length; 
+                return { uid: fUid, info: fInfo, lastMsg: lastMsg, unreadCount: unreadCount, lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 }; 
+            }).filter(c => c && c.lastMsg).sort((a,b) => b.lastTime - a.lastTime);
+            
+            if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
+            
             list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="window.goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); window.deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)))}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
-        window.openChatRoom = (uid) => {
-            document.getElementById('messages-list-view').classList.add('hidden');
-            document.getElementById('chat-room-view').classList.remove('hidden');
-            window.renderChatRoom();
-        }
-        window.closeChatRoom = () => {
-            activeChatFriendId = null;
-            document.getElementById('chat-room-view').classList.add('hidden');
-            document.getElementById('messages-list-view').classList.remove('hidden');
-            renderMessagesList();
-        }
+        window.openChatRoom = (uid) => { document.getElementById('messages-list-view').classList.add('hidden'); document.getElementById('chat-room-view').classList.remove('hidden'); window.renderChatRoom(); }
+        window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); }
 
         window.chatImageBase64 = null;
 
@@ -3134,26 +2759,14 @@
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
+                    const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+                    let width = img.width; let height = img.height;
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    window.chatImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    window.chatImageBase64 = canvas.toDataURL('image/jpeg', 0.6); 
                     document.getElementById('chat-image-preview-container').classList.remove('hidden');
                     document.getElementById('chat-image-preview').src = window.chatImageBase64;
                 };
@@ -3176,39 +2789,26 @@
             document.getElementById('chat-room-avatar').src = friend.photoUrl;
             document.getElementById('chat-room-name').innerHTML = friend.displayName + window.getUserBadge(friend.uid);
             const msgsArea = document.getElementById('chat-messages-area');
-            const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid)).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), {
-                        read: true
-                    });
-                } catch (e) {}
-            });
-            let html = '',
-                lastDate = '';
-            const msgEmojis = ['❤️', '😂', '👍', '👎', '🔥', '✨', '😍', '😢', '😡', '🙏', '👀', '💯', '🎉', '🤯', '🥳'];
+            const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+            fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => { try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true }); } catch(e) {} });
+            let html = '', lastDate = '';
+            const msgEmojis = ['❤️','😂','👍','👎','🔥','✨','😍','😢','😡','🙏','👀','💯', '🎉', '🤯', '🥳'];
 
             fMsgs.forEach(m => {
                 const d = new Date(m.createdAt);
                 const dateStr = d.toLocaleDateString('ar-EG');
-                const timeStr = d.toLocaleTimeString('ar-EG', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                if (dateStr !== lastDate) {
-                    html += `<div class="flex justify-center my-4"><span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs px-3 py-1 rounded-full font-medium shadow-sm">${dateStr}</span></div>`;
-                    lastDate = dateStr;
-                }
+                const timeStr = d.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+                if (dateStr !== lastDate) { html += `<div class="flex justify-center my-4"><span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs px-3 py-1 rounded-full font-medium shadow-sm">${dateStr}</span></div>`; lastDate = dateStr; }
                 const isMe = m.senderId === currentUser.uid;
                 const readIcon = isMe ? `<i data-lucide="check-check" class="w-4 h-4 inline-block mr-1 transition-colors ${m.read ? 'text-blue-400 dark:text-blue-500' : 'text-slate-400 dark:text-slate-500'}"></i>` : '';
                 const delBtn = isMe ? `<button onclick="window.deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100 mx-1" title="حذف الرسالة"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : '';
-
+                
                 let reactsHtml = '';
-                if (m.reactions && Object.keys(m.reactions).length > 0) {
+                if(m.reactions && Object.keys(m.reactions).length > 0) {
                     const rCounts = {};
-                    Object.values(m.reactions).forEach(e => rCounts[e] = (rCounts[e] || 0) + 1);
-                    reactsHtml = `<div class="absolute ${isMe?'-bottom-3 right-2':'-bottom-3 left-2'} flex gap-1 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full px-1.5 py-0.5 text-[10px] z-10 select-none">` +
-                        Object.keys(rCounts).map(e => `<span class="flex items-center gap-0.5">${e}${rCounts[e]>1?` <span class="font-bold text-slate-500">${rCounts[e]}</span>`:''}</span>`).join('') +
+                    Object.values(m.reactions).forEach(e => rCounts[e] = (rCounts[e]||0)+1);
+                    reactsHtml = `<div class="absolute ${isMe?'-bottom-3 right-2':'-bottom-3 left-2'} flex gap-1 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full px-1.5 py-0.5 text-[10px] z-10 select-none">` + 
+                        Object.keys(rCounts).map(e => `<span class="flex items-center gap-0.5">${e}${rCounts[e]>1?` <span class="font-bold text-slate-500">${rCounts[e]}</span>`:''}</span>`).join('') + 
                         `</div>`;
                 }
 
@@ -3224,7 +2824,7 @@
                 } else if (m.type === 'post_share') {
                     const sp = allPosts.find(p => p.id === m.content);
                     let sharedHtml = '';
-                    if (sp) {
+                    if(sp) {
                         let contextBadge = '';
                         if (sp.communityId) {
                             const comm = allCommunities.find(c => c.id === sp.communityId);
@@ -3232,7 +2832,7 @@
                         } else {
                             contextBadge = `<div class="text-[10px] bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0" title="مشاركة من المساحة العامة"><i data-lucide="home" class="w-3 h-3"></i> المساحة العامة</div>`;
                         }
-
+                        
                         sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="window.openSinglePost('${sp.id}')">
                             <div class="flex items-center justify-between gap-2 mb-2">
                                 <div class="flex items-center gap-2 min-w-0">
@@ -3249,62 +2849,50 @@
                     }
                     html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1.5 opacity-80 text-xs font-bold mb-1 border-b border-black/10 dark:border-white/10 pb-1"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'قمت بمشاركة منشور':'شارك منشوراً معك'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
-                    const {
-                        ytId,
-                        tkId
-                    } = extractEmbeds(m.content || '');
+                    const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
-
+                    
                     if (m.type === 'image') {
                         messageBody += `<img src="${m.imageUrl}" class="max-w-full rounded-xl cursor-zoom-in mb-2" onclick="window.openLightbox('${m.imageUrl}')" style="max-height: 250px;">`;
                     }
                     if (m.content) {
                         messageBody += formatMessageContent(m.content, isMe);
                     }
-                    if (ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
-                    if (tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
+                    if(ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
+                    if(tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
                     html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 }
             });
             if (!fMsgs.length) html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
             const isAtBottom = msgsArea.scrollHeight - msgsArea.scrollTop <= msgsArea.clientHeight + 100;
-            msgsArea.innerHTML = html;
-            lucide.createIcons();
+            msgsArea.innerHTML = html; lucide.createIcons();
             if (isAtBottom || html.includes('hand')) msgsArea.scrollTop = msgsArea.scrollHeight;
         }
 
         window.reactToMessage = async (msgId, emoji) => {
-            if (!currentUser) return;
+            if(!currentUser) return;
             const msgRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId);
             const msg = allMessages.find(m => m.id === msgId);
-            if (!msg) return;
+            if(!msg) return;
             let reacts = msg.reactions || {};
-            if (reacts[currentUser.uid] === emoji) {
+            if(reacts[currentUser.uid] === emoji) {
                 delete reacts[currentUser.uid];
             } else {
                 reacts[currentUser.uid] = emoji;
             }
-            try {
-                await updateDoc(msgRef, {
-                    reactions: reacts
-                });
-            } catch (e) {
-                showToast('خطأ في التفاعل', 'error');
-            }
+            try { await updateDoc(msgRef, { reactions: reacts }); } catch(e) { showToast('خطأ في التفاعل', 'error'); }
             const picker = document.getElementById(`msg-picker-${msgId}`);
-            if (picker) picker.classList.add('hidden');
+            if(picker) picker.classList.add('hidden');
         }
 
         window.deleteEntireChat = async (uid) => {
             showConfirm('هل أنت متأكد من حذف هذه المحادثة بالكامل وإزالتها من القائمة؟ (سيتم الحذف نهائياً)', async () => {
                 const msgsToDelete = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === uid) || (m.senderId === uid && m.receiverId === currentUser.uid));
-                try {
-                    await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id))));
+                try { 
+                    await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)))); 
                     showToast('تم مسح المحادثة', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء مسح المحادثة', 'error');
-                }
+                } catch(e) { showToast('حدث خطأ أثناء مسح المحادثة', 'error'); }
             });
         }
 
@@ -3312,23 +2900,17 @@
             if (!activeChatFriendId) return;
             showConfirm('هل أنت متأكد من مسح جميع الرسائل بينك وبين هذا الصديق؟ (سيتم الحذف نهائياً)', async () => {
                 const msgsToDelete = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === activeChatFriendId) || (m.senderId === activeChatFriendId && m.receiverId === currentUser.uid));
-                try {
+                try { 
                     await Promise.all(msgsToDelete.map(m => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id))));
                     window.closeChatRoom();
                     showToast('تم مسح المحادثة', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء مسح المحادثة', 'error');
-                }
+                } catch(e) { showToast('حدث خطأ أثناء مسح المحادثة', 'error'); }
             });
         }
 
         window.deleteMessage = async (msgId) => {
             showConfirm('هل تريد حذف هذه الرسالة؟', async () => {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId));
-                } catch (e) {
-                    showToast('حدث خطأ أثناء حذف الرسالة', 'error');
-                }
+                try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId)); } catch(e) { showToast('حدث خطأ أثناء حذف الرسالة', 'error'); }
             });
         }
 
@@ -3338,56 +2920,44 @@
             let msgType = type;
             let imgUrl = null;
 
-            if (type === 'text') {
-                const input = document.getElementById('chat-input');
-                text = input.value.trim();
-
+            if (type === 'text') { 
+                const input = document.getElementById('chat-input'); 
+                text = input.value.trim(); 
+                
                 if (window.chatImageBase64) {
                     msgType = 'image';
                     imgUrl = window.chatImageBase64;
                     window.removeChatImage();
                 } else if (!text) {
-                    return;
+                    return; 
                 }
-
-                input.value = '';
+                
+                input.value = ''; 
             }
             if (type === 'sticker') window.toggleStickerPicker();
 
-            const msgData = {
-                senderId: currentUser.uid,
-                receiverId: activeChatFriendId,
-                content: text,
-                type: msgType,
-                read: false,
-                createdAt: new Date().toISOString()
+            const msgData = { 
+                senderId: currentUser.uid, 
+                receiverId: activeChatFriendId, 
+                content: text, 
+                type: msgType, 
+                read: false, 
+                createdAt: new Date().toISOString() 
             };
-            if (imgUrl) msgData.imageUrl = imgUrl;
+            if(imgUrl) msgData.imageUrl = imgUrl;
 
-            try {
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), msgData);
-                setTimeout(() => {
-                    const msgsArea = document.getElementById('chat-messages-area');
-                    msgsArea.scrollTop = msgsArea.scrollHeight;
-                }, 100);
-            } catch (e) {
-                showToast('فشل إرسال الرسالة', 'error');
-            }
+            try { 
+                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), msgData); 
+                setTimeout(() => { const msgsArea = document.getElementById('chat-messages-area'); msgsArea.scrollTop = msgsArea.scrollHeight; }, 100); 
+            } catch(e) { showToast('فشل إرسال الرسالة', 'error'); }
         }
 
-        window.toggleStickerPicker = () => {
-            const picker = document.getElementById('sticker-picker');
-            picker.classList.toggle('hidden');
-            if (!picker.classList.contains('hidden') && picker.innerHTML === '') {
-                const stickers = ['😀', '😂', '🥰', '😎', '😭', '😡', '👍', '👎', '❤️', '💔', '🔥', '✨', '🎉', '👋', '🙏', '🤔', '🤐', '😴', '🤢', '🤮', '🤠', '🥳', '🥸', '👀'];
-                picker.innerHTML = stickers.map(s => `<button onclick="window.sendMessage('sticker', '${s}')" class="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors hover:scale-125">${s}</button>`).join('');
-            }
-        }
+        window.toggleStickerPicker = () => { const picker = document.getElementById('sticker-picker'); picker.classList.toggle('hidden'); if (!picker.classList.contains('hidden') && picker.innerHTML === '') { const stickers = ['😀','😂','🥰','😎','😭','😡','👍','👎','❤️','💔','🔥','✨','🎉','👋','🙏','🤔','🤐','😴','🤢','🤮','🤠','🥳','🥸','👀']; picker.innerHTML = stickers.map(s => `<button onclick="window.sendMessage('sticker', '${s}')" class="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors hover:scale-125">${s}</button>`).join(''); } }
 
         function generateCommunityCardHtml(c, isPublicList) {
             let cardColor = c.color || 'bg-emerald-100 dark:bg-emerald-900/40';
             if (!cardColor.includes('dark:')) cardColor += ' dark:bg-slate-700';
-
+            
             return `
             <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md transition-all group" onclick="window.viewCommunity('${c.id}')">
                 <div class="flex items-center gap-4">
@@ -3406,16 +2976,12 @@
             const container = document.getElementById('tab-content-communities');
             if (activeCommunityId) {
                 const comm = allCommunities.find(c => c.id === activeCommunityId);
-                if (!comm) {
-                    activeCommunityId = null;
-                    window.renderCommunitiesTab();
-                    return;
-                }
+                if (!comm) { activeCommunityId = null; window.renderCommunitiesTab(); return; }
                 const isAdmin = comm.creatorId === currentUser.uid;
                 const isMember = comm.members.includes(currentUser.uid);
                 const hasRequested = (comm.joinRequests || []).includes(currentUser.uid);
-                const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+                const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+                
                 let communityPostsHtml = '';
                 if (isMember || isAdminStealthMode) {
                     if (!cPosts.length) {
@@ -3572,7 +3138,7 @@
                     </div>` : (!activeArchiveDate ? `<div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl text-slate-500 dark:text-slate-400 text-sm text-center mb-6 border border-slate-200 dark:border-slate-700">عليك الانضمام للمجتمع أولاً حتى تتمكن من النشر ورؤية محتوياته.</div>` : '')}
                     <div>${communityPostsHtml}</div>
                 </div>`;
-                if (isMember && !activeArchiveDate) window.setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
+                if(isMember && !activeArchiveDate) window.setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
             } else {
                 const myComms = allCommunities.filter(c => c.members.includes(currentUser.uid));
                 container.innerHTML = `
@@ -3588,94 +3154,64 @@
 
         window.requestJoinComm = async (id) => {
             try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), {
-                    joinRequests: arrayUnion(currentUser.uid)
-                });
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), { joinRequests: arrayUnion(currentUser.uid) });
                 showToast('تم إرسال الطلب، في انتظار موافقة صاحب المجتمع', 'success');
-            } catch (e) {
-                showToast('حدث خطأ أثناء إرسال الطلب', 'error');
-            }
+            } catch(e) { showToast('حدث خطأ أثناء إرسال الطلب', 'error'); }
         }
 
         window.acceptCommReq = async (commId, uid) => {
             try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
-                    members: arrayUnion(uid),
-                    joinRequests: arrayRemove(uid)
-                });
-            } catch (e) {
-                showToast('حدث خطأ', 'error');
-            }
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayUnion(uid), joinRequests: arrayRemove(uid) });
+            } catch(e) { showToast('حدث خطأ', 'error'); }
         }
 
         window.rejectCommReq = async (commId, uid) => {
             try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
-                    joinRequests: arrayRemove(uid)
-                });
-            } catch (e) {
-                showToast('حدث خطأ', 'error');
-            }
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { joinRequests: arrayRemove(uid) });
+            } catch(e) { showToast('حدث خطأ', 'error'); }
         }
 
-        window.viewCommunity = (id) => {
-            activeCommunityId = id;
-            window.switchTab('communities', true);
-        }
-        window.closeCommunityView = () => {
-            activeCommunityId = null;
-            window.renderCommunitiesTab();
-        }
+        window.viewCommunity = (id) => { activeCommunityId = id; window.switchTab('communities', true); }
+        window.closeCommunityView = () => { activeCommunityId = null; window.renderCommunitiesTab(); }
 
         window.deleteCommunity = async (id) => {
             showConfirm('هل أنت متأكد من حذف المجتمع بكل محتوياته نهائياً؟', async () => {
                 try {
                     await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id));
                     const commPosts = allPosts.filter(p => p.communityId === id);
-                    for (let p of commPosts) await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id));
+                    for(let p of commPosts) await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id));
                     window.closeCommunityView();
                     showToast('تم الحذف', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ', 'error');
-                }
+                } catch(e) { showToast('حدث خطأ', 'error'); }
             });
         }
 
         window.leaveCommunity = async (id) => {
             showConfirm('هل أنت متأكد من رغبتك في الانسحاب من هذا المجتمع؟', async () => {
                 try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), {
-                        members: arrayRemove(currentUser.uid)
-                    });
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', id), { members: arrayRemove(currentUser.uid) });
                     window.closeCommunityView();
                     showToast('تمت المغادرة', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء المغادرة', 'error');
-                }
+                } catch(e) { showToast('حدث خطأ أثناء المغادرة', 'error'); }
             });
         }
 
         window.removeMemberFromComm = async (commId, uid) => {
             showConfirm('هل أنت متأكد من إزالة هذا العضو من المجتمع؟', async () => {
                 try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
-                        members: arrayRemove(uid)
-                    });
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayRemove(uid) });
                     window.renderCommunitiesTab();
                     showToast('تمت إزالة العضو', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء الإزالة', 'error');
-                }
+                } catch(e) { showToast('حدث خطأ أثناء الإزالة', 'error'); }
             });
         }
 
         window.showAddMemberModal = (commId) => {
-            const comm = allCommunities.find(c => c.id === commId);
-            if (!comm) return;
+            const comm = allCommunities.find(c => c.id === commId); if(!comm) return;
             const list = document.getElementById('comm-friends-list');
             const friends = userData.friends || [];
             const availableFriends = friends.filter(uid => !comm.members.includes(uid));
-
+            
             const validFriends = availableFriends.map(uid => allUsers.find(x => x.uid === uid)).filter(Boolean);
 
             list.innerHTML = validFriends.map(u => {
@@ -3688,88 +3224,59 @@
                     <button onclick="window.addMemberToComm('${u.uid}', '${commId}')" class="bg-emerald-100 dark:bg-emerald-900/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">إضافة</button>
                 </div>`;
             }).join('');
-            if (!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">جميع أصدقائك موجودون بالفعل في هذا المجتمع.</p>';
-            document.getElementById('add-member-modal').classList.remove('hidden');
-            lucide.createIcons();
+            if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">جميع أصدقائك موجودون بالفعل في هذا المجتمع.</p>';
+            document.getElementById('add-member-modal').classList.remove('hidden'); lucide.createIcons();
         }
         window.closeAddMemberModal = () => document.getElementById('add-member-modal').classList.add('hidden');
-
+        
         window.addMemberToComm = async (uid, commId) => {
             try {
-                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), {
-                    members: arrayUnion(uid)
-                });
-                window.showAddMemberModal(commId);
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'communities', commId), { members: arrayUnion(uid) });
+                window.showAddMemberModal(commId); 
                 showToast('تمت الإضافة بنجاح', 'success');
-            } catch (e) {
-                showToast('حدث خطأ', 'error');
-            }
+            } catch(e) { showToast('حدث خطأ', 'error'); }
         }
 
         window.showCreateCommModal = () => document.getElementById('create-comm-modal').classList.remove('hidden');
-        window.closeCreateCommModal = () => {
-            document.getElementById('create-comm-modal').classList.add('hidden');
-            window.tmpCommImgFile = null;
-            window.tmpCommCoverFile = null;
-            document.getElementById('comm-icon-preview').src = 'https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128';
-            document.getElementById('comm-cover-preview').src = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop';
-        }
-
+        window.closeCreateCommModal = () => { document.getElementById('create-comm-modal').classList.add('hidden'); window.tmpCommImgFile = null; window.tmpCommCoverFile = null; document.getElementById('comm-icon-preview').src='https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128'; document.getElementById('comm-cover-preview').src='https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop'; }
+        
         window.handleCommCoverSelect = (e) => {
             const file = e.target.files[0];
-            if (file) {
-                window.tmpCommCoverFile = file;
-                document.getElementById('comm-cover-preview').src = URL.createObjectURL(file);
-            }
+            if(file) { window.tmpCommCoverFile = file; document.getElementById('comm-cover-preview').src = URL.createObjectURL(file); }
         }
 
         window.handleCommIconSelect = (e) => {
             const file = e.target.files[0];
-            if (file) {
-                window.tmpCommImgFile = file;
-                document.getElementById('comm-icon-preview').src = URL.createObjectURL(file);
-            }
+            if(file) { window.tmpCommImgFile = file; document.getElementById('comm-icon-preview').src = URL.createObjectURL(file); }
         }
 
         window.submitCreateComm = async () => {
             const name = document.getElementById('comm-name').value;
             const desc = document.getElementById('comm-desc').value;
-            if (!name.trim()) return showToast('يرجى إدخال اسم المجتمع', 'error');
+            if(!name.trim()) return showToast('يرجى إدخال اسم المجتمع', 'error');
             const btn = document.getElementById('create-comm-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري الإنشاء...';
             try {
                 let iconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=fff&rounded=true&size=128`;
                 let coverUrl = 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop';
-                if (window.tmpCommImgFile) iconUrl = await uploadToImgbb(window.tmpCommImgFile);
-                if (window.tmpCommCoverFile) coverUrl = await uploadToImgbb(window.tmpCommCoverFile);
+                if(window.tmpCommImgFile) iconUrl = await uploadToImgbb(window.tmpCommImgFile);
+                if(window.tmpCommCoverFile) coverUrl = await uploadToImgbb(window.tmpCommCoverFile);
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities')), {
-                    name,
-                    description: desc,
-                    iconUrl,
-                    coverUrl,
-                    color: document.getElementById('comm-color').value,
+                    name, description: desc, iconUrl, coverUrl, color: document.getElementById('comm-color').value,
                     isPrivate: document.getElementById('comm-privacy').value === 'private',
-                    creatorId: currentUser.uid,
-                    members: [currentUser.uid],
-                    joinRequests: [],
-                    createdAt: new Date().toISOString()
+                    creatorId: currentUser.uid, members: [currentUser.uid], joinRequests: [], createdAt: new Date().toISOString()
                 });
                 window.closeCreateCommModal();
-                document.getElementById('comm-name').value = '';
-                document.getElementById('comm-desc').value = '';
+                document.getElementById('comm-name').value=''; document.getElementById('comm-desc').value='';
                 showToast('تم إنشاء المجتمع بنجاح!', 'success');
-            } catch (e) {
-                showToast('حدث خطأ أثناء الإنشاء', 'error');
-            }
-            btn.disabled = false;
-            btn.innerHTML = 'إنشاء المجتمع';
+            } catch(e) { showToast('حدث خطأ أثناء الإنشاء', 'error'); }
+            btn.disabled = false; btn.innerHTML = 'إنشاء المجتمع';
         }
 
         window.renderNotificationsTab = () => {
             const list = document.getElementById('notifications-list');
-            const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+            const myNotifs = allNotifications.filter(n => n.to === currentUser.uid).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
             if (!myNotifs.length) {
                 list.innerHTML = '<div class="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="bell-off" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400">لا توجد إشعارات حالياً.</p></div>';
                 return;
@@ -3779,25 +3286,14 @@
                 const u = allUsers.find(x => x.uid === n.from);
                 if (!u) return '';
                 const bgClass = n.read ? 'bg-white dark:bg-slate-800' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800';
-
+                
                 let actionText = '';
                 let iconHtml = '';
-                if (n.type === 'comment') {
-                    actionText = 'علق على منشورك';
-                    iconHtml = '<i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>';
-                } else if (n.type === 'react_post') {
-                    actionText = 'تفاعل مع منشورك';
-                    iconHtml = '<i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-emerald-500"></i>';
-                } else if (n.type === 'react_comment') {
-                    actionText = 'تفاعل مع تعليقك';
-                    iconHtml = '<i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500"></i>';
-                } else if (n.type === 'reply') {
-                    actionText = 'قام بالرد والتعليق أيضاً';
-                    iconHtml = '<i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-500"></i>';
-                } else if (n.type === 'repost') {
-                    actionText = 'أعاد مشاركة منشورك';
-                    iconHtml = '<i data-lucide="repeat" class="w-3.5 h-3.5 text-emerald-500"></i>';
-                }
+                if(n.type === 'comment') { actionText = 'علق على منشورك'; iconHtml = '<i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+                else if(n.type === 'react_post') { actionText = 'تفاعل مع منشورك'; iconHtml = '<i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-emerald-500"></i>'; }
+                else if(n.type === 'react_comment') { actionText = 'تفاعل مع تعليقك'; iconHtml = '<i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500"></i>'; }
+                else if(n.type === 'reply') { actionText = 'قام بالرد والتعليق أيضاً'; iconHtml = '<i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-500"></i>'; }
+                else if(n.type === 'repost') { actionText = 'أعاد مشاركة منشورك'; iconHtml = '<i data-lucide="repeat" class="w-3.5 h-3.5 text-emerald-500"></i>'; }
 
                 return `<div onclick="window.openSinglePost('${n.postId}', '${n.id}', ${n.commentId ? `'${n.commentId}'` : null})" class="${bgClass} p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
                     <div class="flex items-center gap-3 md:gap-4">
@@ -3819,11 +3315,7 @@
         window.markAllNotifsRead = async () => {
             const unread = allNotifications.filter(n => n.to === currentUser.uid && !n.read);
             unread.forEach(async n => {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id), {
-                        read: true
-                    });
-                } catch (e) {}
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id), { read: true }); } catch(e) {}
             });
             showToast('تم تحديد الكل كمقروء', 'success');
         };
@@ -3831,24 +3323,24 @@
         window.clearAllNotifs = async () => {
             const myNotifs = allNotifications.filter(n => n.to === currentUser.uid);
             if (!myNotifs.length) return showToast('لا توجد إشعارات لمسحها', 'info');
-
+            
             showConfirm('هل أنت متأكد من مسح جميع الإشعارات بشكل نهائي؟', async () => {
                 try {
                     await Promise.all(myNotifs.map(n => deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', n.id))));
                     showToast('تم مسح جميع الإشعارات بنجاح', 'success');
-                } catch (e) {
-                    showToast('حدث خطأ أثناء المسح', 'error');
+                } catch(e) { 
+                    showToast('حدث خطأ أثناء المسح', 'error'); 
                 }
             });
         };
 
         window.renderSinglePostTab = () => {
-            if (!currentSinglePostId) return;
+            if(!currentSinglePostId) return;
             const container = document.getElementById('single-post-container');
             const sourceLabel = document.getElementById('single-post-source-label');
             const post = allPosts.find(p => p.id === currentSinglePostId);
-
-            if (post) {
+            
+            if(post) {
                 container.innerHTML = generatePostHTML(post, 'notif-');
                 if (sourceLabel) {
                     if (post.communityId) {
@@ -3866,24 +3358,17 @@
         };
 
         window.openSinglePost = async (postId, notifId = null, targetCommentId = null) => {
-            if (notifId) {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), {
-                        read: true
-                    });
-                } catch (e) {}
+            if(notifId) {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), { read: true }); } catch(e) {}
             }
             currentSinglePostId = postId;
             window.switchTab('singlepost');
-
-            if (targetCommentId) {
+            
+            if(targetCommentId) {
                 setTimeout(() => {
                     const cEl = document.getElementById(`notif-comment-${targetCommentId}`);
-                    if (cEl) {
-                        cEl.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
+                    if(cEl) {
+                        cEl.scrollIntoView({behavior: 'smooth', block: 'center'});
                         cEl.classList.add('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl', 'transition-colors', 'duration-1000');
                         setTimeout(() => cEl.classList.remove('bg-emerald-50', 'dark:bg-emerald-900/30', 'p-2', 'rounded-2xl'), 2000);
                     }
@@ -3891,44 +3376,38 @@
             }
         };
 
-        window.showCharterModal = () => {
+        window.showCharterModal = () => { 
             const modal = document.getElementById('charter-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('div').classList.remove('scale-95', 'opacity-0');
-            }, 10);
-            lucide.createIcons();
+            modal.classList.remove('hidden'); 
+            setTimeout(() => { modal.querySelector('div').classList.remove('scale-95', 'opacity-0'); }, 10);
+            lucide.createIcons(); 
         }
-
-        window.acceptCharter = () => {
-            localStorage.setItem('mytab_charter_accepted', 'true');
+        
+        window.acceptCharter = () => { 
+            localStorage.setItem('mytab_charter_accepted', 'true'); 
             const modal = document.getElementById('charter-modal');
             modal.querySelector('div').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
-        window.showWhyMyTabModal = () => {
+        window.showWhyMyTabModal = () => { 
             const modal = document.getElementById('why-mytab-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('div').classList.remove('scale-95', 'opacity-0');
+            modal.classList.remove('hidden'); 
+            setTimeout(() => { 
+                modal.querySelector('div').classList.remove('scale-95', 'opacity-0'); 
             }, 10);
-            lucide.createIcons();
+            lucide.createIcons(); 
         }
-
-        window.closeWhyMyTabModal = () => {
+        
+        window.closeWhyMyTabModal = () => { 
             const modal = document.getElementById('why-mytab-modal');
             modal.querySelector('div').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
 
         // ===============================================================
+
     </script>
 </body>
-
 </html>
