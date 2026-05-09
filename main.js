@@ -2701,6 +2701,41 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
+        // --- Mobile Menu Toggle Logic ---
+        window.toggleMobileMenu = () => {
+            const sidebar = document.getElementById('sidebar-nav');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            if(sidebar && overlay) {
+                sidebar.classList.remove('w-14');
+                sidebar.classList.add('fixed', 'right-0', 'inset-y-0', 'transform', 'md:translate-x-0', 'md:relative', 'z-50', 'transition-transform', 'duration-300', 'shadow-2xl');
+                
+                if (!sidebar.classList.contains('translate-x-full') && !sidebar.classList.contains('menu-opened')) {
+                     sidebar.classList.add('translate-x-full');
+                }
+
+                if(sidebar.classList.contains('translate-x-full')) {
+                    sidebar.classList.remove('translate-x-full');
+                    sidebar.classList.add('menu-opened');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                } else {
+                    sidebar.classList.add('translate-x-full');
+                    sidebar.classList.remove('menu-opened');
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                }
+            }
+        };
+
+        const _originalSwitchTab = window.switchTab;
+        window.switchTab = (tab, preserveState = false) => {
+            if (_originalSwitchTab) _originalSwitchTab(tab, preserveState);
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar-nav');
+                if(sidebar && sidebar.classList.contains('menu-opened')) window.toggleMobileMenu();
+            }
+        };
+
         // --- Mobile Menu Logic Fix ---
         window.toggleMobileMenu = () => {
             let sidebar = document.getElementById('sidebar-nav');
@@ -2768,4 +2803,3 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
         }, 100);
 
         // ===============================================================
-
