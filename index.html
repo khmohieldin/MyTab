@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyTab - مساحتك الآمنة</title>
+
     <!-- Tailwind CSS with Dark Mode config -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -705,7 +700,11 @@
         
         let parsedFirebaseConfig;
         if (typeof __firebase_config !== 'undefined') {
-            parsedFirebaseConfig = JSON.parse(__firebase_config);
+            try {
+                parsedFirebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+            } catch (e) {
+                parsedFirebaseConfig = __firebase_config;
+            }
         } else {
             parsedFirebaseConfig = {
                 apiKey: "AIzaSyB6owxIha9VxWWWb0cb7CXK6rV9Zx7QhCE",
@@ -805,7 +804,9 @@
             'rose': { bg: 'bg-rose-100 dark:bg-rose-900/40', border: 'border-rose-300 dark:border-rose-700/50', text: 'text-rose-900 dark:text-rose-100' },
         };
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
         updateThemeIcons();
 
         // --- Admin Setup ---
@@ -836,7 +837,9 @@
             if(desktopIcon) desktopIcon.setAttribute('data-lucide', iconName);
             if(desktopText) desktopText.innerText = text;
             if(mobileIcon) mobileIcon.setAttribute('data-lucide', iconName);
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
 
         // --- Auth Observer ---
@@ -986,6 +989,7 @@
                 viewingUid = currentUser.uid;
                 isAdminStealthMode = false;
             }
+            activeArchiveDate = null;
             
             activeTabStr = tab;
             ['feed', 'profile', 'search', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
@@ -1952,7 +1956,10 @@
 
         window.setArchiveDate = (date) => {
             activeArchiveDate = date;
-            renderFeedTab();
+            if (activeTabStr === 'feed') renderFeedTab();
+            else if (activeTabStr === 'profile') renderProfileTab();
+            else if (activeTabStr === 'communities') window.renderCommunitiesTab();
+            
             if (date) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 showToast(`عرض أرشيف يوم ${date}`, 'info');
@@ -2153,7 +2160,65 @@
 
             if (canView) {
                 const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-                postsContainer.innerHTML = myP.length ? myP.map(p => generatePostHTML(p)).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
+                
+                let postsHtml = '';
+                if (!myP.length) {
+                    postsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
+                } else if (activeArchiveDate) {
+                    const archPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === activeArchiveDate);
+                    postsHtml = `
+                        <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
+                                <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
+                            </div>
+                            <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف</button>
+                        </div>
+                        ${archPosts.map(p => generatePostHTML(p)).join('')}
+                    `;
+                } else {
+                    const today = new Date().toLocaleDateString('en-CA');
+                    const todayPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === today);
+                    const olderPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') !== today);
+
+                    const archiveGroups = {};
+                    olderPosts.forEach(p => {
+                        const d = new Date(p.createdAt).toLocaleDateString('en-CA');
+                        if (!archiveGroups[d]) archiveGroups[d] = 0;
+                        archiveGroups[d]++;
+                    });
+
+                    const archiveColors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
+                    let archiveHtml = '';
+                    if (Object.keys(archiveGroups).length > 0) {
+                        archiveHtml = `
+                        <div class="mt-8 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8">
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> الأرشيف الزمني للمنشورات</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${Object.keys(archiveGroups).sort().reverse().map((date, idx) => {
+                                    const color = archiveColors[idx % archiveColors.length];
+                                    return \`
+                                    <div onclick="window.setArchiveDate('\${date}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                                        <div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b \${color}"></div>
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">ذكريات يوم</p>
+                                                <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">\${date}</h4>
+                                            </div>
+                                            <div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
+                                                <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">\${archiveGroups[date]}</span>
+                                                <span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span>
+                                            </div>
+                                        </div>
+                                    </div>\`;
+                                }).join('')}
+                            </div>
+                        </div>`;
+                    }
+                    postsHtml = todayPosts.map(p => generatePostHTML(p)).join('') + archiveHtml;
+                }
+
+                postsContainer.innerHTML = postsHtml;
                 postsSectionHeader.classList.remove('hidden');
             } else {
                 postsContainer.innerHTML = '';
@@ -2683,6 +2748,65 @@
                 const hasRequested = (comm.joinRequests || []).includes(currentUser.uid);
                 const cPosts = allPosts.filter(p => p.communityId === comm.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
                 
+                let communityPostsHtml = '';
+                if (isMember || isAdminStealthMode) {
+                    if (!cPosts.length) {
+                        communityPostsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>';
+                    } else if (activeArchiveDate) {
+                        const archPosts = cPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === activeArchiveDate);
+                        communityPostsHtml = `
+                            <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
+                                    <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
+                                </div>
+                                <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف</button>
+                            </div>
+                            ${archPosts.map(p => generatePostHTML(p)).join('')}
+                        `;
+                    } else {
+                        const today = new Date().toLocaleDateString('en-CA');
+                        const todayPosts = cPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === today);
+                        const olderPosts = cPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') !== today);
+
+                        const archiveGroups = {};
+                        olderPosts.forEach(p => {
+                            const d = new Date(p.createdAt).toLocaleDateString('en-CA');
+                            if (!archiveGroups[d]) archiveGroups[d] = 0;
+                            archiveGroups[d]++;
+                        });
+
+                        const archiveColors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
+                        let archiveHtml = '';
+                        if (Object.keys(archiveGroups).length > 0) {
+                            archiveHtml = `
+                            <div class="mt-8 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8">
+                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> أرشيف المجتمع</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    ${Object.keys(archiveGroups).sort().reverse().map((date, idx) => {
+                                        const color = archiveColors[idx % archiveColors.length];
+                                        return \`
+                                        <div onclick="window.setArchiveDate('\${date}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                                            <div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b \${color}"></div>
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">منشورات يوم</p>
+                                                    <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">\${date}</h4>
+                                                </div>
+                                                <div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
+                                                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">\${archiveGroups[date]}</span>
+                                                    <span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span>
+                                                </div>
+                                            </div>
+                                        </div>\`;
+                                    }).join('')}
+                                </div>
+                            </div>`;
+                        }
+                        communityPostsHtml = todayPosts.map(p => generatePostHTML(p)).join('') + archiveHtml;
+                    }
+                }
+
                 let topActionBtn = '';
                 if (isAdmin) topActionBtn = `<button onclick="window.deleteCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">حذف المجتمع</span><span class="sm:hidden">حذف</span></button>`;
                 else if (isMember) topActionBtn = `<button onclick="window.leaveCommunity('${comm.id}')" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> <span class="hidden sm:inline">مغادرة المجتمع</span><span class="sm:hidden">مغادرة</span></button>`;
@@ -2781,7 +2905,7 @@
 
                 <div class="mb-8">
                     <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-4 border-r-4 border-emerald-500 pr-2">منشورات المجتمع</h3>
-                    ${isMember ? `
+                    ${isMember && !activeArchiveDate ? `
                     <div id="create-comm-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors mb-6">
                         <div class="flex gap-3 md:gap-4">
                             <img src="${userData.photoUrl}" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800">
@@ -2810,10 +2934,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>` : `<div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl text-slate-500 dark:text-slate-400 text-sm text-center mb-6 border border-slate-200 dark:border-slate-700">عليك الانضمام للمجتمع أولاً حتى تتمكن من النشر ورؤية محتوياته.</div>`}
-                    <div>${isMember || isAdminStealthMode ? (cPosts.length ? cPosts.map(p => generatePostHTML(p)).join('') : '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>') : ''}</div>
+                    </div>` : (!activeArchiveDate ? `<div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl text-slate-500 dark:text-slate-400 text-sm text-center mb-6 border border-slate-200 dark:border-slate-700">عليك الانضمام للمجتمع أولاً حتى تتمكن من النشر ورؤية محتوياته.</div>` : '')}
+                    <div>${communityPostsHtml}</div>
                 </div>`;
-                if(isMember) window.setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
+                if(isMember && !activeArchiveDate) window.setPostColor('white', 'comm-color-picker', 'create-comm-post-container');
             } else {
                 const myComms = allCommunities.filter(c => c.members.includes(currentUser.uid));
                 container.innerHTML = `
@@ -3079,39 +3203,7 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
-        // ==================== حماية الصفحة من الفحص ====================
-        // 1. تعطيل النقر بزر الماوس الأيمن (كليك يمين)
-        document.addEventListener('contextmenu', event => event.preventDefault());
 
-        // 2. تعطيل اختصارات لوحة المفاتيح الشائعة لعرض المصدر وأدوات المطور
-        document.addEventListener('keydown', event => {
-            // تعطيل F12
-            if (event.keyCode === 123) {
-                event.preventDefault(); 
-                return false;
-            }
-            // تعطيل Ctrl+Shift+I و Ctrl+Shift+J و Ctrl+Shift+C
-            if (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74 || event.keyCode === 67)) {
-                event.preventDefault(); 
-                return false;
-            }
-            // تعطيل Ctrl+U (عرض المصدر) و Ctrl+S (حفظ) و Ctrl+P (طباعة)
-            if (event.ctrlKey && (event.keyCode === 85 || event.keyCode === 83 || event.keyCode === 80)) {
-                event.preventDefault(); 
-                return false;
-            }
-        });
-
-        // 3. فخ الديباج (Debugger Trap) لتعطيل أدوات المطور وإزعاج من يحاول فحص الكود
-        // إذا تمكن شخص من فتح أدوات المطور، ستتوقف الصفحة عن العمل وسيتم إخفاء المحتوى
-        setInterval(() => {
-            const before = new Date().getTime();
-            debugger; // سيوقف هذا السطر تنفيذ الكود إذا كانت أدوات المطور مفتوحة
-            const after = new Date().getTime();
-            if (after - before > 100) { // إذا توقف الكود (مما يعني أن أدوات المطور مفتوحة)
-                document.body.innerHTML = '<div style="display:flex; height:100vh; width:100vw; background:#000; color:#0f0; justify-content:center; align-items:center; font-size:24px; direction:rtl;">غير مصرح لك بفحص الكود!</div>';
-            }
-        }, 1000);
         // ===============================================================
 
     </script>
