@@ -724,8 +724,8 @@
                                 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
                                 <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-6 h-6"></i></button>
                                 <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
-                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا... أو ضع روابط" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') sendMessage('text')">
-                                <button onclick="sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
+                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا... أو ضع روابط" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') window.sendMessage('text')">
+                                <button onclick="window.sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
                             </div>
                         </div>
                     </div>
@@ -1819,12 +1819,9 @@
                 statsHTML = `<div class="flex items-center justify-between mb-2 px-1 border-b border-black/5 dark:border-white/5 pb-2 mt-2">
                     <div onclick="window.showReactors('${post.id}')" class="flex items-center gap-1.5 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors w-fit px-1">
                         ${tReact > 0 ? `
-                        <div class="flex -space-x-1 rtl:space-x-reverse">
-                            ${Object.values(reactions).includes('heart') ? `<i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500 fill-current bg-white dark:bg-slate-800 rounded-full shadow-sm border dark:border-slate-700"></i>` : ''}
-                            ${Object.values(reactions).includes('like') ? `<i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 bg-white dark:bg-slate-800 rounded-full shadow-sm border dark:border-slate-700"></i>` : ''}
-                            ${Object.values(reactions).includes('sad') ? `<i data-lucide="frown" class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 bg-white dark:bg-slate-800 rounded-full shadow-sm border dark:border-slate-700"></i>` : ''}
-                            ${Object.values(reactions).includes('angry') ? `<i data-lucide="angry" class="w-3.5 h-3.5 text-red-600 dark:text-red-400 bg-white dark:bg-slate-800 rounded-full shadow-sm border dark:border-slate-700"></i>` : ''}
-                        </div><span class="text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 font-medium">${tReact} &bull; ${reactNames}</span>
+                        <div class="flex -space-x-1.5 rtl:space-x-reverse z-0">
+                            ${[...new Set(Object.values(reactions))].slice(0,3).map(r => `<div class="w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 shrink-0 z-10">${window.getReactionIconStr(r)}</div>`).join('')}
+                        </div><span class="text-sm md:text-[15px] mr-2 text-slate-500 dark:text-slate-400 font-bold">${tReact} &bull; ${reactNames}</span>
                         ` : ''}
                     </div>
                     ${shareCount > 0 ? `<div class="text-[11px] md:text-[12px] text-slate-500 dark:text-slate-400 font-medium cursor-help flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" title="شارك بواسطة: ${reposts.map(r=>r.authorName).join('، ')}">${shareCount} مشاركة (${shareNames}) <i data-lucide="repeat" class="w-3.5 h-3.5"></i></div>` : ''}
@@ -1875,14 +1872,16 @@
                 `}
                 ${statsHTML}
                 <div class="flex flex-wrap items-center gap-1.5 relative">
-                    <div id="${idPrefix}picker-${post.id}" class="reaction-picker absolute -top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-2.5 py-1.5 gap-2 z-10 animate-in fade-in zoom-in duration-200">
-                        <button onclick="window.handleReact('${post.id}', 'like', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="thumbs-up" class="w-[20px] h-[20px] text-blue-500 dark:text-blue-400"></i></button>
-                        <button onclick="window.handleReact('${post.id}', 'heart', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="heart" class="w-[20px] h-[20px] text-rose-500 dark:text-rose-400 fill-current"></i></button>
-                        <button onclick="window.handleReact('${post.id}', 'sad', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="frown" class="w-[20px] h-[20px] text-amber-500 dark:text-amber-400"></i></button>
-                        <button onclick="window.handleReact('${post.id}', 'angry', '${idPrefix}')" class="hover:scale-125 transition-transform"><i data-lucide="angry" class="w-[20px] h-[20px] text-red-600 dark:text-red-400"></i></button>
+                    <div id="${idPrefix}picker-${post.id}" class="reaction-picker absolute -top-14 right-0 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-full px-3 py-2 gap-3 z-20 animate-in fade-in zoom-in duration-200">
+                        <button onclick="window.handleReact('${post.id}', '👍', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">👍</button>
+                        <button onclick="window.handleReact('${post.id}', '❤️', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">❤️</button>
+                        <button onclick="window.handleReact('${post.id}', '😂', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😂</button>
+                        <button onclick="window.handleReact('${post.id}', '😮', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😮</button>
+                        <button onclick="window.handleReact('${post.id}', '😢', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😢</button>
+                        <button onclick="window.handleReact('${post.id}', '🙏', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">🙏</button>
                     </div>
-                    <button onclick="window.togglePicker('${post.id}', '${idPrefix}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors ${myReact ? getRColor(myReact) : 'text-slate-600 dark:text-slate-300'}">
-                        <i data-lucide="${myReact?getRIconName(myReact):'thumbs-up'}" class="w-[18px] h-[18px] ${myReact==='heart'?'fill-current':''}"></i> <span>${myReact?'تفاعلت':'تفاعل'}</span>
+                    <button onclick="window.togglePicker('${post.id}', '${idPrefix}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors ${myReact && ['like','heart','sad','angry'].includes(myReact) ? getRColor(myReact) : (myReact ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300')}">
+                        ${myReact ? (['like','heart','sad','angry'].includes(myReact) ? `<i data-lucide="${getRIconName(myReact)}" class="w-[18px] h-[18px] ${myReact==='heart'?'fill-current text-rose-500':''}"></i>` : `<span class="text-lg leading-none">${myReact}</span>`) : `<i data-lucide="thumbs-up" class="w-[18px] h-[18px]"></i>`} <span>${myReact ? 'تفاعلت' : 'تفاعل'}</span>
                     </button>
                     <button onclick="document.getElementById('${idPrefix}c-input-${post.id}').focus()" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                         <i data-lucide="message-square" class="w-[18px] h-[18px]"></i> <span>تعليق</span>
@@ -1951,20 +1950,20 @@
                             <span onclick="event.stopPropagation(); window.viewProfile('${c.authorId}')" class="font-extrabold text-slate-900 dark:text-slate-100 text-[14px] md:text-[15px] flex items-center mb-0.5 hover:underline transition-colors gap-1">${aName}${window.getUserBadge(c.authorId)}</span>
                             <p class="text-slate-900 dark:text-slate-100 text-[14px] md:text-[15px] font-bold leading-snug break-words">${c.text}</p>
                             
-                            <div id="${idPrefix}cpicker-${c.id}" class="reaction-picker absolute -top-12 right-0 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-full px-3 py-2 gap-2 z-20" onclick="event.stopPropagation()">
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '👍', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">👍</button>
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '❤️', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">❤️</button>
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😂', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😂</button>
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😮', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😮</button>
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😢', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">😢</button>
-                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '🙏', '${idPrefix}')" class="text-lg hover:scale-125 transition-transform">🙏</button>
+                            <div id="${idPrefix}cpicker-${c.id}" class="reaction-picker absolute -top-14 right-0 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-full px-3 py-2 gap-3 z-20" onclick="event.stopPropagation()">
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '👍', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">👍</button>
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '❤️', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">❤️</button>
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😂', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😂</button>
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😮', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😮</button>
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '😢', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">😢</button>
+                                <button onclick="window.handleCReact('${post.id}', '${c.id}', '🙏', '${idPrefix}')" class="text-2xl hover:scale-125 transition-transform">🙏</button>
                             </div>
                         </div>
                         <div class="flex items-center gap-4 mt-1.5 px-3 relative w-full">
                             <span class="text-[12px] md:text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:underline cursor-pointer">${timeAgo}</span>
-                            <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[13px] md:text-[14px] font-extrabold transition-colors hover:underline ${myR?'text-blue-600 dark:text-blue-400':'text-slate-500 dark:text-[#B0B3B8]'}">${myR && !['like','heart','sad','angry'].includes(myR) ? myR : 'أعجبني'}</button>
+                            <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[13px] md:text-[14px] font-extrabold transition-colors flex items-center gap-1.5 hover:underline ${myR && ['like','heart','sad','angry'].includes(myR) ? 'text-blue-600 dark:text-blue-400' : (myR ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-[#B0B3B8]')}">${myR ? (['like','heart','sad','angry'].includes(myR) ? 'تفاعلت' : `<span class="text-base leading-none drop-shadow-sm">${myR}</span> تفاعلت`) : 'تفاعل'}</button>
                             <button onclick="window.replyToComment('${post.id}', '${rootCommentId || c.id}', '${aName}', '${idPrefix}')" class="text-[13px] md:text-[14px] font-extrabold text-slate-500 dark:text-[#B0B3B8] hover:text-slate-700 dark:hover:text-slate-200 transition-colors hover:underline">رد</button>
-                            ${tR>0 ? `<div onclick="window.showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md rounded-full px-1.5 py-0.5 absolute left-0 -top-5 text-[11px] md:text-[12px] text-slate-600 dark:text-slate-300 cursor-pointer hover:scale-110 transition-transform"><i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 fill-current"></i><span class="font-bold">${tR}</span></div>`:''}
+                            ${tR>0 ? `<div onclick="window.showCommentReactors('${post.id}', '${c.id}')" class="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md rounded-full px-2.5 py-1 absolute left-0 -top-6 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:scale-110 transition-transform"><div class="flex items-center justify-center">${window.getReactionIconStr(Object.values(reacts)[0])}</div><span class="font-bold">${tR}</span></div>`:''}
                         </div>
                     </div>
                     ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="window.deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${c.authorId === currentUser.uid ? `<button onclick="window.openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
@@ -1983,12 +1982,11 @@
         function getRIconName(type) { return {like:'thumbs-up', heart:'heart', sad:'frown', angry:'angry'}[type] || 'thumbs-up'; }
         
         window.getReactionIconStr = (type) => {
-            if(type==='like') return '<i data-lucide="thumbs-up" class="w-5 h-5 text-blue-500 dark:text-blue-400"></i>';
-            if(type==='heart') return '<i data-lucide="heart" class="w-5 h-5 text-rose-500 dark:text-rose-400 fill-current"></i>';
-            if(type==='sad') return '<i data-lucide="frown" class="w-5 h-5 text-amber-500 dark:text-amber-400"></i>';
-            if(type==='angry') return '<i data-lucide="angry" class="w-5 h-5 text-red-600 dark:text-red-400"></i>';
-            if(['👍','❤️','😂','😮','😢','🙏'].includes(type)) return `<span class="text-xl leading-none">${type}</span>`;
-            return '';
+            if(type==='like') return '<i data-lucide="thumbs-up" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i>';
+            if(type==='heart') return '<i data-lucide="heart" class="w-4 h-4 text-rose-500 dark:text-rose-400 fill-current"></i>';
+            if(type==='sad') return '<i data-lucide="frown" class="w-4 h-4 text-amber-500 dark:text-amber-400"></i>';
+            if(type==='angry') return '<i data-lucide="angry" class="w-4 h-4 text-red-600 dark:text-red-400"></i>';
+            return `<span class="text-sm leading-none">${type}</span>`;
         }
 
         window.togglePicker = (postId, idPrefix = '') => {
@@ -2240,7 +2238,7 @@
                         <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600">
                         <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
                     </div>
-                    <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${window.getReactionIconStr(rType)}</div>
+                    <div class="bg-slate-100 dark:bg-slate-700 flex items-center justify-center rounded-full shadow-sm w-9 h-9 text-xl">${window.getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
             if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
@@ -2264,7 +2262,7 @@
                         <img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600">
                         <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${u.displayName}</span>
                     </div>
-                    <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-full shadow-sm">${window.getReactionIconStr(rType)}</div>
+                    <div class="bg-slate-100 dark:bg-slate-700 flex items-center justify-center rounded-full shadow-sm w-9 h-9 text-xl">${window.getReactionIconStr(rType)}</div>
                 </div>`;
             }).join('');
             if(!list.innerHTML) list.innerHTML = '<p class="text-center text-slate-500 dark:text-slate-400 py-4">لا يوجد تفاعلات.</p>';
@@ -3009,7 +3007,9 @@
                     canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    window.chatImageBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+                    // الحفاظ على شفافية الـ PNG أو استخدام JPEG للصور العادية لتقليل الحجم
+                    const outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    window.chatImageBase64 = canvas.toDataURL(outType, 0.7); 
                     document.getElementById('chat-image-preview-container').classList.remove('hidden');
                     document.getElementById('chat-image-preview').src = window.chatImageBase64;
                 };
@@ -3032,6 +3032,13 @@
             document.getElementById('chat-room-avatar').src = friend.photoUrl;
             document.getElementById('chat-room-name').innerHTML = friend.displayName + window.getUserBadge(friend.uid);
             const msgsArea = document.getElementById('chat-messages-area');
+            
+            // إغلاق أي قائمة تفاعل مفتوحة إذا تم الضغط في أي مساحة فارغة في المحادثة
+            msgsArea.onclick = (e) => {
+                if(!e.target.closest('.msg-bubble-container')) {
+                    document.querySelectorAll('[id^="msg-picker-"]').forEach(p => p.classList.add('hidden'));
+                }
+            };
             const fMsgs = allMessages.filter(m => (m.senderId === currentUser.uid && m.receiverId === friend.uid) || (m.senderId === friend.uid && m.receiverId === currentUser.uid)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
             fMsgs.filter(m => m.receiverId === currentUser.uid && !m.read).forEach(async m => { try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id), { read: true }); } catch(e) {} });
             let html = '', lastDate = '';
@@ -3047,23 +3054,27 @@
                 const delBtn = isMe ? `<button onclick="window.deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100 mx-1" title="حذف الرسالة"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : '';
                 
                 let reactsHtml = '';
+                let hasReacts = false;
                 if(m.reactions && Object.keys(m.reactions).length > 0) {
+                    hasReacts = true;
                     const rCounts = {};
                     Object.values(m.reactions).forEach(e => rCounts[e] = (rCounts[e]||0)+1);
-                    reactsHtml = `<div class="absolute ${isMe?'-bottom-3 right-2':'-bottom-3 left-2'} flex gap-1 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full px-1.5 py-0.5 text-[10px] z-10 select-none">` + 
-                        Object.keys(rCounts).map(e => `<span class="flex items-center gap-0.5">${e}${rCounts[e]>1?` <span class="font-bold text-slate-500">${rCounts[e]}</span>`:''}</span>`).join('') + 
+                    reactsHtml = `<div class="absolute ${isMe?'-bottom-3 right-2':'-bottom-3 left-2'} flex gap-1 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full px-2 py-0.5 text-sm md:text-base z-10 select-none items-center">` + 
+                        Object.keys(rCounts).map(e => `<span class="flex items-center gap-1">${e}${rCounts[e]>1?` <span class="font-bold text-slate-500 text-xs">${rCounts[e]}</span>`:''}</span>`).join('') + 
                         `</div>`;
                 }
 
-                const reactBtn = `<div class="relative group/picker mx-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button class="text-slate-400 hover:text-emerald-500 p-1 bg-slate-50 dark:bg-slate-800 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onclick="document.getElementById('msg-picker-${m.id}').classList.toggle('hidden')"><i data-lucide="smile" class="w-3 h-3"></i></button>
-                    <div id="msg-picker-${m.id}" class="hidden absolute bottom-full mb-1 ${isMe?'right-0':'left-0'} bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-2 z-20 w-[180px] grid grid-cols-5 gap-1">
-                        ${msgEmojis.map(e => `<button onclick="window.reactToMessage('${m.id}', '${e}')" class="hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-lg text-base hover:scale-125 transition-transform flex justify-center items-center">${e}</button>`).join('')}
-                    </div>
+                const msgPickerHtml = `<div id="msg-picker-${m.id}" class="hidden absolute bottom-[calc(100%+5px)] ${isMe?'right-0':'left-0'} bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-2 py-1.5 z-30 flex items-center gap-1.5 animate-in zoom-in duration-200 w-max" onclick="event.stopPropagation()">
+                    ${['❤️','😂','👍','😮','😢','🙏'].map(e => `<button onclick="window.reactToMessage('${m.id}', '${e}')" class="hover:bg-slate-100 dark:hover:bg-slate-700 w-8 h-8 rounded-full text-lg hover:scale-125 transition-transform flex justify-center items-center">${e}</button>`).join('')}
                 </div>`;
+                const clickAction = `onclick="document.querySelectorAll('[id^=\\'msg-picker-\\']').forEach(el => { if(el.id !== 'msg-picker-${m.id}') el.classList.add('hidden') }); document.getElementById('msg-picker-${m.id}').classList.toggle('hidden')"`;
+                
+                // تزويد المساحة السفلية في حالة وجود تفاعل عشان ميغطيش النص
+                const bubblePadding = hasReacts ? 'px-4 pt-2.5 pb-4' : 'px-4 py-2.5';
+                const sharedBubblePadding = hasReacts ? 'px-3 pt-2.5 pb-4' : 'px-3 py-2.5';
 
                 if (m.type === 'sticker') {
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="text-[40px] leading-none mb-1 cursor-default hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative cursor-pointer msg-bubble-container" ${clickAction}>${msgPickerHtml}<div class="text-[40px] leading-none mb-1 hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else if (m.type === 'post_share') {
                     const sp = allPosts.find(p => p.id === m.content);
                     let sharedHtml = '';
@@ -3076,7 +3087,7 @@
                             contextIcon = 'layers';
                         }
                         
-                        sharedHtml = `<div class="mt-2 w-60 md:w-64 bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-black/10 dark:border-white/10 cursor-pointer hover:opacity-90 transition-opacity flex flex-col" onclick="window.openSinglePost('${sp.id}')">
+                        sharedHtml = `<div class="mt-2 w-60 md:w-64 bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-black/10 dark:border-white/10 cursor-pointer hover:opacity-90 transition-opacity flex flex-col" onclick="event.stopPropagation(); window.openSinglePost('${sp.id}')">
                             <div class="bg-slate-100 dark:bg-slate-900/60 px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 border-b border-black/5 dark:border-white/5">
                                 <div class="flex items-center gap-1.5">
                                     <i data-lucide="${contextIcon}" class="w-3 h-3"></i> من: ${contextName}
@@ -3096,21 +3107,21 @@
                     } else {
                         sharedHtml = `<div class="p-2.5 bg-white/50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-700 dark:text-slate-300 mt-2 border border-black/10 dark:border-white/10 font-bold">هذا المنشور غير متوفر أو تم حذفه</div>`;
                     }
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-3 py-2.5 rounded-2xl max-w-[85%] text-sm shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${sharedBubblePadding} rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
                     const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
                     
                     if (m.type === 'image') {
-                        messageBody += `<img src="${m.imageUrl}" class="max-w-full rounded-xl cursor-zoom-in mb-2" onclick="window.openLightbox('${m.imageUrl}')" style="max-height: 250px;">`;
+                        messageBody += `<img src="${m.imageUrl}" class="max-w-full rounded-xl cursor-zoom-in mb-2" onclick="event.stopPropagation(); window.openLightbox('${m.imageUrl}')" style="max-height: 250px;">`;
                     }
                     if (m.content) {
                         messageBody += formatMessageContent(m.content, isMe);
                     }
-                    if(ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
-                    if(tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
+                    if(ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
+                    if(tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2" onclick="event.stopPropagation()"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 }
             });
             if (!fMsgs.length) html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
@@ -3118,6 +3129,14 @@
             msgsArea.innerHTML = html; lucide.createIcons();
             if (isAtBottom || html.includes('hand')) msgsArea.scrollTop = msgsArea.scrollHeight;
         }
+
+        window.toggleMsgPicker = (msgId) => {
+            document.querySelectorAll('[id^="msg-picker-"]').forEach(el => {
+                if (el.id !== 'msg-picker-' + msgId) el.classList.add('hidden');
+            });
+            const p = document.getElementById('msg-picker-' + msgId);
+            if (p) p.classList.toggle('hidden');
+        };
 
         window.reactToMessage = async (msgId, emoji) => {
             if(!currentUser) return;
@@ -3133,7 +3152,7 @@
             try { await updateDoc(msgRef, { reactions: reacts }); } catch(e) { showToast('خطأ في التفاعل', 'error'); }
             const picker = document.getElementById(`msg-picker-${msgId}`);
             if(picker) picker.classList.add('hidden');
-        }
+        };
 
         window.deleteEntireChat = async (uid) => {
             showConfirm('هل أنت متأكد من حذف هذه المحادثة بالكامل وإزالتها من القائمة؟ (سيتم الحذف نهائياً)', async () => {
