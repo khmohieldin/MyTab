@@ -48,6 +48,49 @@
         
         .reaction-picker { display: none; }
         .reaction-picker.show { display: flex; }
+        
+        /* === تعديلات الموبايل: تكبير الخطوط والأيقونات وإظهار القائمة لتشبه فيسبوك === */
+        @media (max-width: 767px) {
+            /* تكبير النصوص الثابتة لتشبه مقاسات فيسبوك */
+            .text-\\[14px\\] { font-size: 16.5px !important; line-height: 1.6 !important; }
+            .text-\\[13px\\] { font-size: 15.5px !important; }
+            .text-\\[12px\\] { font-size: 14.5px !important; }
+            .text-\\[11px\\] { font-size: 13.5px !important; }
+            .text-\\[10px\\] { font-size: 12.5px !important; }
+            
+            /* تكبير الأيقونات (أزرار التفاعل، المنشورات، إلخ) */
+            .w-\\[18px\\] { width: 24px !important; }
+            .h-\\[18px\\] { height: 24px !important; }
+            .w-\\[20px\\] { width: 26px !important; }
+            .h-\\[20px\\] { height: 26px !important; }
+            .w-\\[15px\\] { width: 22px !important; }
+            .h-\\[15px\\] { height: 22px !important; }
+            .w-\\[14px\\] { width: 20px !important; }
+            .h-\\[14px\\] { height: 20px !important; }
+            
+            /* تكبير خطوط Tailwind الأساسية */
+            .text-sm { font-size: 16px !important; }
+            .text-xs { font-size: 14.5px !important; }
+            
+            /* تكبير صور البروفايل لتكون أوضح */
+            .w-9 { width: 44px !important; }
+            .h-9 { height: 44px !important; }
+            .w-8 { width: 40px !important; }
+            .h-8 { height: 40px !important; }
+            
+            /* إظهار نصوص القائمة الجانبية عند فتحها في الموبايل وتكبير عناصرها */
+            #sidebar-nav.menu-opened span.hidden.md\\:block { display: block !important; font-size: 17px !important; font-weight: bold; }
+            #sidebar-nav.menu-opened .w-\\[18px\\] { width: 28px !important; height: 28px !important; margin-left: 12px; }
+            #sidebar-nav.menu-opened .nav-btn { justify-content: flex-start !important; padding: 14px 24px !important; margin-bottom: 8px; }
+            
+            /* تكبير أيقونات الشريط العلوي واسم الموقع */
+            .md\\:hidden i[data-lucide="menu"], .md\\:hidden i[data-lucide="shield"] { width: 30px !important; height: 30px !important; }
+            .md\\:hidden h1 { font-size: 1.6rem !important; }
+            
+            /* تكبير الإيموجي وحقول الإدخال لتسهيل الكتابة واللمس */
+            .reaction-picker button { font-size: 28px !important; padding: 4px; }
+            input, textarea { font-size: 16px !important; }
+        }
     </style>
 </head>
 <body dir="rtl" class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
