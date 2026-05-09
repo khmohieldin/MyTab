@@ -2164,7 +2164,7 @@
                 let postsHtml = '';
                 if (!myP.length) {
                     postsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
-                } else if (activeArchiveDate) {
+                                } else if (activeArchiveDate) {
                     const archPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === activeArchiveDate);
                     postsHtml = `
                         <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
@@ -2172,7 +2172,7 @@
                                 <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
                                 <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
                             </div>
-                            <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف</button>
+                            <button onclick="window.setArchiveLevel('month', '${activeArchiveMonth}')" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">عودة للأيام</button>
                         </div>
                         ${archPosts.map(p => generatePostHTML(p)).join('')}
                     `;
@@ -2181,40 +2181,7 @@
                     const todayPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === today);
                     const olderPosts = myP.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') !== today);
 
-                    const archiveGroups = {};
-                    olderPosts.forEach(p => {
-                        const d = new Date(p.createdAt).toLocaleDateString('en-CA');
-                        if (!archiveGroups[d]) archiveGroups[d] = 0;
-                        archiveGroups[d]++;
-                    });
-
-                    const archiveColors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
-                    let archiveHtml = '';
-                    if (Object.keys(archiveGroups).length > 0) {
-                        archiveHtml = `
-                        <div class="mt-8 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8">
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> الأرشيف الزمني للمنشورات</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                ${Object.keys(archiveGroups).sort().reverse().map((date, idx) => {
-                                    const color = archiveColors[idx % archiveColors.length];
-                                                                            return `
-                                        <div onclick="window.setArchiveDate('${date}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
-                                            <div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${color}"></div>
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">ذكريات يوم</p>
-                                                    <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">${date}</h4>
-                                                </div>
-                                                <div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
-                                                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${archiveGroups[date]}</span>
-                                                    <span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span>
-                                                </div>
-                                            </div>
-                                        </div>`;
-                                }).join('')}
-                            </div>
-                        </div>`;
-                    }
+                    const archiveHtml = window.generateArchiveViewHtml(olderPosts, 'الأرشيف الزمني');
                     postsHtml = todayPosts.map(p => generatePostHTML(p)).join('') + archiveHtml;
                 }
 
@@ -2760,7 +2727,7 @@
                                     <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
                                     <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
                                 </div>
-                                <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف</button>
+                                <button onclick="window.setArchiveLevel('month', '${activeArchiveMonth}')" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">عودة للأيام</button>
                             </div>
                             ${archPosts.map(p => generatePostHTML(p)).join('')}
                         `;
@@ -2769,40 +2736,7 @@
                         const todayPosts = cPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') === today);
                         const olderPosts = cPosts.filter(p => new Date(p.createdAt).toLocaleDateString('en-CA') !== today);
 
-                        const archiveGroups = {};
-                        olderPosts.forEach(p => {
-                            const d = new Date(p.createdAt).toLocaleDateString('en-CA');
-                            if (!archiveGroups[d]) archiveGroups[d] = 0;
-                            archiveGroups[d]++;
-                        });
-
-                        const archiveColors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
-                        let archiveHtml = '';
-                        if (Object.keys(archiveGroups).length > 0) {
-                            archiveHtml = `
-                            <div class="mt-8 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8">
-                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> أرشيف المجتمع</h3>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    ${Object.keys(archiveGroups).sort().reverse().map((date, idx) => {
-                                        const color = archiveColors[idx % archiveColors.length];
-                                        return `
-                                        <div onclick="window.setArchiveDate('${date}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
-                                            <div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${color}"></div>
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">منشورات يوم</p>
-                                                    <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">${date}</h4>
-                                                </div>
-                                                <div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
-                                                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${archiveGroups[date]}</span>
-                                                    <span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span>
-                                                </div>
-                                            </div>
-                                        </div>`;
-                                    }).join('')}
-                                </div>
-                            </div>`;
-                        }
+                        const archiveHtml = window.generateArchiveViewHtml(olderPosts, 'أرشيف المجتمع');
                         communityPostsHtml = todayPosts.map(p => generatePostHTML(p)).join('') + archiveHtml;
                     }
                 }
