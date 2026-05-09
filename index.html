@@ -2109,32 +2109,33 @@
                 const originalTitle = op.isRepost ? op.originalTitle : (op.title || '');
                 const imageUrl = op.imageUrl || null;
                 
-                await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts')), {
-                    authorId: currentUser.uid, 
-                    authorName: userData.displayName, 
-                    authorPhoto: userData.photoUrl,
-                    isRepost: true,
-                    originalPostId: originalId,
-                    originalAuthorId: originalAuthorId,
-                    originalAuthorName: originalAuthorName,
-                    originalAuthorPhoto: originalAuthorPhoto,
-                    originalContent: originalContent,
-                    originalTitle: originalTitle,
-                    content: userContent,
-                    imageUrl: imageUrl, 
-                    colorId: op.colorId || 'white', 
-                    communityId: null, 
-                    createdAt: new Date().toISOString(), 
-                    reactions: {}, 
-                    comments: []
-                });
-                showToast('تمت المشاركة على صفحتك بنجاح', 'success');
-                
-                if (originalAuthorId !== currentUser.uid) {
-                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
-                        to: originalAuthorId, from: currentUser.uid, type: 'repost', postId: originalId, read: false, createdAt: new Date().toISOString()
-                    });
-                }
+                                const newPostRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'));
+                await setDoc(newPostRef, {
+                    authorId: currentUser.uid, 
+                    authorName: userData.displayName, 
+                    authorPhoto: userData.photoUrl,
+                    isRepost: true,
+                    originalPostId: originalId,
+                    originalAuthorId: originalAuthorId,
+                    originalAuthorName: originalAuthorName,
+                    originalAuthorPhoto: originalAuthorPhoto,
+                    originalContent: originalContent,
+                    originalTitle: originalTitle,
+                    content: userContent,
+                    imageUrl: imageUrl, 
+                    colorId: op.colorId || 'white', 
+                    communityId: null, 
+                    createdAt: new Date().toISOString(), 
+                    reactions: {}, 
+                    comments: []
+                });
+                showToast('تمت المشاركة على صفحتك بنجاح', 'success');
+                
+                if (originalAuthorId !== currentUser.uid) {
+                    await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'notifications')), {
+                        to: originalAuthorId, from: currentUser.uid, type: 'repost', postId: newPostRef.id, read: false, createdAt: new Date().toISOString()
+                    });
+                }
                 window.closeRepostModal();
             } catch(e) {
                 showToast('حدث خطأ أثناء المشاركة', 'error');
