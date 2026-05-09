@@ -1,8 +1,5 @@
-```
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-
-```
     <!-- Tailwind CSS with Dark Mode config -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1786,6 +1783,16 @@
         }
 
         function generatePostHTML(post, idPrefix = '') {
+            // جلب بيانات كاتب المنشور الحالية لعرض أحدث صورة واسم
+            const author = allUsers.find(u => u.uid === post.authorId);
+            const authorPhoto = author ? author.photoUrl : post.authorPhoto;
+            const authorName = author ? author.displayName : post.authorName;
+
+            // جلب بيانات الكاتب الأصلي في حالة إعادة المشاركة
+            const originalAuthor = post.isRepost ? allUsers.find(u => u.uid === post.originalAuthorId) : null;
+            const originalAuthorPhoto = originalAuthor ? originalAuthor.photoUrl : post.originalAuthorPhoto;
+            const originalAuthorName = originalAuthor ? originalAuthor.displayName : post.originalAuthorName;
+
             const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
             const isMine = post.authorId === currentUser.uid;
             let canDelete = isMine;
@@ -1846,9 +1853,9 @@
             <div id="${idPrefix}post-view-${post.id}" class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 scroll-mt-24">
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.viewProfile('${post.authorId}')">
-                        <img src="${post.authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
+                        <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
                         <div class="flex flex-col">
-                            <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${post.authorName}${window.getUserBadge(post.authorId)} ${post.isRepost ? '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full mr-2 font-bold flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i> أعاد المشاركة</span>' : ''}</h4>
+                            <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)} ${post.isRepost ? '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full mr-2 font-bold flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i> أعاد المشاركة</span>' : ''}</h4>
                             <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                                             </div>
@@ -1858,8 +1865,8 @@
                     ${post.content ? `<div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[14px] md:text-[15px]" dir="auto">${formatPostContent(post.content)}</div>` : ''}
                     <div class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl p-3 md:p-4 mb-3">
                     <div class="flex items-center gap-2 mb-3 cursor-pointer group" onclick="window.viewProfile('${post.originalAuthorId}')">
-                        <img src="${post.originalAuthorPhoto}" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
-                        <span class="font-bold text-[13px] md:text-[14px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${post.originalAuthorName}${window.getUserBadge(post.originalAuthorId)}</span>
+                        <img src="${originalAuthorPhoto}" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
+                        <span class="font-bold text-[13px] md:text-[14px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${originalAuthorName}${window.getUserBadge(post.originalAuthorId)}</span>
                     </div>
                     ${post.originalTitle ? `<h4 class="text-base md:text-lg font-extrabold mb-2 text-slate-900 dark:text-white border-r-4 border-emerald-500 pr-2.5">${post.originalTitle}</h4>` : ''}
                     <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[13px] md:text-[14px]" dir="auto">${formatPostContent(post.originalContent)}</div>
