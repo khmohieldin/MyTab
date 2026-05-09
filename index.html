@@ -2926,29 +2926,35 @@
                     const sp = allPosts.find(p => p.id === m.content);
                     let sharedHtml = '';
                     if(sp) {
-                        let contextBadge = '';
+                        let contextName = 'المساحات العامة';
+                        let contextIcon = 'globe';
                         if (sp.communityId) {
                             const comm = allCommunities.find(c => c.id === sp.communityId);
-                            contextBadge = `<div class="text-[10px] bg-emerald-100/80 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0" title="مشاركة من مجتمع"><i data-lucide="layers" class="w-3 h-3"></i> <span class="truncate max-w-[80px] md:max-w-[100px]">${comm ? comm.name : 'مجتمع'}</span></div>`;
-                        } else {
-                            contextBadge = `<div class="text-[10px] bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0" title="مشاركة من المساحة العامة"><i data-lucide="home" class="w-3 h-3"></i> المساحة العامة</div>`;
+                            contextName = comm ? comm.name : 'مجتمع';
+                            contextIcon = 'layers';
                         }
                         
-                        sharedHtml = `<div class="bg-white/50 dark:bg-slate-800/50 border border-black/10 dark:border-white/10 p-3 rounded-xl mt-2 w-64 md:w-80 cursor-pointer hover:shadow-md transition-shadow" onclick="window.openSinglePost('${sp.id}')">
-                            <div class="flex items-center justify-between gap-2 mb-2">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <img src="${sp.authorPhoto}" class="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 object-cover shrink-0">
-                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${sp.authorName}</span>
+                        sharedHtml = `<div class="mt-2 w-60 md:w-64 bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-black/10 dark:border-white/10 cursor-pointer hover:opacity-90 transition-opacity flex flex-col" onclick="window.openSinglePost('${sp.id}')">
+                            <div class="bg-slate-100 dark:bg-slate-900/60 px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 border-b border-black/5 dark:border-white/5">
+                                <div class="flex items-center gap-1.5">
+                                    <i data-lucide="${contextIcon}" class="w-3 h-3"></i> من: ${contextName}
                                 </div>
-                                ${contextBadge}
+                                <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
                             </div>
-                            ${sp.title ? `<h4 class="font-extrabold text-sm mb-1 line-clamp-1 text-slate-900 dark:text-white border-r-2 border-emerald-500 pr-1.5">${sp.title}</h4>` : ''}
-                            <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">${sp.content || 'يحتوي على مرفقات'}</p>
+                            <div class="p-2.5 flex flex-col gap-1 text-slate-800 dark:text-slate-100">
+                                <div class="flex items-center gap-1.5 mb-0.5">
+                                    <img src="${sp.authorPhoto}" class="w-5 h-5 rounded-full object-cover">
+                                    <span class="text-[11px] font-bold truncate">${sp.authorName}</span>
+                                </div>
+                                ${sp.title ? `<h4 class="font-extrabold text-xs truncate leading-snug">${sp.title}</h4>` : ''}
+                                <p class="text-[11px] leading-snug line-clamp-2 text-slate-600 dark:text-slate-300 font-medium">${sp.content || 'يحتوي على مرفقات'}</p>
+                            </div>
+                            ${sp.imageUrl ? `<img src="${sp.imageUrl}" class="w-full h-24 object-cover border-t border-black/5 dark:border-white/5">` : ''}
                         </div>`;
                     } else {
-                        sharedHtml = `<div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-500 mt-2 border border-slate-200 dark:border-slate-700">هذا المنشور غير متوفر أو تم حذفه</div>`;
+                        sharedHtml = `<div class="p-2.5 bg-white/50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-700 dark:text-slate-300 mt-2 border border-black/10 dark:border-white/10 font-bold">هذا المنشور غير متوفر أو تم حذفه</div>`;
                     }
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-4 py-2.5 rounded-2xl max-w-[85%] text-sm md:text-base shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1.5 opacity-80 text-xs font-bold mb-1 border-b border-black/10 dark:border-white/10 pb-1"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'قمت بمشاركة منشور':'شارك منشوراً معك'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative"><div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} px-3 py-2.5 rounded-2xl max-w-[85%] text-sm shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}${reactBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
                     const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
