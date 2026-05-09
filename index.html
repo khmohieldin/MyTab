@@ -1,7 +1,4 @@
     <!-- Tailwind CSS with Dark Mode config -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -723,20 +720,6 @@
 
     <!-- ==================== LOGIC ==================== -->
         <!-- تم نقل السكربت الخارجي بواسطة أداة التقسيم -->
-    <script>
-        (function() {
-            const allElements = document.body.querySelectorAll('*');
-            const layouts = [], verifies = [], registers = [];
-            allElements.forEach(el => {
-                if (el.id === 'main-layout') layouts.push(el);
-                if (el.id === 'verify-view') verifies.push(el);
-                if (el.id === 'register-details-view') registers.push(el);
-            });
-            if (layouts.length >= 2) layouts.forEach((el, idx) => { if (idx !== 1) el.remove(); });
-            if (verifies.length >= 2) verifies.forEach((el, idx) => { if (idx !== 0) el.remove(); });
-            if (registers.length >= 2) registers.forEach((el, idx) => { if (idx !== 0) el.remove(); });
-        })();
-    </script>
-        <script type="module" src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
