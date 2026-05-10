@@ -1,5 +1,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <div id="status-action-modal" class="hidden fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusActionModal()">
+        <div class="bg-white dark:bg-slate-800 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6 sm:hidden"></div>
+            <div class="flex flex-col gap-3">
+                <button id="btn-view-status" class="hidden w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-3.5 rounded-xl hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"><i data-lucide="play-circle" class="w-5 h-5"></i> مشاهدة الحالة</button>
+                <button id="btn-create-status" class="hidden w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5"></i> إضافة حالة جديدة</button>
+                <button id="btn-view-avatar" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"><i data-lucide="image" class="w-5 h-5"></i> عرض صورة البروفايل</button>
+                <button id="btn-view-profile-page" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"><i data-lucide="user" class="w-5 h-5"></i> زيارة الصفحة الشخصية</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-create-modal" class="hidden fixed inset-0 z-[160] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusCreateModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-emerald-500"></i> حالة جديدة</h3>
+                <button onclick="window.closeStatusCreateModal()" class="text-slate-400 hover:text-rose-500 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">نوع الحالة</label>
+                    <select id="status-type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100" onchange="window.toggleStatusInputs()">
+                        <option value="text">نص ملون</option>
+                        <option value="youtube">رابط يوتيوب</option>
+                        <option value="tiktok">رابط تيك توك</option>
+                    </select>
+                </div>
+                <div id="status-content-wrapper">
+                    <label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">المحتوى</label>
+                    <textarea id="status-content" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 resize-none" placeholder="ماذا يدور في ذهنك؟"></textarea>
+                </div>
+                <div id="status-color-wrapper">
+                    <label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">لون الخلفية</label>
+                    <div class="flex gap-2" id="status-color-picker">
+                        <button onclick="window.statusSelectedColor='bg-emerald-500'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-emerald-500 ring-offset-white dark:ring-offset-slate-800"></button>
+                        <button onclick="window.statusSelectedColor='bg-blue-500'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-blue-500 opacity-50 hover:opacity-100"></button>
+                        <button onclick="window.statusSelectedColor='bg-rose-500'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-rose-500 opacity-50 hover:opacity-100"></button>
+                        <button onclick="window.statusSelectedColor='bg-amber-500'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-amber-500 opacity-50 hover:opacity-100"></button>
+                        <button onclick="window.statusSelectedColor='bg-purple-500'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-purple-500 opacity-50 hover:opacity-100"></button>
+                        <button onclick="window.statusSelectedColor='bg-slate-800'; window.updateStatusPreview()" class="w-8 h-8 rounded-full bg-slate-800 opacity-50 hover:opacity-100"></button>
+                    </div>
+                </div>
+                <button onclick="window.saveStatus()" id="status-save-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors mt-2 flex justify-center items-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> نشر الحالة</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-view-modal" class="hidden fixed inset-0 z-[170] flex items-center justify-center bg-black/95 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusView()">
+        <button onclick="window.closeStatusView()" class="absolute top-6 right-6 text-white/80 hover:text-white p-2 bg-white/10 rounded-full z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div id="status-view-content" class="w-full max-w-sm aspect-[9/16] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col justify-center items-center text-center p-6 text-white" onclick="event.stopPropagation()">
+        </div>
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-xs font-bold flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> تختفي بعد 24 ساعة</div>
+    </div>
+
     <!-- Tailwind CSS with Dark Mode config -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +73,7 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Cropper.js for Image Cropping -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
@@ -26,9 +81,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* منع سكرين شوت وتعتيم المحتوى عند محاولة العرض في بعض المتصفحات */
-        @media pill { .no-screenshot { filter: blur(10px); } }
-        #lightbox { user-select: none; -webkit-user-drag: none; }
+        /* تعتيم الشاشة الاحترافي عند محاولة أخذ سكرين شوت أو الخروج من التطبيق */
+        .screenshot-protection { 
+            pointer-events: none !important; 
+            user-select: none !important; 
+        }
+        .screenshot-protection::after {
+            content: "🛡️\A تم إخفاء المحتوى لحماية الخصوصية \A (يُمنع أخذ لقطة شاشة)";
+            white-space: pre-wrap;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(248, 250, 252, 0.6);
+            backdrop-filter: blur(25px) grayscale(0.4);
+            -webkit-backdrop-filter: blur(25px) grayscale(0.4);
+            color: #059669;
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.8;
+            border-radius: inherit;
+            opacity: 0;
+            animation: fadeInProtection 0.2s ease forwards;
+        }
+        .dark .screenshot-protection::after {
+            background: rgba(15, 23, 42, 0.6);
+            color: #34d399;
+        }
+        @keyframes fadeInProtection {
+            to { opacity: 1; }
+        }
+        @media (max-width: 767px) {
+            .screenshot-protection::after { font-size: 1.1rem; padding: 20px; }
+        }
+        #lightbox, #chat-messages-area { user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
         
         body { 
             font-family: 'Cairo', sans-serif; 
@@ -43,6 +132,8 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
         
+        .status-ring { outline: 3px solid #10b981; outline-offset: 2px; }
+        .status-ring-multiple { outline: 3px dashed #10b981; outline-offset: 2px; }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #059669; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         .dark .loader { border-color: #334155; border-top-color: #34d399; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -496,7 +587,8 @@
                     <button onclick="window.switchTab('friends')" id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button>
                     <button onclick="window.viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button>
                     <button onclick="window.switchTab('search')" id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button>
-                    
+                    <button onclick="window.switchTab('favorites')" id="nav-favorites" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="star" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المفضلة</span></button>
+
                     <div class="relative w-full">
                         <button onclick="window.switchTab('notifications')" id="nav-notifications" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell-ring" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الإشعارات</span></button>
                         <span id="notif-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span>
@@ -536,7 +628,7 @@
                         <i data-lucide="copy" class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors"></i>
                     </button>
                 </div>
-                <div class="flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-slate-700 p-1.5 md:p-2 rounded-xl transition-colors w-full cursor-pointer justify-center md:justify-start" onclick="window.viewMyProfile()">
+                <div class="flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-slate-700 p-1.5 md:p-2 rounded-xl transition-colors w-full cursor-pointer justify-center md:justify-start" onclick="window.handleUserAvatarClick(currentUser.uid, userData.photoUrl, event)">
                     <img id="sidebar-avatar" src="" alt="profile" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-emerald-200 dark:border-emerald-700 object-cover bg-white dark:bg-slate-800 mx-auto md:mx-0">
                     <div class="hidden md:flex flex-col items-start overflow-hidden">
                         <span id="sidebar-name" class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate w-32"></span>
@@ -577,6 +669,14 @@
                         <div class="absolute top-4 right-4 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-2 text-white z-20 shadow-sm border border-white/10">
                             <i data-lucide="home" class="w-4 h-4"></i><span class="font-bold text-sm">المساحات</span>
                         </div>
+                        
+                        <div id="quote-of-the-day-container" class="hidden absolute top-4 left-4 md:left-6 max-w-[60%] md:max-w-sm bg-black/50 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 z-20 shadow-lg text-white transition-opacity duration-1000 opacity-0 cursor-default">
+                            <div class="flex items-center gap-1.5 mb-1.5 text-emerald-400 border-b border-white/10 pb-1">
+                                <i data-lucide="quote" class="w-4 h-4"></i><span class="text-[11px] font-bold tracking-wider">حكمة اليوم</span>
+                            </div>
+                            <p id="quote-text-display" class="text-xs md:text-sm font-medium leading-relaxed drop-shadow-sm whitespace-pre-wrap"></p>
+                        </div>
+
                         <div class="absolute bottom-4 right-6 text-white z-10 flex items-center gap-3">
                             <img id="feed-cover-avatar" src="" class="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white/40 object-cover shadow-md hidden sm:block bg-slate-800">
                             <div>
@@ -588,7 +688,7 @@
 
                     <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors">
                         <div class="flex gap-3 md:gap-4">
-                            <img id="create-post-avatar" src="" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="viewMyProfile()">
+                            <img id="create-post-avatar" src="" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.handleUserAvatarClick(currentUser.uid, userData.photoUrl, event)">
                             <div class="flex-1 min-w-0">
                                 <input type="text" id="post-title" class="w-full bg-transparent border-b border-black/5 dark:border-white/5 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 font-bold text-lg md:text-xl mb-2 pb-2 placeholder-slate-400 transition-colors" placeholder="عنوان المنشور (اختياري)">
                                 <textarea id="post-content" class="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-1 text-base md:text-lg" rows="3" placeholder="بماذا تفكر؟ استخدم # للهاشتاج أو ضع روابط"></textarea>
@@ -672,6 +772,21 @@
                                     <button onclick="removeGlobalLogo()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="استعادة الشعار الافتراضي"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
+                            
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full">
+                                    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">قائمة حِكم المساحة (افصل بين كل حكمة وأخرى بعلامة *)</label>
+                                    <textarea id="admin-quote-input" rows="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors" placeholder="اكتب الحكمة الأولى * ثم الحكمة الثانية * ثم الثالثة..."></textarea>
+                                    <p class="text-[10px] text-slate-400 mt-1">سيقوم النظام باختيار حكمة واحدة عشوائياً لكل يوم وتبديلها تلقائياً.</p>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6">
+                                    <button onclick="window.saveGlobalQuote()" id="admin-save-quote-btn" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> حفظ الحكمة</button>
+                                    <button onclick="window.removeGlobalQuote()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="إزالة الحكمة"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -799,6 +914,11 @@
                 </div>
 
                 <!-- Notifications Tab -->
+                <div id="tab-content-favorites" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2"><i data-lucide="star" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> منشوراتي المفضلة</h2>
+                    <div id="favorites-posts-list" class="space-y-6"></div>
+                </div>
+
                 <div id="tab-content-notifications" class="tab-content hidden">
                     <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
                         <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="bell" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الإشعارات</h2>
@@ -814,7 +934,7 @@
                 <!-- Single Post Tab -->
                 <div id="tab-content-singlepost" class="tab-content hidden pb-10">
                     <div class="flex items-center gap-3 mb-6">
-                        <button onclick="switchTab('notifications')" class="text-slate-500 hover:text-emerald-600 transition-colors bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+                        <button onclick="window.switchTab(window.lastTabBeforeSinglePost || 'notifications')" class="text-slate-500 hover:text-emerald-600 transition-colors bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
                         <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">عرض المنشور <span id="single-post-source-label" class="text-xs font-medium text-slate-400 dark:text-slate-500"></span></h2>
                     </div>
                     <div id="single-post-container"></div>
@@ -922,6 +1042,382 @@
 
         // --- State ---
         let currentUser = null;
+        window.statusSelectedColor = 'bg-emerald-500';
+        window.currentStatusUserUid = null;
+        window.currentStatusIndex = 0;
+
+        // جلب كل الحالات النشطة (خلال آخر 24 ساعة)
+        window.getActiveStatuses = (uid) => {
+            const u = allUsers.find(x => x.uid === uid);
+            if (!u) return [];
+            let list = u.statuses || [];
+            // دمج الحالة القديمة مع النظام الجديد إن وجدت
+            if (u.status && !list.find(s => s.createdAt === u.status.createdAt)) list.push(u.status);
+            const now = Date.now();
+            return list.filter(s => (now - new Date(s.createdAt).getTime() < 24 * 60 * 60 * 1000)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+        };
+
+        window.hasActiveStatus = (uid) => window.getActiveStatuses(uid).length > 0;
+        
+        // تحديد شكل الهالة مع حساب وتقطيع الدائرة ديناميكياً بعدد الحالات
+        window.getStatusRingClass = (uid) => {
+            const count = window.getActiveStatuses(uid).length;
+            if (count === 0) return '';
+            if (count === 1) return 'status-ring';
+            
+            const className = `status-ring-dynamic-${count}`;
+            if (!document.getElementById(`style-${className}`)) {
+                let gradient = [];
+                let deg = 360 / count;
+                // إنشاء أجزاء متساوية مع ترك مسافة (Gap) صغيرة بينها
+                for(let i = 0; i < count; i++) {
+                    gradient.push(`#10b981 ${i * deg}deg ${i * deg + deg - 8}deg`);
+                    gradient.push(`transparent ${i * deg + deg - 8}deg ${(i + 1) * deg}deg`);
+                }
+                const style = document.createElement('style');
+                style.id = `style-${className}`;
+                style.innerHTML = `
+                .${className} {
+                    padding: 3px !important;
+                    background: conic-gradient(${gradient.join(', ')}) !important;
+                    border-radius: 50% !important;
+                }`;
+                document.head.appendChild(style);
+            }
+            return className;
+        };
+
+        window.handleUserAvatarClick = (uid, photoUrl, e) => {
+            if (e) e.stopPropagation();
+            const hasStatus = window.hasActiveStatus(uid);
+            
+            if (hasStatus || uid === currentUser.uid) {
+                window.openStatusActionModal(uid, photoUrl, hasStatus);
+            } else {
+                window.openProfileLightbox(photoUrl);
+            }
+        };
+
+        window.openStatusActionModal = (uid, photoUrl, hasStatus) => {
+            const btnViewStatus = document.getElementById('btn-view-status');
+            const btnCreateStatus = document.getElementById('btn-create-status');
+            const isMe = uid === currentUser.uid;
+
+            if (hasStatus) btnViewStatus.classList.remove('hidden');
+            else btnViewStatus.classList.add('hidden');
+
+            if (isMe) btnCreateStatus.classList.remove('hidden');
+            else btnCreateStatus.classList.add('hidden');
+
+            btnViewStatus.onclick = () => { window.closeStatusActionModal(); window.viewUserStatus(uid); };
+            btnCreateStatus.onclick = () => { window.closeStatusActionModal(); window.openStatusCreateModal(); };
+            document.getElementById('btn-view-avatar').onclick = () => { window.closeStatusActionModal(); window.openProfileLightbox(photoUrl); };
+            document.getElementById('btn-view-profile-page').onclick = () => { window.closeStatusActionModal(); window.viewProfile(uid); };
+
+            const modal = document.getElementById('status-action-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        };
+
+        window.closeStatusActionModal = () => {
+            const modal = document.getElementById('status-action-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.openStatusCreateModal = () => {
+            const modal = document.getElementById('status-create-modal');
+            document.getElementById('status-content').value = '';
+            window.statusSelectedColor = 'bg-emerald-500';
+            window.updateStatusPreview();
+            window.toggleStatusInputs();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeStatusCreateModal = () => {
+            const modal = document.getElementById('status-create-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.toggleStatusInputs = () => {
+            const type = document.getElementById('status-type').value;
+            const contentInput = document.getElementById('status-content');
+            const colorWrapper = document.getElementById('status-color-wrapper');
+            
+            if (type === 'text') {
+                contentInput.placeholder = 'ماذا يدور في ذهنك؟';
+                colorWrapper.classList.remove('hidden');
+            } else if (type === 'youtube') {
+                contentInput.placeholder = 'ضع رابط فيديو اليوتيوب هنا...';
+                colorWrapper.classList.add('hidden');
+            } else if (type === 'tiktok') {
+                contentInput.placeholder = 'ضع رابط التيك توك هنا...';
+                colorWrapper.classList.add('hidden');
+            }
+        };
+
+        window.updateStatusPreview = () => {
+            const btns = document.getElementById('status-color-picker').children;
+            for(let btn of btns) {
+                if(btn.className.includes(window.statusSelectedColor)) {
+                    btn.classList.remove('opacity-50');
+                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-offset-white', 'dark:ring-offset-slate-800');
+                    const ringColor = window.statusSelectedColor.replace('bg-', 'ring-');
+                    btn.classList.add(ringColor);
+                } else {
+                    btn.classList.add('opacity-50');
+                    btn.className = btn.className.replace(/ring-[a-z]+-500/g, '').replace('ring-2', '').replace('ring-offset-2', '').replace('ring-offset-white', '').replace('dark:ring-offset-slate-800', '').replace('ring-slate-800', '');
+                }
+            }
+        };
+
+        window.saveStatus = async () => {
+            const type = document.getElementById('status-type').value;
+            const content = document.getElementById('status-content').value.trim();
+            if (!content) return showToast('يرجى إدخال المحتوى', 'error');
+
+            const btn = document.getElementById('status-save-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+
+            try {
+                const newStatus = { id: Date.now().toString(), type: type, content: content, color: window.statusSelectedColor, createdAt: new Date().toISOString(), views: [] };
+                
+                // التأكد من استدعاء مصفوفة الحالات وتحديثها بشكل سليم (لحل مشكلة اختفاء الحالات القديمة)
+                if (!userData.statuses) userData.statuses = [];
+                if (userData.status && !userData.statuses.find(s => s.createdAt === userData.status.createdAt)) {
+                    if (!userData.status.views) userData.status.views = [];
+                    userData.statuses.push(userData.status);
+                }
+                
+                userData.statuses.push(newStatus);
+                
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                    statuses: userData.statuses
+                });
+                
+                showToast('تم نشر الحالة بنجاح!', 'success');
+                window.closeStatusCreateModal();
+                renderAll(); 
+            } catch(e) {
+                console.error(e);
+                showToast('حدث خطأ أثناء النشر', 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> نشر الحالة';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.deleteCurrentStatus = async (statusId) => {
+            // استخدام رسالة التأكيد القياسية المضمونة 100%
+            if (!confirm('هل أنت متأكد من حذف هذه الحالة نهائياً؟')) return;
+            try {
+                // الفلترة باستخدام id أو createdAt كبديل للحالات القديمة
+                userData.statuses = (userData.statuses || []).filter(s => s.id !== statusId && s.createdAt !== statusId);
+                let updatePayload = { statuses: userData.statuses };
+                
+                // مسح الحالة القديمة أيضاً لتجنب رجوعها
+                if (userData.status && (userData.status.id === statusId || userData.status.createdAt === statusId)) {
+                    updatePayload.status = null;
+                }
+                
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), updatePayload);
+                showToast('تم حذف الحالة بنجاح', 'success');
+                
+                const remaining = window.getActiveStatuses(currentUser.uid);
+                if (remaining.length === 0) {
+                    window.closeStatusView();
+                } else {
+                    if (window.currentStatusIndex >= remaining.length) {
+                        window.currentStatusIndex = remaining.length - 1;
+                    }
+                    window.renderCurrentStatus();
+                }
+                renderAll();
+            } catch(e) {
+                console.error(e);
+                showToast('حدث خطأ أثناء الحذف', 'error');
+            }
+        };
+
+        window.viewUserStatus = (uid) => {
+            window.currentStatusUserUid = uid;
+            window.currentStatusIndex = 0;
+            window.renderCurrentStatus();
+        };
+
+        window.nextStatus = (e) => {
+            if(e) e.stopPropagation();
+            const statuses = window.getActiveStatuses(window.currentStatusUserUid);
+            if (window.currentStatusIndex < statuses.length - 1) {
+                window.currentStatusIndex++;
+                window.renderCurrentStatus();
+            } else {
+                window.closeStatusView();
+            }
+        };
+
+        window.prevStatus = (e) => {
+            if(e) e.stopPropagation();
+            if (window.currentStatusIndex > 0) {
+                window.currentStatusIndex--;
+                window.renderCurrentStatus();
+            }
+        };
+
+        window.renderCurrentStatus = () => {
+            const uid = window.currentStatusUserUid;
+            const u = allUsers.find(x => x.uid === uid);
+            const statuses = window.getActiveStatuses(uid);
+            if (!u || statuses.length === 0 || window.currentStatusIndex >= statuses.length) return window.closeStatusView();
+
+            const modal = document.getElementById('status-view-modal');
+            const contentDiv = document.getElementById('status-view-content');
+            const status = statuses[window.currentStatusIndex];
+
+            // تسجيل المشاهدة بصمت في قاعدة البيانات إذا لم تكن الحالة للمستخدم الحالي
+            if (uid !== currentUser.uid) {
+                if (!status.views) status.views = [];
+                if (!status.views.includes(currentUser.uid)) {
+                    status.views.push(currentUser.uid);
+                    updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', uid), {
+                        statuses: u.statuses
+                    }).catch(e => console.error(e));
+                }
+            }
+
+            // أشرطة التقدم (Progress Bars)
+            let progressHtml = '<div class="absolute top-2 left-2 right-2 flex gap-1 z-20">';
+            for(let i=0; i<statuses.length; i++) {
+                const opacityClass = i < window.currentStatusIndex ? 'opacity-100' : (i === window.currentStatusIndex ? 'opacity-100' : 'opacity-40');
+                const bgClass = i <= window.currentStatusIndex ? 'bg-white' : 'bg-white/50';
+                progressHtml += `<div class="h-1 flex-1 rounded-full ${bgClass} ${opacityClass} shadow-sm transition-all duration-300"></div>`;
+            }
+            progressHtml += '</div>';
+
+            let html = '';
+            if (status.type === 'text') {
+                contentDiv.className = `w-full max-w-sm aspect-[9/16] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col justify-center items-center text-center p-8 text-white ${status.color || 'bg-emerald-500'}`;
+                html = `<h2 class="text-2xl md:text-3xl font-bold leading-snug drop-shadow-md whitespace-pre-wrap relative z-10 pointer-events-none" dir="auto">${status.content}</h2>`;
+            } else if (status.type === 'youtube') {
+                contentDiv.className = `w-full max-w-sm aspect-[9/16] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col justify-center items-center text-center p-0 bg-black`;
+                const ytMatch = status.content.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                const ytId = ytMatch ? ytMatch[1] : null;
+                if (ytId) {
+                    html = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+                } else {
+                    html = `<p class="text-white relative z-10 pointer-events-none">رابط يوتيوب غير صالح</p>`;
+                }
+            } else if (status.type === 'tiktok') {
+                contentDiv.className = `w-full max-w-sm aspect-[9/16] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col justify-center items-center text-center p-0 bg-black`;
+                const tkMatch = status.content.match(/(?:https?:\/\/)?(?:www\.)?tiktok\.com\/.*\/video\/(\d+)/);
+                const tkId = tkMatch ? tkMatch[1] : null;
+                if (tkId) {
+                    html = `<iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="fullscreen" allowfullscreen></iframe>`;
+                } else {
+                    html = `<p class="text-white relative z-10 pointer-events-none">رابط تيك توك غير صالح</p>`;
+                }
+            }
+
+            const targetId = status.id || status.createdAt; // الاعتماد على التاريخ كمعرف للحالات القديمة جداً
+            const headerHtml = `
+            <div class="absolute top-0 left-0 right-0 pt-6 pb-4 px-4 bg-gradient-to-b from-black/80 to-transparent z-[100] flex items-center justify-between pointer-events-none">
+                <div class="flex items-center gap-3 pointer-events-auto">
+                    <img src="${u.photoUrl}" class="w-10 h-10 rounded-full border-2 border-emerald-500 object-cover cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.closeStatusView(); window.viewProfile('${u.uid}')">
+                    <div class="flex flex-col items-start min-w-0">
+                        <span class="font-bold text-white text-sm shadow-sm cursor-pointer hover:underline truncate w-full text-right" onclick="event.stopPropagation(); window.closeStatusView(); window.viewProfile('${u.uid}')">${u.displayName}</span>
+                        <span class="text-[10px] text-white/80">${new Date(status.createdAt).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                    </div>
+                </div>
+                ${uid === currentUser.uid ? `<button onclick="event.stopPropagation(); window.deleteCurrentStatus('${targetId}')" class="text-white hover:text-rose-500 bg-black/40 hover:bg-black/70 p-2 rounded-full transition-colors pointer-events-auto" title="حذف هذه الحالة"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </div>`;
+
+            // أزرار التنقل المخفية (يجب أن تكون فوق الفيديو وتحت الأزرار)
+            const navOverlays = `
+            <div class="absolute inset-y-0 left-0 w-1/3 z-[40] cursor-pointer" onclick="window.prevStatus(event)"></div>
+            <div class="absolute inset-y-0 right-0 w-2/3 z-[40] cursor-pointer" onclick="window.nextStatus(event)"></div>
+            `;
+
+            // زر المشاهدات الخاص بصاحب الحالة
+            let authorControlsHtml = '';
+            if (uid === currentUser.uid) {
+                const viewsCount = (status.views || []).length;
+                authorControlsHtml = `
+                <div class="absolute bottom-6 left-0 right-0 flex justify-center z-[100] pointer-events-none">
+                    <button onclick="event.stopPropagation(); window.showStatusViewers('${targetId}')" class="pointer-events-auto flex flex-col items-center text-white/90 hover:text-white transition-colors bg-black/40 hover:bg-black/70 px-6 py-2.5 rounded-3xl backdrop-blur-md shadow-lg border border-white/10">
+                        <i data-lucide="eye" class="w-5 h-5 mb-1"></i>
+                        <span class="text-xs font-bold">${viewsCount} مشاهدة</span>
+                    </button>
+                </div>`;
+            }
+
+            contentDiv.innerHTML = html + progressHtml + navOverlays + headerHtml + authorControlsHtml;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // دالة عرض قائمة من شاهد الحالة
+        window.showStatusViewers = (statusId) => {
+            const u = allUsers.find(x => x.uid === currentUser.uid);
+            if (!u) return;
+            const status = (u.statuses || []).find(s => s.id === statusId || s.createdAt === statusId);
+            if (!status) return;
+            const viewersIds = status.views || [];
+            
+            let html = '<div class="absolute inset-0 bg-slate-900/95 z-[70] flex flex-col p-5 transition-all duration-300" onclick="event.stopPropagation()">';
+            html += `
+            <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                <h3 class="text-white font-bold flex items-center gap-2 text-lg"><i data-lucide="eye" class="w-5 h-5 text-emerald-500"></i> المشاهدات (${viewersIds.length})</h3>
+                <button onclick="window.renderCurrentStatus()" class="text-white/70 hover:text-rose-500 hover:bg-white/10 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>`;
+            
+            if (viewersIds.length === 0) {
+                html += '<div class="flex-1 flex flex-col items-center justify-center text-white/50 text-sm"><i data-lucide="eye-off" class="w-12 h-12 mb-3 opacity-20"></i>لم يشاهد أحد هذه الحالة بعد.</div>';
+            } else {
+                html += '<div class="flex-1 overflow-y-auto space-y-3 pb-4">';
+                viewersIds.forEach(vid => {
+                    const viewer = allUsers.find(x => x.uid === vid);
+                    if (viewer) {
+                        html += `
+                        <div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors" onclick="window.closeStatusView(); window.viewProfile('${viewer.uid}')">
+                            <img src="${viewer.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-500/50">
+                            <span class="font-bold text-white text-sm">${viewer.displayName}</span>
+                        </div>`;
+                    }
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+            
+            const contentDiv = document.getElementById('status-view-content');
+            const existing = document.getElementById('viewers-layer');
+            if (existing) existing.remove();
+            
+            const div = document.createElement('div');
+            div.id = 'viewers-layer';
+            div.innerHTML = html;
+            contentDiv.appendChild(div);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.closeStatusView = () => {
+            const modal = document.getElementById('status-view-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('status-view-content').innerHTML = ''; 
+            }, 300);
+        };
         let userData = null;
         let allUsers = [];
         let allPosts = [];
@@ -1359,7 +1855,7 @@
             activeArchiveDate = null;
             
             activeTabStr = tab;
-            ['feed', 'profile', 'search', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
+            ['feed', 'profile', 'search', 'favorites', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
                 const tc = document.getElementById(`tab-content-${t}`);
                 if(tc) tc.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -1567,9 +2063,17 @@
             if(!userData) return;
             document.getElementById('sidebar-myid').innerText = userData.myTabId;
             document.getElementById('mobile-myid').innerText = userData.myTabId;
-            document.getElementById('sidebar-avatar').src = userData.photoUrl;
+            const sbAvatar = document.getElementById('sidebar-avatar');
+            sbAvatar.src = userData.photoUrl;
+            sbAvatar.classList.remove('status-ring', 'status-ring-multiple');
+            if (window.getStatusRingClass(userData.uid)) sbAvatar.classList.add(window.getStatusRingClass(userData.uid));
+            
             document.getElementById('sidebar-name').innerHTML = userData.displayName + window.getUserBadge(userData.uid);
-            document.getElementById('create-post-avatar').src = userData.photoUrl;
+            
+            const cpAvatar = document.getElementById('create-post-avatar');
+            cpAvatar.src = userData.photoUrl;
+            cpAvatar.classList.remove('status-ring', 'status-ring-multiple');
+            if (window.getStatusRingClass(userData.uid)) cpAvatar.classList.add(window.getStatusRingClass(userData.uid));
             
             const feedCover = document.getElementById('feed-cover-image');
             const feedAvatar = document.getElementById('feed-cover-avatar');
@@ -1585,6 +2089,34 @@
             if (feedAvatar && userData.photoUrl) feedAvatar.src = userData.photoUrl;
             if (feedWelcome && userData.displayName) feedWelcome.innerText = 'مرحباً، ' + userData.displayName.split(' ')[0];
             
+            // تحديث وإظهار حكمة اليوم بنظام التبديل اليومي
+            const quoteCont = document.getElementById('quote-of-the-day-container');
+            const quoteText = document.getElementById('quote-text-display');
+            if (quoteCont && quoteText) {
+                const rawQuotes = globalSettings.quoteOfTheDay || '';
+                if (rawQuotes.trim() !== '') {
+                    // تقسيم النص بناءً على النجمة وتحويله لمصفوفة
+                    const quotesArray = rawQuotes.split('*').map(q => q.trim()).filter(q => q !== '');
+                    
+                    if (quotesArray.length > 0) {
+                        // حساب مؤشر الحكمة بناءً على تاريخ اليوم (يتغير كل 24 ساعة)
+                        // نستخدم عدد الأيام منذ بداية التاريخ لضمان الثبات لجميع المستخدمين
+                        const dayTimestamp = Math.floor(new Date().setHours(0,0,0,0) / (24 * 60 * 60 * 1000));
+                        const quoteIndex = dayTimestamp % quotesArray.length;
+                        
+                        quoteText.innerText = quotesArray[quoteIndex];
+                        quoteCont.classList.remove('hidden');
+                        // إظهار ناعم ومستمر
+                        setTimeout(() => quoteCont.classList.remove('opacity-0'), 100);
+                    } else {
+                        quoteCont.classList.add('hidden');
+                    }
+                } else {
+                    quoteCont.classList.add('hidden');
+                    quoteCont.classList.add('opacity-0');
+                }
+            }
+
             const picker = document.getElementById('color-picker-container');
             if(picker) {
                 picker.innerHTML = Object.keys(POST_COLORS).map(id => {
@@ -1739,6 +2271,7 @@
             if(activeTabStr==='friends') renderFriendsTab();
             if(activeTabStr==='requests') renderRequestsTab();
             if(activeTabStr==='search') window.performSearch();
+            if(activeTabStr==='favorites') window.renderFavoritesTab();
             if(activeTabStr==='notifications') window.renderNotificationsTab();
             if(activeTabStr==='singlepost') window.renderSinglePostTab();
             if(activeTabStr==='messages') {
@@ -1763,6 +2296,10 @@
             document.getElementById('admin-stat-users').innerText = totalUsers;
             document.getElementById('admin-stat-posts').innerText = totalPosts;
             document.getElementById('admin-stat-comments').innerText = totalComments;
+
+            if (document.getElementById('admin-quote-input')) {
+                document.getElementById('admin-quote-input').value = globalSettings.quoteOfTheDay || '';
+            }
 
             const tableBody = document.getElementById('admin-users-table');
             tableBody.innerHTML = allUsers.map(u => {
@@ -1868,6 +2405,38 @@
                         logoUrl: ''
                     }, { merge: true });
                     showToast('تمت استعادة الشعار الافتراضي', 'success');
+                } catch(e) {
+                    showToast('حدث خطأ', 'error');
+                }
+            });
+        };
+
+        window.saveGlobalQuote = async () => {
+            const val = document.getElementById('admin-quote-input').value.trim();
+            const btn = document.getElementById('admin-save-quote-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+            try {
+                await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+                    ...globalSettings,
+                    quoteOfTheDay: val
+                }, { merge: true });
+                showToast('تم حفظ حكمة اليوم بنجاح!', 'success');
+            } catch(e) {
+                showToast('حدث خطأ أثناء الحفظ', 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> حفظ الحكمة';
+            lucide.createIcons();
+        };
+
+        window.removeGlobalQuote = async () => {
+            showConfirm('هل أنت متأكد من مسح حكمة اليوم وإخفائها؟', async () => {
+                try {
+                    await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+                        ...globalSettings,
+                        quoteOfTheDay: ''
+                    }, { merge: true });
+                    document.getElementById('admin-quote-input').value = '';
+                    showToast('تم إخفاء حكمة اليوم', 'success');
                 } catch(e) {
                     showToast('حدث خطأ', 'error');
                 }
@@ -1995,14 +2564,22 @@
             return `
             <div id="${idPrefix}post-view-${post.id}" class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 scroll-mt-24">
                 <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.viewProfile('${post.authorId}')">
-                        <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
+                    <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.handleUserAvatarClick('${post.authorId}', '${authorPhoto}', event)">
+                        <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity ${window.getStatusRingClass(post.authorId)}">
                         <div class="flex flex-col">
                             <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)} ${post.isRepost ? '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full mr-2 font-bold flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i> أعاد المشاركة</span>' : ''}</h4>
                             <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
                                             </div>
-                        ${canDelete ? `<div class="flex items-center gap-1">${isMine ? `<button onclick="window.openEditModal('${post.id}', 'post')" class="text-slate-400 hover:text-emerald-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="تعديل"><i data-lucide="edit-3" class="w-[15px] h-[15px]"></i></button>` : ''}<button onclick="window.deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="حذف"><i data-lucide="trash-2" class="w-[15px] h-[15px]"></i></button></div>` : ''}
+                        <div class="flex items-center gap-1">
+                            <button onclick="window.toggleFavorite('${post.id}')" class="${(userData.favorites || []).includes(post.id) ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/40' : 'text-slate-400 bg-white/50 dark:bg-slate-800/50'} hover:scale-110 rounded-full p-1.5 transition-all" title="أضف للمفضلة">
+                                <i data-lucide="star" class="w-[15px] h-[15px] ${ (userData.favorites || []).includes(post.id) ? 'fill-current' : '' }"></i>
+                            </button>
+                            ${canDelete ? `
+                                ${isMine ? `<button onclick="window.openEditModal('${post.id}', 'post')" class="text-slate-400 hover:text-emerald-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="تعديل"><i data-lucide="edit-3" class="w-[15px] h-[15px]"></i></button>` : ''}
+                                <button onclick="window.deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="حذف"><i data-lucide="trash-2" class="w-[15px] h-[15px]"></i></button>
+                            ` : ''}
+                        </div>
                     </div>
                     ${post.isRepost ? `
                     ${post.content ? `<div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[14px] md:text-[15px]" dir="auto">${formatPostContent(post.content)}</div>` : ''}
@@ -2041,6 +2618,9 @@
                     </button>
                     <button onclick="window.openShareModal('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                         <i data-lucide="send" class="w-[18px] h-[18px]"></i> <span>إرسال</span>
+                    </button>
+                    <button onclick="window.capturePost('${idPrefix}post-view-${post.id}', '${authorName}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors" title="حفظ كصورة">
+                        <i data-lucide="camera" class="w-[18px] h-[18px]"></i> <span class="hidden sm:inline">حفظ</span>
                     </button>
                 </div>
                 <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
@@ -2093,7 +2673,7 @@
 
             return `
             <div id="${idPrefix}comment-${c.id}" class="flex gap-2 items-start group relative scroll-mt-32 mb-3 w-full">
-                <img src="${aPic}" onclick="window.viewProfile('${c.authorId}')" class="${avatarSize} rounded-full mt-1 object-cover bg-slate-200 dark:bg-slate-700 cursor-pointer hover:opacity-80 transition-opacity shrink-0 shadow-sm">
+                <img src="${aPic}" onclick="window.handleUserAvatarClick('${c.authorId}', '${aPic}', event)" class="${avatarSize} rounded-full mt-1 object-cover bg-slate-200 dark:bg-slate-700 cursor-pointer hover:opacity-80 transition-opacity shrink-0 shadow-sm ${window.getStatusRingClass(c.authorId)}">
                 <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
                     <div class="flex-1 min-w-0 flex flex-col items-start">
                         <div class="bg-slate-100 dark:bg-[#3A3B3C] border border-black/5 dark:border-white/5 px-4 py-2.5 rounded-2xl rounded-tr-sm inline-block relative cursor-pointer hover:bg-slate-200 dark:hover:bg-[#4E4F50] transition-colors shadow-sm" onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')">
@@ -2686,7 +3266,7 @@
                 return `
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 hover:border-emerald-200 dark:hover:border-slate-600 transition-colors group" onclick="window.viewProfile('${u.uid}')">
                     <div class="flex items-center gap-3">
-                        <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800">
+                        <img src="${u.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-slate-800 ${window.getStatusRingClass(u.uid)}" onclick="window.handleUserAvatarClick('${u.uid}', '${u.photoUrl}', event)">
                         <div>
                             <h4 class="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">${u.displayName}</h4>
                             <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">${u.myTabId}</p>
@@ -3011,7 +3591,7 @@
                     </div>
                     <div class="p-6 md:p-8 relative z-10 bg-white dark:bg-slate-800">
                         <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start text-center md:text-right -mt-20 md:-mt-24">
-                            <img src="${tUser.photoUrl}" class="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20 transition-transform duration-300 hover:scale-105 cursor-pointer" onclick="window.openProfileLightbox('${tUser.photoUrl}')">
+                            <img src="${tUser.photoUrl}" class="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20 transition-transform duration-300 hover:scale-105 cursor-pointer ${window.getStatusRingClass(tUser.uid)}" onclick="window.handleUserAvatarClick('${tUser.uid}', '${tUser.photoUrl}', event)">
                             <div class="flex-1 w-full md:mt-12 flex flex-col items-center md:items-start gap-4 min-w-0">
                                 <div class="flex flex-col items-center md:items-start min-w-0 max-w-full w-full">
                                     <h1 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1.5 flex flex-wrap items-center justify-center md:justify-start gap-1 w-full leading-snug break-words">${tUser.displayName}${window.getUserBadge(tUser.uid)}</h1>
@@ -3171,7 +3751,7 @@
             
                             if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
                 
-                list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="window.goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); window.deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.isDeleted ? '🚫 رسالة محذوفة' : (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content))))}</p></div></div>`).join('');
+                list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="window.goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 ${window.getStatusRingClass(c.uid)}" onclick="window.handleUserAvatarClick('${c.uid}', '${c.info.photoUrl}', event)">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); window.deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.isDeleted ? '🚫 رسالة محذوفة' : (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content))))}</p></div></div>`).join('');
                 lucide.createIcons();
         }
 
@@ -3911,7 +4491,63 @@
             lucide.createIcons();
         };
 
+        window.toggleFavorite = async (postId) => {
+            if (!currentUser) return;
+            const isFav = (userData.favorites || []).includes(postId);
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                    favorites: isFav ? arrayRemove(postId) : arrayUnion(postId)
+                });
+                showToast(isFav ? 'تمت الإزالة من المفضلة' : 'تمت الإضافة للمفضلة', 'success');
+            } catch(e) { showToast('حدث خطأ', 'error'); }
+        };
+
+        window.generateFavoriteCardHTML = (post) => {
+            const author = allUsers.find(u => u.uid === post.authorId);
+            const aName = author ? author.displayName : post.authorName;
+            const aPic = author ? author.photoUrl : post.authorPhoto;
+            
+            return `
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md transition-all group mb-3" onclick="window.openSinglePost('${post.id}')">
+                <div class="flex items-center gap-4 min-w-0">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 overflow-hidden shadow-sm border border-black/5 dark:border-white/5 shrink-0">
+                        <img src="${aPic}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-200 text-base truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">${post.title || aName}</h4>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 truncate mt-1 flex items-center gap-1.5 font-medium">
+                            <i data-lucide="calendar" class="w-3 h-3"></i> ${new Date(post.createdAt).toLocaleDateString('ar-EG')} 
+                            <span class="opacity-30">|</span>
+                            <span class="truncate">${post.content ? post.content.substring(0, 50) + '...' : 'عرض المنشور الكامل'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="event.stopPropagation(); window.toggleFavorite('${post.id}')" class="text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-2 rounded-xl transition-colors" title="إزالة من المفضلة">
+                        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                    </button>
+                    <i data-lucide="chevron-left" class="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
+                </div>
+            </div>`;
+        };
+
+        window.renderFavoritesTab = () => {
+            const list = document.getElementById('favorites-posts-list');
+            const favIds = userData.favorites || [];
+            const favPosts = allPosts.filter(p => favIds.includes(p.id)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (!favPosts.length) {
+                list.innerHTML = '<div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"><i data-lucide="star" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i><p class="text-slate-500 dark:text-slate-400 font-bold">قائمة المفضلة فارغة حالياً.</p></div>';
+            } else {
+                list.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${favPosts.map(p => window.generateFavoriteCardHTML(p)).join('')}</div>`;
+            }
+            lucide.createIcons();
+        };
+
         window.openSinglePost = async (postId, notifId = null, targetCommentId = null) => {
+            // حفظ التبويب الحالي قبل الانتقال للمنشور للتمكن من الرجوع إليه لاحقاً
+            window.lastTabBeforeSinglePost = activeTabStr;
+            
             if(notifId) {
                 try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), { read: true }); } catch(e) {}
             }
@@ -4024,6 +4660,195 @@
                 }
             }
         }, 100);
+
+        // --- حماية المحادثات من التصوير والنسخ ---
+        window.addEventListener('blur', () => {
+            // تعتيم قسم الرسائل والصور فقط عند محاولة التبديل بين التطبيقات أو تصوير الشاشة
+            if (activeTabStr === 'messages') {
+                const chatView = document.getElementById('tab-content-messages');
+                if (chatView) chatView.classList.add('screenshot-protection');
+            }
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox && !lightbox.classList.contains('hidden')) {
+                lightbox.classList.add('screenshot-protection');
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            const chatView = document.getElementById('tab-content-messages');
+            if (chatView) chatView.classList.remove('screenshot-protection');
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox) lightbox.classList.remove('screenshot-protection');
+        });
+
+        // منع الزر الأيمن للفأرة ومنع سحب الصور
+        document.addEventListener('contextmenu', (e) => {
+            if (activeTabStr === 'messages' || document.getElementById('lightbox').classList.contains('hidden') === false) {
+                e.preventDefault();
+                showToast('عذراً، لا يمكن نسخ المحتوى في هذا القسم لدواعي الأمان', 'error');
+            }
+        });
+
+        // كشف محاولة الضغط على زر Print Screen في الكمبيوتر
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'PrintScreen' && (activeTabStr === 'messages' || !document.getElementById('lightbox').classList.contains('hidden'))) {
+                navigator.clipboard.writeText('Security Blocked');
+                const chatView = document.getElementById('tab-content-messages');
+                if (chatView) chatView.classList.add('screenshot-protection');
+                const lightbox = document.getElementById('lightbox');
+                if (lightbox) lightbox.classList.add('screenshot-protection');
+                showToast('تم حظر تصوير المحادثة!', 'error');
+            }
+        });
+
+        // --- وظيفة التقاط صورة للمنشور بأسلوب تسويقي احترافي ---
+        window.capturePost = async (postElementId, authorName) => {
+            const postEl = document.getElementById(postElementId);
+            if (!postEl) return;
+            
+            // تحديد أزرار التفاعل وقسم التعليقات وأزرار التعديل والحذف لإخفائهم أثناء التصوير
+            const btnGroup = postEl.querySelector('.gap-1\\.5.relative') || postEl.children[postEl.children.length - 2];
+            const commentSection = postEl.querySelector('.mt-3.pt-3') || postEl.children[postEl.children.length - 1];
+            const editDeleteBtns = postEl.querySelector('.flex.justify-between.items-start .flex.items-center.gap-1');
+            
+            // تصميم العلامة المائية التسويقية الفخمة مع ضبط محاذاة اللوجو
+            const watermark = document.createElement('div');
+            watermark.className = 'mt-4 pt-4 border-t-2 border-emerald-500/30 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-slate-50 dark:from-emerald-900/20 dark:to-slate-800 p-4 rounded-2xl shadow-sm';
+            watermark.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5">صاحب المنشور</span>
+                    <span class="font-black text-lg text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <i data-lucide="user-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> ${authorName}
+                    </span>
+                </div>
+                <div class="flex flex-col items-end justify-center">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">بواسطة موقع</span>
+                    <div class="font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1.5 text-2xl drop-shadow-sm tracking-wide leading-none">
+                        <span>MyTab</span> 
+                        <img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" crossorigin="anonymous" class="w-8 h-8 object-contain drop-shadow-md translate-y-[2px]">
+                    </div>
+                </div>
+            `;
+            
+            try {
+                showToast('جاري تجهيز الصورة...', 'info');
+                
+                // إخفاء الأزرار والتعليقات مؤقتاً وإضافة العلامة المائية
+                if (btnGroup) btnGroup.style.display = 'none';
+                if (commentSection) commentSection.style.display = 'none';
+                if (editDeleteBtns) editDeleteBtns.style.display = 'none';
+                
+                postEl.appendChild(watermark);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // التقاط الصورة
+                const canvas = await html2canvas(postEl, {
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                    scale: 2, // جودة عالية HD
+                    useCORS: true, // مهم لتحميل صور البروفايل من الروابط الخارجية
+                    allowTaint: true,
+                    logging: false
+                });
+                
+                // تحميل الصورة
+                const link = document.createElement('a');
+                link.download = `MyTab_Post_${authorName.replace(/\s+/g, '_')}_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('تم حفظ صورة المنشور بنجاح!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء التقاط الصورة', 'error');
+            } finally {
+                // إعادة المنشور لشكله الطبيعي وإزالة العلامة المائية
+                if (btnGroup) btnGroup.style.display = '';
+                if (commentSection) commentSection.style.display = '';
+                if (editDeleteBtns) editDeleteBtns.style.display = '';
+                watermark.remove();
+            }
+        };
+
+        // --- وظيفة التقاط صورة للمنشور بأسلوب تسويقي احترافي ---
+        window.capturePost = async (postElementId, authorName) => {
+            const postEl = document.getElementById(postElementId);
+            if (!postEl) return;
+            
+            // تحديد أزرار التفاعل وقسم التعليقات لإخفائهم أثناء التصوير
+            const btnGroup = postEl.querySelector('.gap-1\\.5.relative') || postEl.children[postEl.children.length - 2];
+            const commentSection = postEl.querySelector('.mt-3.pt-3') || postEl.children[postEl.children.length - 1];
+            
+            // استهداف أزرار التعديل والحذف باستخدام طريقة مضمونة 100% (أول عنصر ثم آخر ابن داخله إذا كان زراً)
+            const headerDiv = postEl.firstElementChild;
+            let editDeleteBtns = null;
+            if (headerDiv && headerDiv.classList.contains('justify-between') && headerDiv.children.length > 1) {
+                editDeleteBtns = headerDiv.children[1];
+            }
+            
+            // تصميم العلامة المائية التسويقية الفخمة مع الضبط الهندسي لمحاذاة اللوجو
+            const watermark = document.createElement('div');
+            watermark.className = 'mt-4 pt-4 border-t-2 border-emerald-500/30 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-slate-50 dark:from-emerald-900/20 dark:to-slate-800 p-4 rounded-2xl shadow-sm';
+            watermark.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5">صاحب المنشور</span>
+                    <span class="font-black text-lg text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <i data-lucide="user-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> ${authorName}
+                    </span>
+                </div>
+                <div class="flex flex-col items-end justify-center">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">بواسطة موقع</span>
+                    <div class="font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-2 text-2xl drop-shadow-sm tracking-wide">
+                        <span>MyTab</span> 
+                        <img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" crossorigin="anonymous" class="w-8 h-8 object-contain drop-shadow-md">
+                    </div>
+                </div>
+            `;
+            
+            try {
+                showToast('جاري تجهيز الصورة...', 'info');
+                
+                // إخفاء الأزرار مؤقتاً وإضافة العلامة المائية
+                if (btnGroup) btnGroup.style.display = 'none';
+                if (commentSection) commentSection.style.display = 'none';
+                if (editDeleteBtns) {
+                    editDeleteBtns.style.opacity = '0'; // إخفاء إضافي مضمون
+                    editDeleteBtns.style.display = 'none';
+                }
+                
+                postEl.appendChild(watermark);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // 🔴 مهلة زمنية: إعطاء المتصفح لحظة لتطبيق إخفاء العناصر قبل التقاط الصورة (مهم جداً لحل المشكلة)
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                // التقاط الصورة
+                const canvas = await html2canvas(postEl, {
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                    scale: 2, // جودة عالية HD
+                    useCORS: true, // مهم لتحميل صور البروفايل من الروابط الخارجية
+                    allowTaint: true,
+                    logging: false
+                });
+                
+                // تحميل الصورة
+                const link = document.createElement('a');
+                link.download = `MyTab_Post_${authorName.replace(/\s+/g, '_')}_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('تم حفظ صورة المنشور بنجاح!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء التقاط الصورة', 'error');
+            } finally {
+                // إعادة المنشور لشكله الطبيعي
+                if (btnGroup) btnGroup.style.display = '';
+                if (commentSection) commentSection.style.display = '';
+                if (editDeleteBtns) {
+                    editDeleteBtns.style.opacity = '1';
+                    editDeleteBtns.style.display = ''; 
+                }
+                watermark.remove();
+            }
+        };
 
         // ===============================================================
 
