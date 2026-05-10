@@ -717,6 +717,13 @@
                                     تنبيه: رغم أن المحادثات مشفرة، ننصحك بعدم مشاركة أسرار شديدة الخصوصية؛ فالتكنولوجيا ليست خالية من الثغرات، اجعل تبادلك في حدود ما لا تخشى تسريبه.
                                 </p>
                             </div>
+                            <div id="reply-preview-container" class="hidden bg-slate-50 dark:bg-slate-700/50 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 flex justify-between items-center relative">
+                                <div class="flex flex-col overflow-hidden w-full pl-6">
+                                    <span class="text-emerald-600 dark:text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="reply" class="w-3 h-3 rtl:-scale-x-100"></i> الرد على رسالة</span>
+                                    <span id="reply-preview-text" class="text-slate-600 dark:text-slate-300 text-xs truncate mt-0.5"></span>
+                                </div>
+                                <button onclick="window.cancelReply()" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-600 rounded-full p-1 shadow-sm transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            </div>
                             <div class="flex items-center gap-2">
                                 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
                                 <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-6 h-6"></i></button>
@@ -2121,12 +2128,16 @@
                 const post = allPosts.find(p => p.id === id);
                 if (post) currentText = post.content || '';
                 document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل المنشور';
-            } else {
+            } else if (type === 'comment') {
                 for (let p of allPosts) {
                     const c = (p.comments || []).find(x => x.id === id);
                     if (c) { currentText = c.text || ''; break; }
                 }
                 document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل التعليق';
+            } else if (type === 'message') {
+                const msg = allMessages.find(m => m.id === id);
+                if (msg) currentText = msg.content || '';
+                document.getElementById('edit-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل الرسالة';
             }
             
             document.getElementById('edit-modal-input').value = currentText;
@@ -2166,6 +2177,9 @@
                         await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', targetPost.id), { comments: newComments });
                         showToast('تم تعديل التعليق بنجاح', 'success');
                     }
+                } else if (editingItemType === 'message') {
+                    await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', editingItemId), { content: newText, isEdited: true });
+                    showToast('تم تعديل الرسالة بنجاح', 'success');
                 }
                 window.closeEditModal();
             } catch (e) {
@@ -2988,14 +3002,49 @@
                 return { uid: fUid, info: fInfo, lastMsg: lastMsg, unreadCount: unreadCount, lastTime: lastMsg ? new Date(lastMsg.createdAt).getTime() : 0 }; 
             }).filter(c => c && c.lastMsg).sort((a,b) => b.lastTime - a.lastTime);
             
-            if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
-            
-            list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="window.goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); window.deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content)))}</p></div></div>`).join('');
-            lucide.createIcons();
+                            if (!chats.length) { list.innerHTML = '<div class="text-center py-10"><i data-lucide="message-square" class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2"></i><p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">لا توجد محادثات سابقة.<br>يمكنك بدء محادثة جديدة بالدخول لتبويب (الأصدقاء).</p></div>'; return; }
+                
+                list.innerHTML = chats.map(c => `<div class="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700/50 transition-colors group ${c.unreadCount ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}" onclick="window.goToChat('${c.uid}')"><div class="relative"><img src="${c.info.photoUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">${c.unreadCount ? `<span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800">${c.unreadCount}</span>` : ''}</div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h4 class="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1 ${c.unreadCount ? 'text-emerald-700 dark:text-emerald-400' : ''}">${c.info.displayName}${window.getUserBadge(c.uid)}</h4><div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap ml-2 group-hover:hidden">${new Date(c.lastMsg.createdAt).toLocaleDateString('ar-EG')}</span><button onclick="event.stopPropagation(); window.deleteEntireChat('${c.uid}')" class="hidden group-hover:flex items-center justify-center text-rose-500 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-1.5 rounded-lg transition-colors" title="حذف المحادثة بالكامل"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-sm truncate ${c.unreadCount ? 'font-bold text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.lastMsg.isDeleted ? '🚫 رسالة محذوفة' : (c.lastMsg.type === 'sticker' ? 'ملصق' : (c.lastMsg.type === 'image' ? '🖼️ صورة' : (c.lastMsg.type === 'post_share' ? 'شارك منشوراً معك' : (c.lastMsg.senderId === currentUser.uid ? 'أنت: ' + c.lastMsg.content : c.lastMsg.content))))}</p></div></div>`).join('');
+                lucide.createIcons();
         }
 
         window.openChatRoom = (uid) => { document.getElementById('messages-list-view').classList.add('hidden'); document.getElementById('chat-room-view').classList.remove('hidden'); window.renderChatRoom(); }
-        window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); }
+        window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); if(window.cancelReply) window.cancelReply(); }
+
+        window.messageToReply = null;
+        window.setReplyMessage = (msgId) => {
+            try {
+                // جلب الرسالة برمجياً لمنع تعطل الأزرار بسبب النصوص المعقدة
+                const msg = allMessages.find(m => m.id === msgId);
+                if (!msg) return;
+                
+                window.messageToReply = { id: msg.id, content: msg.content, type: msg.type || 'text' };
+                const previewText = msg.type === 'image' ? '🖼️ صورة' : (msg.type === 'sticker' ? 'ملصق' : (msg.type === 'post_share' ? 'مشاركة منشور' : msg.content));
+                
+                const previewTextEl = document.getElementById('reply-preview-text');
+                if (previewTextEl) previewTextEl.innerText = previewText;
+                
+                const previewContainerEl = document.getElementById('reply-preview-container');
+                if (previewContainerEl) previewContainerEl.classList.remove('hidden');
+                
+                const inputEl = document.getElementById('chat-input');
+                if (inputEl) {
+                    inputEl.focus();
+                }
+                
+                document.querySelectorAll('[id^="msg-picker-"]').forEach(p => p.classList.add('hidden'));
+            } catch (e) {
+                console.error("خطأ:", e);
+            }
+        };
+        
+        window.cancelReply = () => {
+            window.messageToReply = null;
+            const container = document.getElementById('reply-preview-container');
+            if (container) container.classList.add('hidden');
+            const previewText = document.getElementById('reply-preview-text');
+            if (previewText) previewText.innerText = '';
+        };
 
         window.chatImageBase64 = null;
 
@@ -3057,8 +3106,10 @@
                 const timeStr = d.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
                 if (dateStr !== lastDate) { html += `<div class="flex justify-center my-4"><span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs px-3 py-1 rounded-full font-medium shadow-sm">${dateStr}</span></div>`; lastDate = dateStr; }
                 const isMe = m.senderId === currentUser.uid;
-                const readIcon = isMe ? `<i data-lucide="check-check" class="w-4 h-4 inline-block mr-1 transition-colors ${m.read ? 'text-blue-400 dark:text-blue-500' : 'text-slate-400 dark:text-slate-500'}"></i>` : '';
-                const delBtn = isMe ? `<button onclick="window.deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100 mx-1" title="حذف الرسالة"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : '';
+                const editedMark = m.isEdited && !m.isDeleted ? `<span class="text-[9px] text-slate-400 mx-1">(معدلة)</span>` : '';
+                const readIcon = (isMe ? `<i data-lucide="check-check" class="w-4 h-4 inline-block mr-1 transition-colors ${m.read ? 'text-blue-400 dark:text-blue-500' : 'text-slate-400 dark:text-slate-500'}"></i>` : '') + editedMark;
+                const editBtn = isMe && (!m.type || m.type === 'text') && !m.isDeleted ? `<button onclick="window.openEditModal('${m.id}', 'message')" class="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-emerald-50 dark:bg-emerald-900/30 rounded-full hover:bg-emerald-100 mx-1" title="تعديل الرسالة"><i data-lucide="edit-3" class="w-3 h-3"></i></button>` : '';
+                const delBtn = isMe && !m.isDeleted ? `<div class="flex items-center">${editBtn}<button onclick="window.deleteMessage('${m.id}')" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-rose-50 dark:bg-rose-900/30 rounded-full hover:bg-rose-100 mx-1" title="حذف الرسالة"><i data-lucide="trash-2" class="w-3 h-3"></i></button></div>` : '';
                 
                 let reactsHtml = '';
                 let hasReacts = false;
@@ -3071,8 +3122,10 @@
                         `</div>`;
                 }
 
-                const msgPickerHtml = `<div id="msg-picker-${m.id}" class="hidden absolute bottom-[calc(100%+5px)] ${isMe?'right-0':'left-0'} bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-2 py-1.5 z-30 flex items-center gap-1.5 animate-in zoom-in duration-200 w-max" onclick="event.stopPropagation()">
-                    ${['❤️','😂','👍','😮','😢','🙏'].map(e => `<button onclick="window.reactToMessage('${m.id}', '${e}')" class="hover:bg-slate-100 dark:hover:bg-slate-700 w-8 h-8 rounded-full text-lg hover:scale-125 transition-transform flex justify-center items-center">${e}</button>`).join('')}
+                const msgPickerHtml = `<div id="msg-picker-${m.id}" class="hidden absolute bottom-[calc(100%+5px)] ${isMe ? 'left-0' : 'right-0'} bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-2 py-1.5 z-30 flex items-center gap-1.5 animate-in zoom-in duration-200 w-max" onclick="event.stopPropagation()">
+                    <button onclick="event.preventDefault(); window.setReplyMessage('${m.id}')" class="hover:bg-slate-100 dark:hover:bg-slate-700 w-8 h-8 rounded-full flex justify-center items-center text-emerald-600 dark:text-emerald-400 transition-colors" title="رد"><i data-lucide="reply" class="w-4 h-4 rtl:-scale-x-100"></i></button>
+                    <div class="w-px h-5 bg-slate-200 dark:bg-slate-600 mx-0.5"></div>
+                    ${['❤️','😂','👍','😮','😢','🙏'].map(e => `<button onclick="event.preventDefault(); window.reactToMessage('${m.id}', '${e}')" class="hover:bg-slate-100 dark:hover:bg-slate-700 w-8 h-8 rounded-full text-lg hover:scale-125 transition-transform flex justify-center items-center">${e}</button>`).join('')}
                 </div>`;
                 const clickAction = `onclick="document.querySelectorAll('[id^=\\'msg-picker-\\']').forEach(el => { if(el.id !== 'msg-picker-${m.id}') el.classList.add('hidden') }); document.getElementById('msg-picker-${m.id}').classList.toggle('hidden')"`;
                 
@@ -3080,8 +3133,23 @@
                 const bubblePadding = hasReacts ? 'px-4 pt-2.5 pb-4' : 'px-4 py-2.5';
                 const sharedBubblePadding = hasReacts ? 'px-3 pt-2.5 pb-4' : 'px-3 py-2.5';
 
+                if (m.isDeleted) {
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="${isMe ? 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-br-sm' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-tl-sm'} px-4 py-2.5 rounded-2xl text-sm shadow-sm flex items-center gap-2 italic"><i data-lucide="ban" class="w-4 h-4 opacity-70"></i> تم حذف هذه الرسالة</div><div class="flex items-center mt-1"><span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    return;
+                }
+
+                let repliedMsgHtml = '';
+                if (m.replyTo) {
+                    const repliedContentText = m.replyTo.type === 'image' ? '🖼️ صورة' : (m.replyTo.type === 'sticker' ? 'ملصق' : (m.replyTo.type === 'post_share' ? 'مشاركة منشور' : m.replyTo.content));
+                    repliedMsgHtml = `<div class="bg-black/10 dark:bg-white/10 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 text-[11px] md:text-xs opacity-90 truncate max-w-full shadow-sm"><span class="font-bold flex items-center gap-1 mb-0.5 text-emerald-300 dark:text-emerald-400"><i data-lucide="reply" class="w-3 h-3 rtl:-scale-x-100"></i> رد على:</span>${repliedContentText}</div>`;
+                }
+
                 if (m.type === 'sticker') {
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative cursor-pointer msg-bubble-container" ${clickAction}>${msgPickerHtml}<div class="text-[40px] leading-none mb-1 hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    if (m.replyTo) {
+                        html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="text-[40px] leading-none text-center">${m.content}</div></div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    } else {
+                        html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative cursor-pointer msg-bubble-container" ${clickAction}>${msgPickerHtml}<div class="text-[40px] leading-none mb-1 hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    }
                 } else if (m.type === 'post_share') {
                     const sp = allPosts.find(p => p.id === m.content);
                     let sharedHtml = '';
@@ -3114,7 +3182,7 @@
                     } else {
                         sharedHtml = `<div class="p-2.5 bg-white/50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-700 dark:text-slate-300 mt-2 border border-black/10 dark:border-white/10 font-bold">هذا المنشور غير متوفر أو تم حذفه</div>`;
                     }
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${sharedBubblePadding} rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap"><div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${sharedBubblePadding} rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 } else {
                     const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
@@ -3128,7 +3196,7 @@
                     if(ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
                     if(tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2" onclick="event.stopPropagation()"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
                 }
             });
             if (!fMsgs.length) html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
@@ -3184,8 +3252,8 @@
         }
 
         window.deleteMessage = async (msgId) => {
-            showConfirm('هل تريد حذف هذه الرسالة؟', async () => {
-                try { await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId)); } catch(e) { showToast('حدث خطأ أثناء حذف الرسالة', 'error'); }
+            showConfirm('هل تريد حذف هذه الرسالة؟ (سيظهر أنها محذوفة للطرف الآخر)', async () => {
+                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId), { isDeleted: true, content: '', imageUrl: null, type: 'text', reactions: {} }); } catch(e) { showToast('حدث خطأ أثناء حذف الرسالة', 'error'); }
             });
         }
 
@@ -3220,8 +3288,12 @@
                 createdAt: new Date().toISOString() 
             };
             if(imgUrl) msgData.imageUrl = imgUrl;
+            if(window.messageToReply) {
+                msgData.replyTo = window.messageToReply;
+            }
 
             try { 
+                if(window.cancelReply) window.cancelReply();
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), msgData); 
                 setTimeout(() => { const msgsArea = document.getElementById('chat-messages-area'); msgsArea.scrollTop = msgsArea.scrollHeight; }, 100); 
             } catch(e) { showToast('فشل إرسال الرسالة', 'error'); }
