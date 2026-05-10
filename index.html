@@ -692,8 +692,26 @@
 
                 <!-- Messages Tab -->
                 <div id="tab-content-messages" class="tab-content hidden h-[85vh] flex-col relative">
+                    
+                    <div id="chat-lock-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                        <div class="bg-emerald-50 dark:bg-emerald-900/30 p-5 rounded-full mb-6">
+                            <i data-lucide="lock" class="w-12 h-12 text-emerald-600 dark:text-emerald-400"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">الرسائل مقفلة</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 text-center px-4">يرجى إدخال كلمة سر الرسائل لفتح المحادثات.</p>
+                        <div class="flex gap-2 w-full max-w-xs px-4">
+                            <input type="password" id="chat-unlock-input" placeholder="كلمة السر..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 text-center tracking-widest font-mono" onkeydown="if(event.key==='Enter') window.unlockChat()">
+                            <button onclick="window.unlockChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 rounded-xl font-bold transition-colors shadow-sm flex items-center justify-center"><i data-lucide="unlock" class="w-5 h-5"></i></button>
+                        </div>
+                        <p id="chat-unlock-error" class="text-rose-500 text-xs mt-3 hidden font-bold">كلمة السر غير صحيحة!</p>
+                        <button onclick="window.requestChatPasswordReset()" class="text-[10px] text-slate-400 hover:text-emerald-500 mt-6 underline underline-offset-4 transition-colors">نسيت كلمة السر؟</button>
+                    </div>
+
                     <div id="messages-list-view" class="w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
-                        <div class="p-4 border-b border-slate-100 dark:border-slate-700"><h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2></div>
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2>
+                            <button id="lock-chat-btn" onclick="window.lockChat()" class="hidden bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="قفل الرسائل الآن"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                        </div>
                         <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50 dark:bg-slate-900/50"></div>
                     </div>
                     
@@ -703,6 +721,9 @@
                             <img id="chat-room-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
                             <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)"><h3 id="chat-room-name" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"></h3></div>
                             <button onclick="clearChat()" class="p-2 bg-rose-50 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="مسح المحادثة"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                        <div id="chat-auto-delete-banner" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] md:text-xs text-center py-2 font-bold shadow-sm z-10 relative border-b border-rose-100 dark:border-rose-800/50 flex justify-center items-center gap-1.5">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> الحذف التلقائي مفعل (تتم إزالة الرسائل القديمة كل 12 ساعة)
                         </div>
                         <div id="chat-messages-area" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col relative pb-8"></div>
                         <div class="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-2 relative">
@@ -913,6 +934,44 @@
         let activeArchiveMonth = null;
         let activeChatFriendId = null; 
         let currentSinglePostId = null;
+        window.isChatSessionUnlocked = false;
+
+        window.unlockChat = () => {
+            const input = document.getElementById('chat-unlock-input');
+            const err = document.getElementById('chat-unlock-error');
+            if (input && userData && input.value === userData.chatPassword) {
+                window.isChatSessionUnlocked = true;
+                input.value = '';
+                if(err) err.classList.add('hidden');
+                document.getElementById('chat-lock-screen').classList.add('hidden');
+                lucide.createIcons();
+            } else {
+                if(err) err.classList.remove('hidden');
+            }
+        };
+
+        window.lockChat = () => {
+            window.isChatSessionUnlocked = false;
+            window.switchTab('messages', true);
+            showToast('تم قفل الرسائل', 'success');
+        };
+
+        window.requestChatPasswordReset = () => {
+            showConfirm('لإعادة تعيين كلمة سر الرسائل، سنحتاج للتأكد من هويتك باستخدام تاريخ ميلادك المسجل. هل تود الاستمرار؟', () => {
+                const recoveryValue = prompt("يرجى إدخال تاريخ ميلادك المسجل بصيغة (السنة-الشهر-اليوم)\nمثال: 1990-01-01");
+                if (recoveryValue && userData && recoveryValue === userData.birthDate) {
+                    updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                        chatPassword: ''
+                    }).then(() => {
+                        window.isChatSessionUnlocked = true;
+                        document.getElementById('chat-lock-screen').classList.add('hidden');
+                        showToast('تم التحقق بنجاح وإلغاء قفل الرسائل.', 'success');
+                    }).catch(() => showToast('حدث خطأ أثناء التحديث', 'error'));
+                } else {
+                    showToast('تاريخ الميلاد غير مطابق للبيانات المسجلة.', 'error');
+                }
+            });
+        };
 
         window.setArchiveLevel = (level, val) => {
             if (level === 'year') { activeArchiveYear = val; activeArchiveMonth = null; activeArchiveDate = null; }
@@ -1157,6 +1216,27 @@
 
             const u5 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages'), (snap) => {
                 allMessages = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                
+                // فحص الحذف التلقائي للرسائل (إذا كنت أنت أو صديقك مفعلين الخاصية)
+                if (currentUser) {
+                    const now = Date.now();
+                    const twelveHours = 12 * 60 * 60 * 1000;
+                    allMessages.forEach(m => {
+                        if (m.senderId === currentUser.uid || m.receiverId === currentUser.uid) {
+                            const friendId = m.senderId === currentUser.uid ? m.receiverId : m.senderId;
+                            const friend = allUsers.find(u => u.uid === friendId);
+                            const iHaveAutoDelete = userData && userData.autoDeleteMessages;
+                            const friendHasAutoDelete = friend && friend.autoDeleteMessages;
+                            
+                            if (iHaveAutoDelete || friendHasAutoDelete) {
+                                if ((now - new Date(m.createdAt).getTime()) > twelveHours) {
+                                    try { deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)); } catch(e){}
+                                }
+                            }
+                        }
+                    });
+                }
+
                 updateBadge();
                 if(activeTabStr === 'messages') {
                     if(activeChatFriendId) window.renderChatRoom();
@@ -1190,6 +1270,36 @@
             }, (error) => console.error(error));
 
             unsubs.push(u1, u2, u3, u4, u5, u6, u7);
+
+            // تشغيل فاحص دوري كل دقيقة لحذف الرسائل التي انتهت مدتها
+            if (window.autoDeleteInterval) clearInterval(window.autoDeleteInterval);
+            window.autoDeleteInterval = setInterval(() => {
+                if (!currentUser) return;
+                const now = Date.now();
+                const twelveHours = 12 * 60 * 60 * 1000;
+                let hasDeletions = false;
+                
+                allMessages.forEach(m => {
+                    if (m.senderId === currentUser.uid || m.receiverId === currentUser.uid) {
+                        const friendId = m.senderId === currentUser.uid ? m.receiverId : m.senderId;
+                        const friend = allUsers.find(u => u.uid === friendId);
+                        const iHaveAutoDelete = userData && userData.autoDeleteMessages;
+                        const friendHasAutoDelete = friend && friend.autoDeleteMessages;
+                        
+                        if (iHaveAutoDelete || friendHasAutoDelete) {
+                            if ((now - new Date(m.createdAt).getTime()) > twelveHours) {
+                                hasDeletions = true;
+                                try { deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)); } catch(e){}
+                            }
+                        }
+                    }
+                });
+                
+                if (hasDeletions && activeTabStr === 'messages') {
+                    if(activeChatFriendId) window.renderChatRoom();
+                    else renderMessagesList();
+                }
+            }, 60000);
         }
 
         // --- View Management ---
@@ -1265,6 +1375,27 @@
             }
             if (tab === 'messages') {
                 tcAct.classList.add('flex');
+                
+                const hasChatPwd = userData && userData.chatPassword && userData.chatPassword.trim() !== '';
+                const lockScreen = document.getElementById('chat-lock-screen');
+                const lockBtn = document.getElementById('lock-chat-btn');
+                
+                if (hasChatPwd) {
+                    if (lockBtn) lockBtn.classList.remove('hidden');
+                    if (!window.isChatSessionUnlocked) {
+                        if (lockScreen) lockScreen.classList.remove('hidden');
+                        setTimeout(() => {
+                            const pwdInput = document.getElementById('chat-unlock-input');
+                            if (pwdInput) pwdInput.focus();
+                        }, 100);
+                    } else {
+                        if (lockScreen) lockScreen.classList.add('hidden');
+                    }
+                } else {
+                    if (lockBtn) lockBtn.classList.add('hidden');
+                    if (lockScreen) lockScreen.classList.add('hidden');
+                }
+
                 if (!activeChatFriendId) {
                     document.getElementById('chat-room-view').classList.add('hidden');
                     document.getElementById('messages-list-view').classList.remove('hidden');
@@ -2658,6 +2789,11 @@
                     url: row.querySelector('.s-url').value
                 }));
 
+                const chatPwdEl = document.getElementById('ep-chat-password');
+                const chatPwdVal = chatPwdEl ? chatPwdEl.value.trim() : (userData.chatPassword || '');
+                const autoDeleteEl = document.getElementById('ep-auto-delete');
+                const autoDeleteVal = autoDeleteEl ? autoDeleteEl.checked : (userData.autoDeleteMessages || false);
+
                 await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
                     displayName: document.getElementById('ep-name').value,
                     bio: document.getElementById('ep-bio').value,
@@ -2665,8 +2801,13 @@
                     gender: document.getElementById('ep-gender').value,
                     birthDate: document.getElementById('ep-dob').value,
                     photoUrl: pUrl,
-                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
+                    socialLinks: sLinksRaw.filter(l => l.url.trim()!==''),
+                    chatPassword: chatPwdVal,
+                    autoDeleteMessages: autoDeleteVal
                 });
+                
+                if (chatPwdVal !== userData.chatPassword) window.isChatSessionUnlocked = false;
+                
                 isEditingProfile = false;
                 window.tmpProfImgFile = null;
                 window.removeProfImg = false;
@@ -2727,13 +2868,23 @@
                     <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إعدادات حسابي</h3>
                     <div class="space-y-8">
                         <div>
-                            <h4 class="font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> بيانات الدخول</h4>
+                            <h4 class="font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 mb-4 flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> بيانات الدخول والأمان</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">البريد الإلكتروني المسجل</label><input type="text" value="${currentUser.email || 'مسجل بحساب جوجل'}" disabled class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 cursor-not-allowed font-sans" dir="ltr"></div>
                                 <div>
                                     <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">كلمة المرور</label>
                                     <button id="reset-pwd-btn" onclick="window.resetMyPassword()" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex justify-center items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور</button>
                                     <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 dark:text-emerald-400 hidden font-medium"></p>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">قفل الرسائل الخاصة (اختياري)</label>
+                                <input type="password" id="ep-chat-password" value="${userData.chatPassword || ''}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors font-mono tracking-wider" placeholder="اكتب كلمة سر، أو اتركها فارغة لإلغاء القفل">
+                                <p class="text-[10px] text-slate-400 mt-1 mb-3">إذا قمت بتعيين كلمة سر، فلن يتمكن أحد من الدخول لرسائلك إلا بكتابتها. لمسح القفل بالكامل، اترك هذا الحقل فارغاً واحفظ التعديلات.</p>
+                                
+                                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                                    <input type="checkbox" id="ep-auto-delete" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" ${userData.autoDeleteMessages ? 'checked' : ''}>
+                                    <label for="ep-auto-delete" class="text-sm text-rose-600 dark:text-rose-400 font-bold cursor-pointer flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> تفعيل الحذف التلقائي للرسائل كل 12 ساعة</label>
                                 </div>
                             </div>
                         </div>
@@ -3088,6 +3239,14 @@
             document.getElementById('chat-room-avatar').src = friend.photoUrl;
             document.getElementById('chat-room-name').innerHTML = friend.displayName + window.getUserBadge(friend.uid);
             const msgsArea = document.getElementById('chat-messages-area');
+            const autoDeleteBanner = document.getElementById('chat-auto-delete-banner');
+            if (autoDeleteBanner) {
+                if ((userData && userData.autoDeleteMessages) || (friend && friend.autoDeleteMessages)) {
+                    autoDeleteBanner.classList.remove('hidden');
+                } else {
+                    autoDeleteBanner.classList.add('hidden');
+                }
+            }
             
             // إغلاق أي قائمة تفاعل مفتوحة إذا تم الضغط في أي مساحة فارغة في المحادثة
             msgsArea.onclick = (e) => {
@@ -3133,8 +3292,10 @@
                 const bubblePadding = hasReacts ? 'px-4 pt-2.5 pb-4' : 'px-4 py-2.5';
                 const sharedBubblePadding = hasReacts ? 'px-3 pt-2.5 pb-4' : 'px-3 py-2.5';
 
+                const msgAvatarHtml = `<img src="${isMe ? userData.photoUrl : friend.photoUrl}" class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover shrink-0 cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm self-end mb-5" onclick="event.stopPropagation(); window.viewProfile('${isMe ? currentUser.uid : friend.uid}')">`;
+                
                 if (m.isDeleted) {
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="${isMe ? 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-br-sm' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-tl-sm'} px-4 py-2.5 rounded-2xl text-sm shadow-sm flex items-center gap-2 italic"><i data-lucide="ban" class="w-4 h-4 opacity-70"></i> تم حذف هذه الرسالة</div><div class="flex items-center mt-1"><span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    html += `<div class="flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 mb-4 group relative w-full">${msgAvatarHtml}<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} w-full min-w-0"><div class="${isMe ? 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-br-sm' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400 rounded-tl-sm'} px-4 py-2.5 rounded-2xl text-sm shadow-sm flex items-center gap-2 italic w-fit"><i data-lucide="ban" class="w-4 h-4 opacity-70"></i> تم حذف هذه الرسالة</div><div class="flex items-center mt-1"><span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div></div>`;
                     return;
                 }
 
@@ -3144,11 +3305,13 @@
                     repliedMsgHtml = `<div class="bg-black/10 dark:bg-white/10 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 text-[11px] md:text-xs opacity-90 truncate max-w-full shadow-sm"><span class="font-bold flex items-center gap-1 mb-0.5 text-emerald-300 dark:text-emerald-400"><i data-lucide="reply" class="w-3 h-3 rtl:-scale-x-100"></i> رد على:</span>${repliedContentText}</div>`;
                 }
 
+                let innerBubble = '';
+                
                 if (m.type === 'sticker') {
                     if (m.replyTo) {
-                        html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="text-[40px] leading-none text-center">${m.content}</div></div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                        innerBubble = `<div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="text-[40px] leading-none text-center">${m.content}</div></div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div>`;
                     } else {
-                        html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative"><div class="relative cursor-pointer msg-bubble-container" ${clickAction}>${msgPickerHtml}<div class="text-[40px] leading-none mb-1 hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                        innerBubble = `<div class="relative cursor-pointer msg-bubble-container w-fit" ${clickAction}>${msgPickerHtml}<div class="text-[40px] leading-none mb-1 hover:scale-110 transition-transform">${m.content}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div>`;
                     }
                 } else if (m.type === 'post_share') {
                     const sp = allPosts.find(p => p.id === m.content);
@@ -3182,7 +3345,7 @@
                     } else {
                         sharedHtml = `<div class="p-2.5 bg-white/50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-700 dark:text-slate-300 mt-2 border border-black/10 dark:border-white/10 font-bold">هذا المنشور غير متوفر أو تم حذفه</div>`;
                     }
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${sharedBubblePadding} rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    innerBubble = `<div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-emerald-50 rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${sharedBubblePadding} rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}<div class="flex items-center gap-1 opacity-90 text-[11px] font-bold mb-0.5"><i data-lucide="forward" class="w-3.5 h-3.5 rtl:-scale-x-100"></i> ${isMe?'أرسلت منشوراً':'شارك منشوراً'}</div>${sharedHtml}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div>`;
                 } else {
                     const {ytId, tkId} = extractEmbeds(m.content||'');
                     let messageBody = '';
@@ -3196,8 +3359,10 @@
                     if(ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
                     if(tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2" onclick="event.stopPropagation()"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full max-w-[200px] h-[350px] rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
 
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-4 group relative w-full"><div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div></div>`;
+                    innerBubble = `<div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div>`;
                 }
+                
+                html += `<div class="flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 mb-4 group relative w-full">${msgAvatarHtml}<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} flex-1 min-w-0">${innerBubble}</div></div>`;
             });
             if (!fMsgs.length) html = '<div class="flex-1 flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500"><i data-lucide="hand" class="w-12 h-12 mb-3 opacity-50"></i><p>أرسل رسالة لبدء المحادثة!</p></div>';
             const isAtBottom = msgsArea.scrollHeight - msgsArea.scrollTop <= msgsArea.clientHeight + 100;
