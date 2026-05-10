@@ -26,6 +26,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* منع سكرين شوت وتعتيم المحتوى عند محاولة العرض في بعض المتصفحات */
+        @media pill { .no-screenshot { filter: blur(10px); } }
+        #lightbox { user-select: none; -webkit-user-drag: none; }
+        
         body { 
             font-family: 'Cairo', sans-serif; 
             -webkit-font-smoothing: antialiased;
@@ -748,6 +752,7 @@
                             <div class="flex items-center gap-2">
                                 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
                                 <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-6 h-6"></i></button>
+                                <button id="view-once-btn" onclick="window.toggleViewOnce()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-rose-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="صورة للعرض مرة واحدة"><i data-lucide="eye-off" class="w-6 h-6"></i></button>
                                 <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
                                 <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا... أو ضع روابط" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') window.sendMessage('text')">
                                 <button onclick="window.sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
@@ -2368,9 +2373,20 @@
             }, 300);
         }
         
-        window.openLightbox = (url) => {
+        window.openLightbox = async (url, msgId = null) => {
             document.getElementById('lightbox-img').src = url;
             document.getElementById('lightbox').classList.remove('hidden');
+            
+            if (msgId) {
+                const msg = allMessages.find(m => m.id === msgId);
+                if (msg && msg.isViewOnce) {
+                    // مسح الصورة فور فتحها
+                    try {
+                        await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId));
+                        showToast('هذه الصورة للعرض لمرة واحدة وقد تم تدميرها الآن', 'info');
+                    } catch (e) { console.error(e); }
+                }
+            }
         }
         window.closeLightbox = (e) => {
             if(e) e.stopPropagation();
@@ -3162,6 +3178,18 @@
         window.openChatRoom = (uid) => { document.getElementById('messages-list-view').classList.add('hidden'); document.getElementById('chat-room-view').classList.remove('hidden'); window.renderChatRoom(); }
         window.closeChatRoom = () => { activeChatFriendId = null; document.getElementById('chat-room-view').classList.add('hidden'); document.getElementById('messages-list-view').classList.remove('hidden'); renderMessagesList(); if(window.cancelReply) window.cancelReply(); }
 
+        window.isViewOnceMode = false;
+        window.toggleViewOnce = () => {
+            window.isViewOnceMode = !window.isViewOnceMode;
+            const btn = document.getElementById('view-once-btn');
+            if (window.isViewOnceMode) {
+                btn.classList.add('bg-rose-100', 'text-rose-600', 'dark:bg-rose-900/40', 'dark:text-rose-400');
+                showToast('تم تفعيل وضع المشاهدة لمرة واحدة', 'info');
+            } else {
+                btn.classList.remove('bg-rose-100', 'text-rose-600', 'dark:bg-rose-900/40', 'dark:text-rose-400');
+            }
+        };
+
         window.messageToReply = null;
         window.setReplyMessage = (msgId) => {
             try {
@@ -3351,7 +3379,15 @@
                     let messageBody = '';
                     
                     if (m.type === 'image') {
-                        messageBody += `<img src="${m.imageUrl}" class="max-w-full rounded-xl cursor-zoom-in mb-2" onclick="event.stopPropagation(); window.openLightbox('${m.imageUrl}')" style="max-height: 250px;">`;
+                        if (m.isViewOnce) {
+                            messageBody += `
+                            <div class="bg-black/20 dark:bg-black/40 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer border-2 border-dashed border-white/20 hover:bg-black/30 transition-colors" onclick="event.stopPropagation(); window.openLightbox('${m.imageUrl}', '${m.id}')">
+                                <div class="w-12 h-12 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-lg animate-pulse"><i data-lucide="eye" class="w-6 h-6"></i></div>
+                                <span class="text-xs font-bold text-white">صورة للعرض مرة واحدة</span>
+                            </div>`;
+                        } else {
+                            messageBody += `<img src="${m.imageUrl}" class="max-w-full rounded-xl cursor-zoom-in mb-2" onclick="event.stopPropagation(); window.openLightbox('${m.imageUrl}')" style="max-height: 250px;">`;
+                        }
                     }
                     if (m.content) {
                         messageBody += formatMessageContent(m.content, isMe);
@@ -3452,7 +3488,13 @@
                 read: false, 
                 createdAt: new Date().toISOString() 
             };
-            if(imgUrl) msgData.imageUrl = imgUrl;
+            if(imgUrl) {
+                msgData.imageUrl = imgUrl;
+                if(window.isViewOnceMode) {
+                    msgData.isViewOnce = true;
+                    window.toggleViewOnce(); // إغلاق الوضع بعد الإرسال
+                }
+            }
             if(window.messageToReply) {
                 msgData.replyTo = window.messageToReply;
             }
