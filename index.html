@@ -316,6 +316,51 @@
         </div>
     </div>
 
+    <div id="chat-settings-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeChatSettings()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إعدادات الرسائل</h3>
+                <button onclick="window.closeChatSettings()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> قفل الرسائل بكلمة سر</label>
+                    <input type="password" id="cs-password" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors font-mono tracking-wider" placeholder="اكتب كلمة سر، أو اتركها فارغة للإلغاء">
+                    <p class="text-[10px] text-slate-400 mt-1">لحماية محادثاتك من المتطفلين.</p>
+                </div>
+
+                <div>
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> الحذف التلقائي للرسائل</label>
+                    <select id="cs-auto-delete" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors">
+                        <option value="0">إيقاف الحذف التلقائي</option>
+                        <option value="12">حذف بعد 12 ساعة</option>
+                        <option value="24">حذف بعد 24 ساعة</option>
+                        <option value="168">حذف بعد 7 أيام</option>
+                    </select>
+                </div>
+
+                <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1"><i data-lucide="bell-off" class="w-4 h-4"></i> إيقاف استقبال الرسائل</label>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="cs-pause-toggle" class="sr-only peer" onchange="window.togglePauseExceptions(this.checked)">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-rose-500"></div>
+                        </label>
+                    </div>
+                    
+                    <div id="cs-exceptions-wrapper" class="hidden mt-3 pt-3 border-t border-rose-200 dark:border-rose-800/50">
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">استثناء الأصدقاء التالين (يمكنهم مراسلتك):</p>
+                        <div id="cs-exceptions-list" class="max-h-32 overflow-y-auto space-y-1 bg-white/50 dark:bg-slate-900/50 rounded-xl p-2 border border-slate-200 dark:border-slate-700">
+                            </div>
+                    </div>
+                </div>
+
+                <button onclick="window.saveChatSettings()" id="cs-save-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"><i data-lucide="save" class="w-5 h-5"></i> حفظ الإعدادات</button>
+            </div>
+        </div>
+    </div>
+
     <div id="create-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeCreateCommModal()">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-all duration-300" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
@@ -593,8 +638,17 @@
     </div>
 
     <!-- ================= MAIN LAYOUT ================= -->
-    <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900">
+    <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900 relative">
         
+        <div id="maintenance-view" class="hidden absolute inset-0 z-[999] bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
+            <div class="bg-amber-100 dark:bg-amber-900/30 p-6 rounded-full mb-6 animate-pulse">
+                <i data-lucide="settings-2" class="w-16 h-16 text-amber-600 dark:text-amber-400"></i>
+            </div>
+            <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-4">عفواً، الموقع مغلق للصيانة</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-lg max-w-md leading-relaxed">نحن نقوم ببعض التحديثات لتحسين تجربتك.<br>يرجى المعاودة في وقت لاحق.</p>
+            <button onclick="window.handleLogout()" class="mt-12 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-xl font-bold hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/40 dark:hover:text-rose-400 transition-colors flex items-center gap-2 shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
+        </div>
+
         <!-- Sidebar Navigation -->
         <nav class="w-14 md:w-64 bg-white dark:bg-slate-800 border-l border-emerald-100 dark:border-slate-700 flex flex-col justify-between py-4 md:py-6 shrink-0 z-10 shadow-sm overflow-y-auto transition-colors">
             <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-4 md:gap-8">
@@ -802,6 +856,21 @@
                             
                             <hr class="border-slate-100 dark:border-slate-700">
                             
+                            <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-rose-50 dark:bg-rose-900/20 p-5 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+                                <div>
+                                    <h4 class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-1"><i data-lucide="alert-triangle" class="w-5 h-5"></i> وضع الصيانة (إغلاق الموقع)</h4>
+                                    <p class="text-xs text-rose-600 dark:text-rose-300/70">عند التفعيل، لن يتمكن الأعضاء من الدخول للموقع وستظهر لهم شاشة الصيانة. (أنت فقط كمدير من يمكنك الدخول).</p>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="admin-maintenance-toggle" class="sr-only peer" onchange="window.toggleMaintenanceMode(this.checked)">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-rose-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <hr class="border-slate-100 dark:border-slate-700">
+
                             <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
                                 <div class="flex-1 w-full">
                                     <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">قائمة حِكم المساحة (افصل بين كل حكمة وأخرى بعلامة *)</label>
@@ -854,9 +923,12 @@
                     </div>
 
                     <div id="messages-list-view" class="w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
-                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center relative">
                             <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2>
-                            <button id="lock-chat-btn" onclick="window.lockChat()" class="hidden bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="قفل الرسائل الآن"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                            <div class="flex items-center gap-2">
+                                <button id="lock-chat-btn" onclick="window.lockChat()" class="hidden bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="قفل الرسائل الآن"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                                <button onclick="window.openChatSettings()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="إعدادات الرسائل"><i data-lucide="settings" class="w-4 h-4"></i></button>
+                            </div>
                         </div>
                         <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50 dark:bg-slate-900/50"></div>
                     </div>
@@ -884,21 +956,35 @@
                                     تنبيه: رغم أن المحادثات مشفرة، ننصحك بعدم مشاركة أسرار شديدة الخصوصية؛ فالتكنولوجيا ليست خالية من الثغرات، اجعل تبادلك في حدود ما لا تخشى تسريبه.
                                 </p>
                             </div>
-                            <div id="reply-preview-container" class="hidden bg-slate-50 dark:bg-slate-700/50 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 flex justify-between items-center relative">
+                            <div id="reply-preview-container" class="hidden bg-slate-50 dark:bg-slate-700/50 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 justify-between items-center relative" style="display: none;">
                                 <div class="flex flex-col overflow-hidden w-full pl-6">
                                     <span class="text-emerald-600 dark:text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="reply" class="w-3 h-3 rtl:-scale-x-100"></i> الرد على رسالة</span>
                                     <span id="reply-preview-text" class="text-slate-600 dark:text-slate-300 text-xs truncate mt-0.5"></span>
                                 </div>
                                 <button onclick="window.cancelReply()" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-600 rounded-full p-1 shadow-sm transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 relative w-full overflow-hidden">
                                 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
-                                <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-6 h-6"></i></button>
-                                <button id="view-once-btn" onclick="window.toggleViewOnce()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-rose-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="صورة للعرض مرة واحدة"><i data-lucide="eye-off" class="w-6 h-6"></i></button>
-                                <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="smile-plus" class="w-6 h-6"></i></button>
-                                <button id="record-voice-btn" onclick="window.toggleRecording()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-rose-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="تسجيل صوتي (30 ثانية أقصى حد)"><i data-lucide="mic" class="w-6 h-6"></i></button>
-                                <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا... أو ضع روابط" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') window.sendMessage('text')">
-                                <button onclick="window.sendMessage('text')" class="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
+                                
+                                <div id="recording-ui" class="hidden flex-1 items-center gap-2 bg-rose-50 dark:bg-rose-900/30 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800 transition-all w-full">
+                                    <div class="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold text-xs animate-pulse w-14 shrink-0">
+                                        <i data-lucide="mic" class="w-3.5 h-3.5"></i> <span id="record-time">00:00</span>
+                                    </div>
+                                    <div class="flex-1 bg-rose-200 dark:bg-rose-700 h-2 rounded-full overflow-hidden">
+                                        <div id="record-progress" class="bg-rose-600 dark:bg-rose-500 h-full w-0 transition-all duration-100 ease-linear"></div>
+                                    </div>
+                                    <button onclick="window.cancelRecording()" class="text-rose-500 bg-rose-100 dark:bg-rose-800 p-1.5 rounded-full hover:bg-rose-200 transition-colors shrink-0" title="إلغاء"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <button onclick="window.stopRecordingAndSend()" class="bg-rose-600 text-white p-1.5 rounded-full hover:bg-rose-700 transition-colors shadow-sm shrink-0" title="إرسال"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
+                                </div>
+
+                                <div id="normal-chat-ui" class="flex items-center gap-1.5 sm:gap-2 w-full">
+                                    <button onclick="document.getElementById('chat-image-input').click()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-5 h-5 sm:w-6 sm:h-6"></i></button>
+                                    <button id="view-once-btn" onclick="window.toggleViewOnce()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-rose-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="صورة للعرض مرة واحدة"><i data-lucide="eye-off" class="w-5 h-5 sm:w-6 sm:h-6"></i></button>
+                                    <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full shrink-0"><i data-lucide="smile-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i></button>
+                                    <input type="text" id="chat-input" placeholder="اكتب رسالة..." class="flex-1 min-w-[50px] bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-3 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown="if(event.key==='Enter') window.sendMessage('text')">
+                                    <button id="record-voice-btn" onclick="window.startRecording()" class="p-2.5 md:p-3 bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 rounded-xl hover:bg-rose-200 transition-colors shadow-sm shrink-0"><i data-lucide="mic" class="w-5 h-5"></i></button>
+                                    <button onclick="window.sendMessage('text')" class="p-2.5 md:p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shrink-0"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1808,21 +1894,29 @@
             }, (error) => console.error(error));
 
             const u5 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages'), (snap) => {
-                allMessages = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                // تصفية الرسائل التي قام المستخدم الحالي بحذفها من عنده (مثل الفويس بعد الاستماع)
+                allMessages = snap.docs.map(d => ({id: d.id, ...d.data()})).filter(m => !(m.deletedFor && m.deletedFor.includes(currentUser?.uid)));
                 
                 // فحص الحذف التلقائي للرسائل (إذا كنت أنت أو صديقك مفعلين الخاصية)
                 if (currentUser) {
                     const now = Date.now();
-                    const twelveHours = 12 * 60 * 60 * 1000;
                     allMessages.forEach(m => {
                         if (m.senderId === currentUser.uid || m.receiverId === currentUser.uid) {
                             const friendId = m.senderId === currentUser.uid ? m.receiverId : m.senderId;
                             const friend = allUsers.find(u => u.uid === friendId);
-                            const iHaveAutoDelete = userData && userData.autoDeleteMessages;
-                            const friendHasAutoDelete = friend && friend.autoDeleteMessages;
                             
-                            if (iHaveAutoDelete || friendHasAutoDelete) {
-                                if ((now - new Date(m.createdAt).getTime()) > twelveHours) {
+                            let myHours = (userData && userData.autoDeleteHours) ? userData.autoDeleteHours : (userData && userData.autoDeleteMessages ? 12 : 0);
+                            let friendHours = (friend && friend.autoDeleteHours) ? friend.autoDeleteHours : (friend && friend.autoDeleteMessages ? 12 : 0);
+                            
+                            // نختار أقل مدة بين الطرفين لتطبيق الحذف (إذا كان أحدهما مفعلها)
+                            let deleteHours = 0;
+                            if (myHours > 0 && friendHours > 0) deleteHours = Math.min(myHours, friendHours);
+                            else if (myHours > 0) deleteHours = myHours;
+                            else if (friendHours > 0) deleteHours = friendHours;
+                            
+                            if (deleteHours > 0) {
+                                const msAllowed = deleteHours * 60 * 60 * 1000;
+                                if ((now - new Date(m.createdAt).getTime()) > msAllowed) {
                                     try { deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)); } catch(e){}
                                 }
                             }
@@ -1858,9 +1952,34 @@
                 } else {
                     globalSettings = {};
                 }
+
+                const maintenanceView = document.getElementById('maintenance-view');
+                if (globalSettings.maintenanceMode && !window.isSuperAdmin()) {
+                    if (maintenanceView) {
+                        maintenanceView.classList.remove('hidden');
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                } else {
+                    if (maintenanceView) maintenanceView.classList.add('hidden');
+                }
+
                 updateSidebar(); 
                 if(activeTabStr === 'feed') renderFeedTab();
             }, (error) => console.error(error));
+
+            window.toggleMaintenanceMode = async (isMaintenance) => {
+                if (!window.isSuperAdmin()) return;
+                try {
+                    await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+                        ...globalSettings,
+                        maintenanceMode: isMaintenance
+                    }, { merge: true });
+                    showToast(isMaintenance ? 'تم تفعيل وضع الصيانة وإغلاق الموقع' : 'تم إيقاف وضع الصيانة وفتح الموقع', isMaintenance ? 'info' : 'success');
+                } catch(e) {
+                    showToast('حدث خطأ', 'error');
+                    document.getElementById('admin-maintenance-toggle').checked = !isMaintenance;
+                }
+            };
 
             unsubs.push(u1, u2, u3, u4, u5, u6, u7);
 
@@ -1869,18 +1988,24 @@
             window.autoDeleteInterval = setInterval(() => {
                 if (!currentUser) return;
                 const now = Date.now();
-                const twelveHours = 12 * 60 * 60 * 1000;
                 let hasDeletions = false;
                 
                 allMessages.forEach(m => {
                     if (m.senderId === currentUser.uid || m.receiverId === currentUser.uid) {
                         const friendId = m.senderId === currentUser.uid ? m.receiverId : m.senderId;
                         const friend = allUsers.find(u => u.uid === friendId);
-                        const iHaveAutoDelete = userData && userData.autoDeleteMessages;
-                        const friendHasAutoDelete = friend && friend.autoDeleteMessages;
                         
-                        if (iHaveAutoDelete || friendHasAutoDelete) {
-                            if ((now - new Date(m.createdAt).getTime()) > twelveHours) {
+                        let myHours = (userData && userData.autoDeleteHours) ? userData.autoDeleteHours : (userData && userData.autoDeleteMessages ? 12 : 0);
+                        let friendHours = (friend && friend.autoDeleteHours) ? friend.autoDeleteHours : (friend && friend.autoDeleteMessages ? 12 : 0);
+                        
+                        let deleteHours = 0;
+                        if (myHours > 0 && friendHours > 0) deleteHours = Math.min(myHours, friendHours);
+                        else if (myHours > 0) deleteHours = myHours;
+                        else if (friendHours > 0) deleteHours = friendHours;
+                        
+                        if (deleteHours > 0) {
+                            const msAllowed = deleteHours * 60 * 60 * 1000;
+                            if ((now - new Date(m.createdAt).getTime()) > msAllowed) {
                                 hasDeletions = true;
                                 try { deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', m.id)); } catch(e){}
                             }
@@ -2391,6 +2516,9 @@
 
             if (document.getElementById('admin-quote-input')) {
                 document.getElementById('admin-quote-input').value = globalSettings.quoteOfTheDay || '';
+            }
+            if (document.getElementById('admin-maintenance-toggle')) {
+                document.getElementById('admin-maintenance-toggle').checked = globalSettings.maintenanceMode || false;
             }
 
             const tableBody = document.getElementById('admin-users-table');
@@ -3151,6 +3279,98 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
+        // --- Chat Settings Logic ---
+        window.openChatSettings = () => {
+            if(!userData) return;
+            const modal = document.getElementById('chat-settings-modal');
+            
+            document.getElementById('cs-password').value = userData.chatPassword || '';
+            document.getElementById('cs-auto-delete').value = userData.autoDeleteHours || (userData.autoDeleteMessages ? '12' : '0');
+            
+            const isPaused = userData.pauseMessages || false;
+            document.getElementById('cs-pause-toggle').checked = isPaused;
+            window.togglePauseExceptions(isPaused);
+
+            const exceptionsList = document.getElementById('cs-exceptions-list');
+            const friends = userData.friends || [];
+            const allowedSenders = userData.allowedSenders || [];
+            
+            if (friends.length === 0) {
+                exceptionsList.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">لا يوجد أصدقاء لاستثنائهم.</p>';
+            } else {
+                exceptionsList.innerHTML = friends.map(uid => {
+                    const u = allUsers.find(x => x.uid === uid);
+                    if (!u) return '';
+                    const isChecked = allowedSenders.includes(uid) ? 'checked' : '';
+                    return `
+                        <label class="flex items-center gap-2 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg cursor-pointer transition-colors">
+                            <input type="checkbox" class="cs-exception-checkbox w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" value="${u.uid}" ${isChecked}>
+                            <div class="flex items-center gap-2">
+                                <img src="${u.photoUrl}" class="w-6 h-6 rounded-full object-cover">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">${u.displayName}</span>
+                            </div>
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0'); 
+                modal.querySelector('div').classList.remove('scale-95'); 
+            }, 10);
+            lucide.createIcons();
+        };
+
+        window.togglePauseExceptions = (isPaused) => {
+            const wrapper = document.getElementById('cs-exceptions-wrapper');
+            if (isPaused) {
+                wrapper.classList.remove('hidden');
+            } else {
+                wrapper.classList.add('hidden');
+            }
+        };
+
+        window.closeChatSettings = () => {
+            const modal = document.getElementById('chat-settings-modal');
+            modal.classList.add('opacity-0'); 
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.saveChatSettings = async () => {
+            const btn = document.getElementById('cs-save-btn');
+            btn.disabled = true; btn.innerHTML = '<i class="loader"></i> جاري...';
+
+            const pwd = document.getElementById('cs-password').value.trim();
+            const autoDeleteHours = parseInt(document.getElementById('cs-auto-delete').value);
+            const isPaused = document.getElementById('cs-pause-toggle').checked;
+            
+            const checkboxes = document.querySelectorAll('.cs-exception-checkbox:checked');
+            const allowedSenders = Array.from(checkboxes).map(cb => cb.value);
+
+            try {
+                await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
+                    chatPassword: pwd,
+                    autoDeleteHours: autoDeleteHours,
+                    autoDeleteMessages: autoDeleteHours > 0, // توافق مع الأكواد السابقة
+                    pauseMessages: isPaused,
+                    allowedSenders: isPaused ? allowedSenders : []
+                });
+
+                if (pwd !== userData.chatPassword) window.isChatSessionUnlocked = false;
+
+                showToast('تم حفظ إعدادات الرسائل بنجاح', 'success');
+                window.closeChatSettings();
+                renderAll();
+            } catch (e) {
+                showToast('حدث خطأ أثناء الحفظ', 'error');
+            }
+            
+            btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> حفظ الإعدادات';
+            lucide.createIcons();
+        };
+
         let postToRepostId = null;
 
         window.repostPost = (postId) => {
@@ -3225,6 +3445,17 @@
 
         window.sendShare = async (friendUid) => {
             if(!postToShareId) return;
+            
+            const receiverUser = allUsers.find(u => u.uid === friendUid);
+            if (receiverUser && receiverUser.pauseMessages) {
+                const allowed = receiverUser.allowedSenders || [];
+                if (!allowed.includes(currentUser.uid)) {
+                    showToast('هذا المستخدم لا يمكنه استقبال الرسائل الآن', 'error');
+                    window.closeShareModal();
+                    return;
+                }
+            }
+
             try {
                 await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'messages')), { 
                     senderId: currentUser.uid, 
@@ -3477,11 +3708,6 @@
                     url: row.querySelector('.s-url').value
                 }));
 
-                const chatPwdEl = document.getElementById('ep-chat-password');
-                const chatPwdVal = chatPwdEl ? chatPwdEl.value.trim() : (userData.chatPassword || '');
-                const autoDeleteEl = document.getElementById('ep-auto-delete');
-                const autoDeleteVal = autoDeleteEl ? autoDeleteEl.checked : (userData.autoDeleteMessages || false);
-
                 await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
                     displayName: document.getElementById('ep-name').value,
                     bio: document.getElementById('ep-bio').value,
@@ -3489,12 +3715,8 @@
                     gender: document.getElementById('ep-gender').value,
                     birthDate: document.getElementById('ep-dob').value,
                     photoUrl: pUrl,
-                    socialLinks: sLinksRaw.filter(l => l.url.trim()!==''),
-                    chatPassword: chatPwdVal,
-                    autoDeleteMessages: autoDeleteVal
+                    socialLinks: sLinksRaw.filter(l => l.url.trim()!=='')
                 });
-                
-                if (chatPwdVal !== userData.chatPassword) window.isChatSessionUnlocked = false;
                 
                 isEditingProfile = false;
                 window.tmpProfImgFile = null;
@@ -3563,16 +3785,6 @@
                                     <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">كلمة المرور</label>
                                     <button id="reset-pwd-btn" onclick="window.resetMyPassword()" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex justify-center items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> إرسال رابط تغيير كلمة المرور</button>
                                     <p id="pwd-msg" class="text-xs mt-2 text-emerald-600 dark:text-emerald-400 hidden font-medium"></p>
-                                </div>
-                            </div>
-                            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">قفل الرسائل الخاصة (اختياري)</label>
-                                <input type="password" id="ep-chat-password" value="${userData.chatPassword || ''}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors font-mono tracking-wider" placeholder="اكتب كلمة سر، أو اتركها فارغة لإلغاء القفل">
-                                <p class="text-[10px] text-slate-400 mt-1 mb-3">إذا قمت بتعيين كلمة سر، فلن يتمكن أحد من الدخول لرسائلك إلا بكتابتها. لمسح القفل بالكامل، اترك هذا الحقل فارغاً واحفظ التعديلات.</p>
-                                
-                                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-                                    <input type="checkbox" id="ep-auto-delete" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" ${userData.autoDeleteMessages ? 'checked' : ''}>
-                                    <label for="ep-auto-delete" class="text-sm text-rose-600 dark:text-rose-400 font-bold cursor-pointer flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> تفعيل الحذف التلقائي للرسائل كل 12 ساعة</label>
                                 </div>
                             </div>
                         </div>
@@ -3865,7 +4077,6 @@
         window.messageToReply = null;
         window.setReplyMessage = (msgId) => {
             try {
-                // جلب الرسالة برمجياً لمنع تعطل الأزرار بسبب النصوص المعقدة
                 const msg = allMessages.find(m => m.id === msgId);
                 if (!msg) return;
                 
@@ -3876,7 +4087,10 @@
                 if (previewTextEl) previewTextEl.innerText = previewText;
                 
                 const previewContainerEl = document.getElementById('reply-preview-container');
-                if (previewContainerEl) previewContainerEl.classList.remove('hidden');
+                if (previewContainerEl) {
+                    previewContainerEl.classList.remove('hidden');
+                    previewContainerEl.style.display = 'flex';
+                }
                 
                 const inputEl = document.getElementById('chat-input');
                 if (inputEl) {
@@ -3892,7 +4106,10 @@
         window.cancelReply = () => {
             window.messageToReply = null;
             const container = document.getElementById('reply-preview-container');
-            if (container) container.classList.add('hidden');
+            if (container) {
+                container.classList.add('hidden');
+                container.style.display = 'none';
+            }
             const previewText = document.getElementById('reply-preview-text');
             if (previewText) previewText.innerText = '';
         };
@@ -3941,7 +4158,16 @@
             const msgsArea = document.getElementById('chat-messages-area');
             const autoDeleteBanner = document.getElementById('chat-auto-delete-banner');
             if (autoDeleteBanner) {
-                if ((userData && userData.autoDeleteMessages) || (friend && friend.autoDeleteMessages)) {
+                let myHours = (userData && userData.autoDeleteHours) ? userData.autoDeleteHours : (userData && userData.autoDeleteMessages ? 12 : 0);
+                let friendHours = (friend && friend.autoDeleteHours) ? friend.autoDeleteHours : (friend && friend.autoDeleteMessages ? 12 : 0);
+                
+                let deleteHours = 0;
+                if (myHours > 0 && friendHours > 0) deleteHours = Math.min(myHours, friendHours);
+                else if (myHours > 0) deleteHours = myHours;
+                else if (friendHours > 0) deleteHours = friendHours;
+
+                if (deleteHours > 0) {
+                    autoDeleteBanner.innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5"></i> الحذف التلقائي مفعل (تتم إزالة الرسائل كل ${deleteHours} ساعة)`;
                     autoDeleteBanner.classList.remove('hidden');
                 } else {
                     autoDeleteBanner.classList.add('hidden');
@@ -4063,7 +4289,7 @@
                     } else if (m.type === 'voice') {
                         messageBody += `
                         <div class="flex items-center gap-3 bg-black/10 dark:bg-black/30 p-2 rounded-xl min-w-[200px]" onclick="event.stopPropagation()">
-                            <button onclick="window.playVoice('${m.id}', '${m.imageUrl}')" id="play-btn-${m.id}" class="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform shrink-0">
+                            <button onclick="window.playVoice('${m.id}', '${m.imageUrl}', '${m.senderId}')" id="play-btn-${m.id}" class="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform shrink-0">
                                 <i data-lucide="play" class="w-5 h-5 ml-1"></i>
                             </button>
                             <div class="flex flex-col flex-1">
@@ -4143,61 +4369,88 @@
             });
         }
 
-        let mediaRecorder;
-        let audioChunks = [];
-        let recordTimeout;
+        window.mediaRecorder = null;
+        window.audioChunks = [];
+        window.recordInterval = null;
+        window.recordStartTime = 0;
+        window.isRecordingCanceled = false;
 
-        window.toggleRecording = async () => {
-            const btn = document.getElementById('record-voice-btn');
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                return;
-            }
+        window.startRecording = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // استخدام أداة تشفير خفيفة ومناسبة للويب (opus) بحجم صغير جداً
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' }); 
-                audioChunks = [];
+                window.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                window.audioChunks = [];
                 
-                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                mediaRecorder.onstop = () => {
-                    clearTimeout(recordTimeout);
-                    btn.classList.remove('bg-rose-500', 'text-white', 'animate-pulse');
-                    btn.classList.add('bg-slate-50', 'text-slate-400', 'dark:bg-slate-700', 'dark:text-slate-300');
-                    btn.innerHTML = '<i data-lucide="mic" class="w-6 h-6"></i>';
-                    lucide.createIcons();
-                    
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        window.sendMessage('voice', reader.result);
-                    };
-                    reader.readAsDataURL(audioBlob);
-                    
-                    stream.getTracks().forEach(track => track.stop());
+                window.mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) window.audioChunks.push(e.data);
                 };
                 
-                mediaRecorder.start();
-                btn.classList.remove('bg-slate-50', 'text-slate-400', 'dark:bg-slate-700', 'dark:text-slate-300');
-                btn.classList.add('bg-rose-500', 'text-white', 'animate-pulse');
-                btn.innerHTML = '<i data-lucide="square" class="w-6 h-6"></i>'; 
-                lucide.createIcons();
+                window.mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(window.audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = async () => {
+                        const base64data = reader.result;
+                        if (!window.isRecordingCanceled) {
+                            await window.sendMessage('voice', base64data);
+                        }
+                    };
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                document.getElementById('normal-chat-ui').classList.add('hidden');
+                document.getElementById('recording-ui').classList.remove('hidden');
+                document.getElementById('recording-ui').style.display = 'flex';
+                document.getElementById('record-progress').style.width = '0%';
                 
-                showToast('يتم التسجيل (الحد الأقصى 30 ثانية)', 'info');
+                window.isRecordingCanceled = false;
+                window.mediaRecorder.start();
+                window.recordStartTime = Date.now();
                 
-                recordTimeout = setTimeout(() => {
-                    if (mediaRecorder.state === 'recording') {
-                        mediaRecorder.stop();
-                        showToast('انتهى وقت التسجيل', 'info');
+                const maxDuration = 30000; // 30 ثانية
+                window.recordInterval = setInterval(() => {
+                    const elapsed = Date.now() - window.recordStartTime;
+                    const secs = Math.floor(elapsed / 1000);
+                    document.getElementById('record-time').innerText = `00:${secs < 10 ? '0'+secs : secs}`;
+                    const percent = Math.min((elapsed / maxDuration) * 100, 100);
+                    document.getElementById('record-progress').style.width = percent + '%';
+                    
+                    if (elapsed >= maxDuration) {
+                        window.stopRecordingAndSend(); // التوقف والإرسال التلقائي
                     }
-                }, 30000);
+                }, 100);
+                lucide.createIcons();
             } catch (err) {
-                showToast('يرجى السماح للمتصفح باستخدام الميكروفون', 'error');
+                showToast('لم نتمكن من الوصول للميكروفون. يرجى إعطاء الصلاحية.', 'error');
+            }
+        };
+
+        window.stopRecordingAndSend = () => {
+            if (window.mediaRecorder && window.mediaRecorder.state !== 'inactive') {
+                clearInterval(window.recordInterval);
+                window.mediaRecorder.stop();
+                
+                document.getElementById('normal-chat-ui').classList.remove('hidden');
+                document.getElementById('recording-ui').classList.add('hidden');
+                document.getElementById('recording-ui').style.display = 'none';
+            }
+        };
+
+        window.cancelRecording = () => {
+            if (window.mediaRecorder && window.mediaRecorder.state !== 'inactive') {
+                window.isRecordingCanceled = true;
+                clearInterval(window.recordInterval);
+                window.mediaRecorder.stop();
+                
+                document.getElementById('normal-chat-ui').classList.remove('hidden');
+                document.getElementById('recording-ui').classList.add('hidden');
+                document.getElementById('recording-ui').style.display = 'none';
             }
         };
 
         let currentAudio = null;
-        window.playVoice = (msgId, base64Audio) => {
+        window.currentPlayingMsgId = null;
+        window.playVoice = (msgId, base64Audio, senderId) => {
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -4206,8 +4459,15 @@
                     b.innerHTML = '<i data-lucide="play" class="w-5 h-5 ml-1"></i>';
                 });
                 lucide.createIcons();
+                
+                // إذا تم الضغط على نفس الرسالة المشتغلة حالياً، نتوقف فقط ولا نعيد تشغيلها
+                if (window.currentPlayingMsgId === msgId) {
+                    window.currentPlayingMsgId = null;
+                    return;
+                }
             }
 
+            window.currentPlayingMsgId = msgId;
             const audio = new Audio(base64Audio);
             currentAudio = audio;
             const btn = document.getElementById(`play-btn-${msgId}`);
@@ -4224,13 +4484,31 @@
             };
             audio.onended = async () => {
                 currentAudio = null;
-                // تدمير الفويس فوراً بعد الانتهاء
+                window.currentPlayingMsgId = null;
+                btn.innerHTML = '<i data-lucide="play" class="w-5 h-5 ml-1"></i>';
+                lucide.createIcons();
+                
                 try {
-                    await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId));
-                    showToast('تم تدمير التسجيل الصوتي لضمان الخصوصية', 'success');
+                    const msg = allMessages.find(m => m.id === msgId);
+                    if (!msg) return;
+                    let deletedFor = msg.deletedFor || [];
+                    if (!deletedFor.includes(currentUser.uid)) {
+                        deletedFor.push(currentUser.uid);
+                    }
+                    
+                    if (deletedFor.includes(msg.senderId) && deletedFor.includes(msg.receiverId)) {
+                        // إذا استمع الاثنان، احذفها نهائياً من قاعدة البيانات والسيرفر
+                        await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId));
+                        showToast('تم تدمير الفويس من السيرفر نهائياً', 'info');
+                    } else {
+                        // إخفاء من عند هذا المستخدم فقط (وتبقى محفوظة للطرف الثاني)
+                        await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'messages', msgId), { deletedFor: deletedFor });
+                        showToast('تم إخفاء الفويس من محادثتك', 'info');
+                    }
                 } catch(e) {}
             };
             audio.play().catch(e => {
+                window.currentPlayingMsgId = null;
                 showToast('تعذر تشغيل الصوت', 'error');
                 btn.innerHTML = '<i data-lucide="play" class="w-5 h-5 ml-1"></i>';
                 lucide.createIcons();
@@ -4263,6 +4541,16 @@
             }
 
             if (type === 'sticker') window.toggleStickerPicker();
+
+            const receiverUser = allUsers.find(u => u.uid === activeChatFriendId);
+            if (receiverUser && receiverUser.pauseMessages) {
+                const allowed = receiverUser.allowedSenders || [];
+                if (!allowed.includes(currentUser.uid)) {
+                    showToast('هذا المستخدم لا يمكنه استقبال الرسائل الآن', 'error');
+                    if(window.cancelReply) window.cancelReply();
+                    return;
+                }
+            }
 
             const msgData = { 
                 senderId: currentUser.uid, 
