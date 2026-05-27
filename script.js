@@ -102,7 +102,8 @@ window.sharePostLink = (postId) => {
     const post = allPosts.find(p => p.id === postId);
     if (!post) return;
     const numId = window.getPostNumericId(post);
-    const link = window.location.origin + window.location.pathname + '?post=' + numId;
+    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+    const link = window.location.origin + basePath + 'posts/' + numId + '.html';
     const title = post.title || 'منشور في MyTab';
     const text = post.content ? post.content.substring(0, 100) : 'شاهد هذا المنشور في MyTab';
 
