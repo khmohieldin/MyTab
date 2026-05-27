@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(() => {
+          console.log('Service Worker Registered');
+        }).catch(err => console.error('Service Worker Failed', err));
+      }
+    </script>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="script.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+
+    
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body dir="rtl" class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
+    <div id="toast-container" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="status-action-modal" class="hidden fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusActionModal()">
+        <div class="bg-white dark:bg-slate-800 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6 sm:hidden"></div>
+            <div class="flex flex-col gap-3"><button id="btn-view-status" class="hidden w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-3.5 rounded-xl hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"><i data-lucide="play-circle" class="w-5 h-5"></i> مشاهدة الحالة</button> <button id="btn-create-status" class="hidden w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5"></i> إضافة حالة جديدة</button> <button id="btn-view-avatar" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"><i data-lucide="image" class="w-5 h-5"></i> عرض صورة البروفايل</button> <button id="btn-view-profile-page" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"><i data-lucide="user" class="w-5 h-5"></i> زيارة الصفحة الشخصية</button></div>
+        </div>
+    </div>
+    <div id="status-create-modal" class="hidden fixed inset-0 z-[160] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusCreateModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-emerald-500"></i> حالة جديدة</h3><button onclick="window.closeStatusCreateModal()" class="text-slate-400 hover:text-rose-500 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div><label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">نوع الحالة</label> <select id="status-type" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100" onchange="window.toggleStatusInputs()">
+                        <option value="text">نص ملون</option>
+                        <option value="youtube">رابط يوتيوب</option>
+                        <option value="tiktok">رابط تيك توك</option>
+                        <option value="image">صورة (كالواتساب)</option>
+                    </select></div>
+                <div id="status-content-wrapper"><label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">المحتوى</label> <textarea id="status-content" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 resize-none" placeholder="ماذا يدور في ذهنك؟"></textarea></div>
+                <div id="status-image-wrapper" class="hidden"><label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">اختر صورة للحالة</label><div class="relative w-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center hover:border-emerald-500 transition-colors cursor-pointer" onclick="document.getElementById('status-image-input').click()"><i data-lucide="image" class="w-8 h-8 mx-auto text-slate-400 mb-2"></i><p class="text-xs text-slate-500 dark:text-slate-400 font-bold">اضغط لاختيار صورة</p></div><input type="file" id="status-image-input" accept="image/*" class="hidden" onchange="window.handleStatusImagePreview(event)"><div id="status-image-preview-container" class="mt-3 hidden relative w-full aspect-[9/16] max-h-48 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-black"><img id="status-image-preview" src="" class="w-full h-full object-contain"><button onclick="document.getElementById('status-image-input').value=''; document.getElementById('status-image-preview-container').classList.add('hidden'); window.statusImageFile = null;" class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white rounded-full p-1.5 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button></div></div>
+                <div id="status-color-wrapper"><label class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">لون الخلفية</label>
+                    <div class="flex gap-2" id="status-color-picker"><button onclick='window.statusSelectedColor="bg-emerald-500",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-emerald-500 ring-offset-white dark:ring-offset-slate-800"></button> <button onclick='window.statusSelectedColor="bg-blue-500",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-blue-500 opacity-50 hover:opacity-100"></button> <button onclick='window.statusSelectedColor="bg-rose-500",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-rose-500 opacity-50 hover:opacity-100"></button> <button onclick='window.statusSelectedColor="bg-amber-500",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-amber-500 opacity-50 hover:opacity-100"></button> <button onclick='window.statusSelectedColor="bg-purple-500",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-purple-500 opacity-50 hover:opacity-100"></button> <button onclick='window.statusSelectedColor="bg-slate-800",window.updateStatusPreview()' class="w-8 h-8 rounded-full bg-slate-800 opacity-50 hover:opacity-100"></button></div>
+                </div><button onclick="window.saveStatus()" id="status-save-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors mt-2 flex justify-center items-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> نشر الحالة</button>
+            </div>
+        </div>
+    </div>
+    <div id="status-view-modal" class="hidden fixed inset-0 z-[170] flex items-center justify-center bg-black/95 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeStatusView()"><button onclick="window.closeStatusView()" class="absolute top-6 right-6 text-white/80 hover:text-white p-2 bg-white/10 rounded-full z-20"><i data-lucide="x" class="w-6 h-6"></i></button>
+        <div id="status-view-content" class="w-full max-w-sm aspect-[9/16] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col justify-center items-center text-center p-6 text-white" onclick="event.stopPropagation()"></div>
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-xs font-bold flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> تختفي بعد 24 ساعة</div>
+    </div>
+    <div id="crop-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="crop" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> ضبط الصورة</h3><button onclick="closeCropModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 min-h-0 w-full bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden mb-4 relative" style="height:400px;max-height:50vh"><img id="crop-image-target" src="" class="block max-w-full" style="max-height:100%"></div>
+            <div class="flex justify-end gap-3 shrink-0"><button onclick="closeCropModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button> <button id="crop-save-btn" onclick="confirmCrop()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors shadow-sm flex items-center justify-center gap-2 min-w-[120px]"><i data-lucide="crop" class="w-4 h-4"></i> قص وحفظ</button></div>
+        </div>
+    </div>
+    <div id="edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="closeEditModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="edit-modal-title" class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> تعديل</h3><button onclick="closeEditModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div><textarea id="edit-modal-input" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 resize-none mb-4" rows="4"></textarea>
+            
+            <div id="edit-modal-image-section" class="hidden mb-4 relative inline-block">
+                <img id="edit-modal-image-preview" src="" class="max-h-48 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm max-w-full object-contain bg-slate-50 dark:bg-slate-900">
+                <button onclick="window.removeEditModalImage()" class="absolute -top-2 -right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500 transition-colors" title="إزالة الصورة"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
+                <div id="edit-modal-image-controls" class="hidden">
+                    <input type="file" id="edit-modal-image-input" accept="image/*" class="hidden" onchange="window.handleEditModalImageSelect(event)">
+                    <button onclick="document.getElementById('edit-modal-image-input').click()" class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50"><i data-lucide="image" class="w-4 h-4"></i> <span class="hidden sm:inline">إضافة / تغيير الصورة</span><span class="sm:hidden">صورة</span></button>
+                </div>
+                <div class="flex justify-end gap-2 ml-auto">
+                    <button onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button>
+                    <button id="edit-modal-save" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors shadow-sm flex items-center gap-2">حفظ التعديلات</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="repost-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="closeRepostModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="repeat" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> مشاركة المنشور</h3><button onclick="closeRepostModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div><textarea id="repost-modal-input" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 resize-none mb-4" rows="3" placeholder="قل شيئاً عن هذا المنشور... (اختياري)"></textarea>
+            <div id="repost-preview-container" class="hidden mb-4 p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 max-h-48 overflow-y-auto pointer-events-none"></div>
+            <div class="flex justify-end gap-3"><button onclick="closeRepostModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button> <button onclick="confirmRepost()" id="repost-modal-save" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors shadow-sm flex items-center gap-2">مشاركة الآن</button></div>
+        </div>
+    </div>
+    <div id="forgot-password-modal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeForgotPasswordModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-sm mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="key" class="w-6 h-6 text-emerald-500"></i> استعادة كلمة السر</h3><button onclick="window.closeForgotPasswordModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">أدخل بريدك الإلكتروني وسيصلك رابط آمن لكتابة كلمة السر الجديدة وتفعيلها.</p>
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4">
+                    <h4 class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> تنبيه لمستخدمي Gmail:</h4>
+                    <p class="text-[11px] text-amber-600 dark:text-amber-300/80 leading-relaxed">الرسالة قد تصل إلى مجلد <b>"البريد المهمل" (Spam)</b> بدلاً من البريد الوارد:<br><span class="inline-block mt-1">• افتح تطبيق Gmail واضغط على القائمة <i data-lucide="menu" class="w-3 h-3 inline text-amber-500"></i></span><br><span>• اختر <b>"الرسائل غير المرغوب فيها"</b> لتجد رابط التفعيل هناك.</span></p>
+                </div>
+            </div>
+            <form id="forgot-pwd-form" onsubmit="event.preventDefault(),window.sendResetLink()"><input type="email" id="forgot-pwd-email" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 mb-4" placeholder="البريد الإلكتروني..." required> <button type="submit" id="forgot-pwd-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2"><i data-lucide="send" class="w-5 h-5"></i> <span>إرسال الرابط</span></button></form>
+        </div>
+    </div>
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 p-2 rounded-full"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">تأكيد الإجراء</h3>
+            </div>
+            <p id="confirm-modal-text" class="text-slate-600 dark:text-slate-300 text-sm mb-6 leading-relaxed"></p>
+            <div class="flex gap-3 justify-end"><button id="confirm-modal-cancel" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إلغاء</button> <button id="confirm-modal-ok" class="px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold transition-colors shadow-sm">تأكيد</button></div>
+        </div>
+    </div>
+    <div id="lightbox" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 cursor-zoom-out transition-opacity" onclick="closeLightbox(event)"><button class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors p-2 bg-white/10 rounded-full" onclick="closeLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button> <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm" onclick="event.stopPropagation()"></div>
+    <div id="profile-lightbox" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-emerald-950/70 backdrop-blur-md p-4 cursor-zoom-out transition-opacity" onclick="closeProfileLightbox(event)"><button class="absolute top-6 right-6 text-emerald-100 hover:text-white transition-colors p-2 bg-emerald-800/50 rounded-full hover:bg-emerald-700/80" onclick="closeProfileLightbox(event)"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <div class="relative group cursor-default" onclick="event.stopPropagation()"><img id="profile-lightbox-img" src="" class="w-64 h-64 md:w-80 md:h-80 object-cover rounded-full shadow-[0_0_50px_rgba(16,185,129,0.4)] border-4 border-emerald-300/30 relative z-10">
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-600/40 via-emerald-400/10 to-white/10 pointer-events-none z-20 mix-blend-overlay"></div>
+            <div class="absolute inset-0 rounded-full shadow-[inset_0_0_40px_rgba(16,185,129,0.9)] pointer-events-none z-20"></div>
+            <div class="absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl pointer-events-none z-0 scale-110"></div>
+        </div>
+    </div>
+    <div id="reactors-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeReactorsModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" id="reactors-modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">قائمة المتفاعلين</h3><button onclick="closeReactorsModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="reactors-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+    </div>
+    <div id="share-post-modal" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeShareModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" id="share-post-modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">مشاركة في رسالة خاصة</h3><button onclick="closeShareModal()" class="text-slate-400 hover:text-rose-500 transition-colors p-1 bg-slate-50 dark:bg-slate-700 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">اختر صديقاً لإرسال هذا المنشور إليه:</p>
+            <div id="share-friends-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+    </div>
+    <div id="chat-settings-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeChatSettings()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-all duration-300 transform scale-95" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إعدادات الرسائل</h3><button onclick="window.closeChatSettings()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="space-y-6">
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> قفل الرسائل بكلمة سر</label> <input type="password" id="cs-password" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors font-mono tracking-wider" placeholder="اكتب كلمة سر، أو اتركها فارغة للإلغاء">
+                    <p class="text-[10px] text-slate-400 mt-1">لحماية محادثاتك من المتطفلين.</p>
+                </div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> الحذف التلقائي للرسائل</label> <select id="cs-auto-delete" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors">
+                        <option value="0">إيقاف الحذف التلقائي</option>
+                        <option value="12">حذف بعد 12 ساعة</option>
+                        <option value="24">حذف بعد 24 ساعة</option>
+                        <option value="168">حذف بعد 7 أيام</option>
+                    </select></div>
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+                    <div class="flex items-center justify-between"><label class="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1"><i data-lucide="message-circle" class="w-4 h-4"></i> فقاعة الرسائل العائمة</label> <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="cs-bubble-toggle" class="sr-only peer" onchange="window.toggleFloatingBubble(this.checked)">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+                        </label></div>
+                </div>
+                <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+                    <div class="flex items-center justify-between mb-3"><label class="text-sm font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1"><i data-lucide="bell-off" class="w-4 h-4"></i> إيقاف استقبال الرسائل</label> <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="cs-pause-toggle" class="sr-only peer" onchange="window.togglePauseExceptions(this.checked)">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-rose-500"></div>
+                        </label></div>
+                    <div id="cs-exceptions-wrapper" class="hidden mt-3 pt-3 border-t border-rose-200 dark:border-rose-800/50">
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">استثناء الأصدقاء التالين (يمكنهم مراسلتك):</p>
+                        <div id="cs-exceptions-list" class="max-h-32 overflow-y-auto space-y-1 bg-white/50 dark:bg-slate-900/50 rounded-xl p-2 border border-slate-200 dark:border-slate-700"></div>
+                    </div>
+                </div><button onclick="window.saveChatSettings()" id="cs-save-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"><i data-lucide="save" class="w-5 h-5"></i> حفظ الإعدادات</button>
+            </div>
+        </div>
+    </div>
+    <div id="create-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeCreateCommModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="plus-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> إنشاء مجتمع خاص</h3><button onclick="closeCreateCommModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div><label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">غلاف المجتمع</label>
+                    <div class="relative group h-20 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700"><img id="comm-cover-preview" src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200&auto=format&fit=crop" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("comm-cover-input").click()'><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                    </div><input type="file" id="comm-cover-input" accept="image/*" class="hidden" onchange="handleCommCoverSelect(event)">
+                </div>
+                <div class="flex flex-col items-center -mt-8 relative z-10">
+                    <div class="relative group"><img id="comm-icon-preview" src="https://ui-avatars.com/api/?name=C&background=10b981&color=fff&rounded=true&size=128" class="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white dark:border-slate-800 bg-emerald-100 dark:bg-emerald-900/50 transition-all">
+                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("comm-icon-input").click()'><i data-lucide="camera" class="w-5 h-5 text-white"></i></div>
+                    </div><input type="file" id="comm-icon-input" accept="image/*" class="hidden" onchange="handleCommIconSelect(event)"> <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">أيقونة المجتمع</span>
+                </div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اسم المجتمع <span class="text-rose-500">*</span></label><input id="comm-name" placeholder="مثال: مجتمع التقنية" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">تصنيف المجتمع <span class="text-rose-500">*</span></label> <select id="comm-category" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors">
+                        <option value="" disabled="disabled" selected="selected">اختر التصنيف...</option>
+                        <option value="sports">رياضي ⚽</option>
+                        <option value="religion">ديني ☪️</option>
+                        <option value="politics">سياسي 🏛️</option>
+                        <option value="social">اجتماعي 👥</option>
+                        <option value="entertainment">ترفيهي 🎮</option>
+                        <option value="art">فني 🎨</option>
+                        <option value="education">تعليمي 📚</option>
+                        <option value="tech">تقني / برمجة 💻</option>
+                        <option value="business">اقتصادي / أعمال 💼</option>
+                        <option value="news">أخبار 📰</option>
+                        <option value="cars">سيارات 🚗</option>
+                        <option value="games">ألعاب 🎯</option>
+                        <option value="movies">أفلام ومسلسلات 🎬</option>
+                        <option value="music">موسيقى 🎵</option>
+                        <option value="photography">تصوير 📸</option>
+                        <option value="health">صحة ولياقة 🏋️</option>
+                        <option value="travel">سفر وسياحة ✈️</option>
+                        <option value="food">طبخ 🍔</option>
+                        <option value="anime">أنمي ومانجا 🎌</option>
+                        <option value="books">كتب وروايات 📖</option>
+                        <option value="science">علوم 🔬</option>
+                        <option value="family">عائلي 👨👩👧</option>
+                        <option value="other">أخرى ➕</option>
+                    </select></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">التفاصيل / الوصف</label><textarea id="comm-desc" rows="2" placeholder="أضف وصفاً لمجتمعك..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none resize-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></textarea></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">الخصوصية <span class="text-rose-500">*</span></label> <select id="comm-privacy" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="" disabled="disabled" selected="selected">اختر...</option>
+                            <option value="public">عام 🌍 (مفتوح)</option>
+                            <option value="private">خاص 🔒 (مغلق)</option>
+                        </select></div>
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اللون المميز</label> <select id="comm-color" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="bg-emerald-100 dark:bg-emerald-900/40">أخضر</option>
+                            <option value="bg-blue-100 dark:bg-blue-900/40">أزرق</option>
+                            <option value="bg-purple-100 dark:bg-purple-900/40">بنفسجي</option>
+                            <option value="bg-amber-100 dark:bg-amber-900/40">أصفر</option>
+                            <option value="bg-rose-100 dark:bg-rose-900/40">أحمر</option>
+                            <option value="bg-slate-100 dark:bg-slate-800">رمادي</option>
+                        </select></div>
+                </div><button id="create-comm-btn" onclick="submitCreateComm()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md">إنشاء المجتمع</button>
+            </div>
+        </div>
+    </div>
+    <div id="edit-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeEditCommModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="edit-3" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> تعديل المجتمع</h3><button onclick="closeEditCommModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div><label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">غلاف المجتمع</label>
+                    <div class="relative group h-20 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700"><img id="edit-comm-cover-preview" src="" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("edit-comm-cover-input").click()'><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                    </div><input type="file" id="edit-comm-cover-input" accept="image/*" class="hidden" onchange="handleEditCommCoverSelect(event)">
+                </div>
+                <div class="flex flex-col items-center -mt-8 relative z-10">
+                    <div class="relative group"><img id="edit-comm-icon-preview" src="" class="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white dark:border-slate-800 bg-emerald-100 dark:bg-emerald-900/50 transition-all">
+                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("edit-comm-icon-input").click()'><i data-lucide="camera" class="w-5 h-5 text-white"></i></div>
+                    </div><input type="file" id="edit-comm-icon-input" accept="image/*" class="hidden" onchange="handleEditCommIconSelect(event)"> <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">أيقونة المجتمع</span>
+                </div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اسم المجتمع <span class="text-rose-500">*</span></label><input id="edit-comm-name" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">تصنيف المجتمع <span class="text-rose-500">*</span></label> <select id="edit-comm-category" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors">
+                        <option value="sports">رياضي ⚽</option>
+                        <option value="religion">ديني ☪️</option>
+                        <option value="politics">سياسي 🏛️</option>
+                        <option value="social">اجتماعي 👥</option>
+                        <option value="entertainment">ترفيهي 🎮</option>
+                        <option value="art">فني 🎨</option>
+                        <option value="education">تعليمي 📚</option>
+                        <option value="tech">تقني / برمجة 💻</option>
+                        <option value="business">اقتصادي / أعمال 💼</option>
+                        <option value="news">أخبار 📰</option>
+                        <option value="cars">سيارات 🚗</option>
+                        <option value="games">ألعاب 🎯</option>
+                        <option value="movies">أفلام ومسلسلات 🎬</option>
+                        <option value="music">موسيقى 🎵</option>
+                        <option value="photography">تصوير 📸</option>
+                        <option value="health">صحة ولياقة 🏋️</option>
+                        <option value="travel">سفر وسياحة ✈️</option>
+                        <option value="food">طبخ 🍔</option>
+                        <option value="anime">أنمي ومانجا 🎌</option>
+                        <option value="books">كتب وروايات 📖</option>
+                        <option value="science">علوم 🔬</option>
+                        <option value="family">عائلي 👨👩👧</option>
+                        <option value="other">أخرى ➕</option>
+                    </select></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">التفاصيل / الوصف</label><textarea id="edit-comm-desc" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none resize-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></textarea></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">الخصوصية <span class="text-rose-500">*</span></label> <select id="edit-comm-privacy" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="public">عام 🌍 (مفتوح)</option>
+                            <option value="private">خاص 🔒 (مغلق)</option>
+                        </select></div>
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اللون المميز</label> <select id="edit-comm-color" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="bg-emerald-100 dark:bg-emerald-900/40">أخضر</option>
+                            <option value="bg-blue-100 dark:bg-blue-900/40">أزرق</option>
+                            <option value="bg-purple-100 dark:bg-purple-900/40">بنفسجي</option>
+                            <option value="bg-amber-100 dark:bg-amber-900/40">أصفر</option>
+                            <option value="bg-rose-100 dark:bg-rose-900/40">أحمر</option>
+                            <option value="bg-slate-100 dark:bg-slate-800">رمادي</option>
+                        </select></div>
+                </div><button id="edit-comm-btn" onclick="submitEditComm()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+    <div id="edit-comm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeEditCommModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border dark:border-slate-700 transform scale-95 transition-all duration-300" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="edit-3" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> تعديل المجتمع</h3><button onclick="window.closeEditCommModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div><label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">غلاف المجتمع</label>
+                    <div class="relative group h-20 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700"><img id="edit-comm-cover-preview" src="" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("edit-comm-cover-input").click()'><i data-lucide="camera" class="w-6 h-6 text-white"></i></div>
+                    </div><input type="file" id="edit-comm-cover-input" accept="image/*" class="hidden" onchange="window.handleEditCommCoverSelect(event)">
+                </div>
+                <div class="flex flex-col items-center -mt-8 relative z-10">
+                    <div class="relative group"><img id="edit-comm-icon-preview" src="" class="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white dark:border-slate-800 bg-emerald-100 dark:bg-emerald-900/50 transition-all">
+                        <div class="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" onclick='document.getElementById("edit-comm-icon-input").click()'><i data-lucide="camera" class="w-5 h-5 text-white"></i></div>
+                    </div><input type="file" id="edit-comm-icon-input" accept="image/*" class="hidden" onchange="window.handleEditCommIconSelect(event)"> <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-bold">أيقونة المجتمع</span>
+                </div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اسم المجتمع <span class="text-rose-500">*</span></label><input id="edit-comm-name" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">تصنيف المجتمع <span class="text-rose-500">*</span></label> <select id="edit-comm-category" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors">
+                        <option value="sports">رياضي ⚽</option>
+                        <option value="religion">ديني ☪️</option>
+                        <option value="politics">سياسي 🏛️</option>
+                        <option value="social">اجتماعي 👥</option>
+                        <option value="entertainment">ترفيهي 🎮</option>
+                        <option value="art">فني 🎨</option>
+                        <option value="education">تعليمي 📚</option>
+                        <option value="tech">تقني / برمجة 💻</option>
+                        <option value="business">اقتصادي / أعمال 💼</option>
+                        <option value="news">أخبار 📰</option>
+                        <option value="cars">سيارات 🚗</option>
+                        <option value="games">ألعاب 🎯</option>
+                        <option value="movies">أفلام ومسلسلات 🎬</option>
+                        <option value="music">موسيقى 🎵</option>
+                        <option value="photography">تصوير 📸</option>
+                        <option value="health">صحة ولياقة 🏋️</option>
+                        <option value="travel">سفر وسياحة ✈️</option>
+                        <option value="food">طبخ 🍔</option>
+                        <option value="anime">أنمي ومانجا 🎌</option>
+                        <option value="books">كتب وروايات 📖</option>
+                        <option value="science">علوم 🔬</option>
+                        <option value="family">عائلي 👨👩👧</option>
+                        <option value="other">أخرى ➕</option>
+                    </select></div>
+                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">التفاصيل / الوصف</label><textarea id="edit-comm-desc" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none resize-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors"></textarea></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">الخصوصية <span class="text-rose-500">*</span></label> <select id="edit-comm-privacy" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="public">عام 🌍 (مفتوح)</option>
+                            <option value="private">خاص 🔒 (مغلق)</option>
+                        </select></div>
+                    <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 block">اللون المميز</label> <select id="edit-comm-color" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-slate-100 transition-colors text-sm">
+                            <option value="bg-emerald-100 dark:bg-emerald-900/40">أخضر</option>
+                            <option value="bg-blue-100 dark:bg-blue-900/40">أزرق</option>
+                            <option value="bg-purple-100 dark:bg-purple-900/40">بنفسجي</option>
+                            <option value="bg-amber-100 dark:bg-amber-900/40">أصفر</option>
+                            <option value="bg-rose-100 dark:bg-rose-900/40">أحمر</option>
+                            <option value="bg-slate-100 dark:bg-slate-800">رمادي</option>
+                        </select></div>
+                </div><button id="edit-comm-btn" onclick="window.submitEditComm()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+    <div id="add-member-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity" onclick="closeAddMemberModal()">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl border dark:border-slate-700 transition-colors" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">إضافة أصدقاء للمجتمع</h3><button onclick="closeAddMemberModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="comm-friends-list" class="overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+    </div>
+    <div id="why-mytab-modal" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-md transition-opacity">
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-3xl p-0 w-full max-w-5xl shadow-2xl relative overflow-y-auto max-h-[90vh] border dark:border-slate-700 transform transition-all scale-95 opacity-0 duration-300" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 p-4 md:p-6 flex justify-between items-center z-20">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-xl"><i data-lucide="leaf" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i></div><span class="font-black text-xl md:text-2xl tracking-wide text-emerald-900 dark:text-emerald-400">الدليل الشامل لـ MyTab</span>
+                </div><button onclick="closeWhyMyTabModal()" class="text-slate-500 hover:text-rose-500 bg-slate-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-6 md:p-8 space-y-12">
+                <div class="relative overflow-hidden p-6 md:p-10 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm text-center md:text-right">
+                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center justify-center md:justify-start gap-3"><i data-lucide="shield-check" class="w-8 h-8 text-emerald-500"></i> القصة باختصار.. ليه عملنا الموقع ده؟</h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed font-medium mb-4">في الفترة الأخيرة، منصات التواصل مبقتش مكان مريح. أي حد ممكن يدخل يعلق عندك، يشتمك، يتنمر عليك، أو يحكم على حياتك وسلوكياتك بدون وجه حق. الدواير وسعت جداً وبقينا مضطرين نتعامل مع "غرباء" بيفرضوا آراءهم علينا وبيجرحونا.</p>
+                    <p class="text-emerald-700 dark:text-emerald-400 text-base md:text-lg leading-relaxed font-bold bg-emerald-50 dark:bg-emerald-900/20 p-5 rounded-2xl border-r-4 border-emerald-500">إحنا قررنا نرجع خطوة لورا، ونبني مكان "مقفول عليك وعلى الدواير المحدودة جداً من البشر اللي بتثق فيهم". مكان مفيش فيه بحث عشوائي، مفيش فيه خوارزميات بتنشر بوستاتك للغرباء.. هنا أنت بتشارك أفكارك وأسرارك مع الناس اللي بتشبهك وبس، في بيئة نظيفة ومحمية 100%.</p>
+                </div>
+                <div>
+                    <div class="text-center mb-10">
+                        <h4 class="inline-block px-8 py-3 bg-slate-800 dark:bg-slate-700 rounded-full font-black text-white shadow-md text-lg">كيف تستخدم الموقع؟ (12 ميزة خرافية)</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="fingerprint" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">1. الكود السري (المعرف)</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">مفيش حاجة اسمها تبحث عن حد باسمه، النظام بيديك كود زي MYT-ABC. ابعته لصاحبك عشان يضيفك من البحث. ده بيمنع أي حد غريب يوصلك.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="edit-3" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">2. انشر بألوانك وخلفياتك</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">اكتب بوست، ارفق صورة، وتقدر تختار "خلفية فخمة" للبوست بتاعك تعبر عن مودك (فضاء، طبيعة، ألوان) من باليتة الألوان.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="message-square" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">3. التعليقات الذكية</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">اعمل (لايك، قلب..) على البوستات والتعليقات. واضغط على كلمة "رد" تحت تعليق صاحبك عشان ترد عليه تحديداً جوه مسار منفصل.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="lock" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">4. خزنة الرسايل السرية</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">حط "كلمة سر" للرسايل، عشان لو الموبايل في إيد حد ميقدرش يفتحها. وتقدر ترجع الباسوورد بتاريخ ميلادك لو نسيته.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="clock" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">5. الحذف الذاتي وعدم الإزعاج</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">الرسايل بتتمسح لوحدها من السيرفر كل 12 أو 24 ساعة لو فعلت الخيار. وتقدر "توقف استقبال الرسايل" وتستثني أقرب الناس ليك بس يراسلوك.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group border-b-4 border-b-rose-500">
+                            <div class="w-12 h-12 bg-rose-100 dark:bg-rose-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="mic" class="w-6 h-6 text-rose-600 dark:text-rose-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">6. فويس مدمر ذاتياً</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">الفويس مساحته 30 ثانية. أول ما تسمعه بيختفي من عندك، وأول ما الطرف التاني يسمعه بيتدمر من السيرفر نهائياً كأنه متقالش.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group border-b-4 border-b-teal-500">
+                            <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="eye-off" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">7. صور تتشاف مرة واحدة</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">اضغط على علامة "العين" قبل إرسال الصورة في الشات. الصورة هتفتح مرة واحدة بس، ولما تنقفل هتتمسح للأبد للحماية القصوى.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group border-b-4 border-b-red-500">
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="scan-line" class="w-6 h-6 text-red-600 dark:text-red-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">8. حظر السكرين شوت</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">حاول تاخد سكرين شوت جوة الرسايل أو تخرج من الموقع لثواني، الشاشة هتتعتم فوراً وتخفي المحتوى. أسرارك محفوظة ومفيش تسريب رسايل.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="aperture" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">9. الحالات اليومية (ستوري)</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">نزل "حالة" نصية أو فيديو من صورتك الشخصية. بتفضل موجودة 24 ساعة، وبتقدر تعرف مين من أصحابك دخل وشافها بالتحديد.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="layers" class="w-6 h-6 text-cyan-600 dark:text-cyan-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">10. المجتمعات الخاصة</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">أنشئ "مجموعة" عامة أو خاصة لأصحابك. البوستات اللي جواها مش بتظهر بره، والمدير يقدر يقبل أو يرفض طلبات الانضمام.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group">
+                            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="camera" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">11. حفظ البوستات للمشاركة</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">تقدر تحفظ أي بوست كصورة شيك جداً، النظام هيحط إطار فخم فيه اسم الكاتب ولوجو الموقع، عشان تشاركه بره وأنت متطمن على شكله.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all group border-b-4 border-b-fuchsia-500">
+                            <div class="w-12 h-12 bg-fuchsia-100 dark:bg-fuchsia-900/40 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="history" class="w-6 h-6 text-fuchsia-600 dark:text-fuchsia-400"></i></div>
+                            <h5 class="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">12. آلة الزمن (الأرشيف)</h5>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium text-sm leading-relaxed">من قسم "الأرشيف الزمني"، تقدر ترجع لأي يوم في الماضي وتشوف البوستات اللي نزلت في اليوم ده بس.. ذكرياتك متقسمة سنين وشهور وأيام.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-8 py-6 border-t border-slate-100 dark:border-slate-700">
+                    <div class="inline-block p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl">
+                        <p class="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-snug">في MyTab.. أنت لا تحاول أن تبهر أحداً.<br>أنت فقط تكون نفسك.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sticky bottom-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 p-4 md:p-6 flex justify-center z-20"><button onclick="closeWhyMyTabModal()" class="w-full max-w-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-transform hover:scale-105 shadow-md flex items-center justify-center gap-2 text-lg">فهمت كل حاجة.. يلا نبدأ! <i data-lucide="arrow-left" class="w-5 h-5"></i></button></div>
+        </div>
+    </div>
+    <div id="charter-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-md transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh] border dark:border-slate-700 transform transition-all">
+            <div class="flex items-center justify-center mb-6">
+                <div class="bg-emerald-100 dark:bg-emerald-900/50 p-4 rounded-full"><i data-lucide="shield-check" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i></div>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-5">ميثاق المساحة</h2>
+            <div class="text-slate-700 dark:text-slate-300 space-y-4 text-sm md:text-base leading-relaxed text-justify bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <p>مرحباً بك في مساحتك الآمنة. لقد بُنيت <strong>MyTab</strong> على فلسفة الخصوصية وحرية التعبير الإيجابية.</p>
+                <p>نحن نؤمن بأن هذه مملكتك الخاصة التي تديرها وتدعو إليها من تثق بهم. أفكارك، معتقداتك، وكل ما تشاركه هنا هو ملك لك وحدك، ونحن نحترم حريتك الشخصية.</p>
+                <div class="bg-rose-50 dark:bg-rose-900/30 border-r-4 border-rose-500 p-4 rounded-xl mt-4">
+                    <p class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-2"><i data-lucide="alert-octagon" class="w-5 h-5"></i> محظورات المنصة الأساسية:</p>
+                    <ul class="text-rose-600 dark:text-rose-300 text-sm font-medium list-disc list-inside space-y-1.5">
+                        <li>يُمنع منعاً باتاً نشر <strong>المحتوى الإباحي</strong> بكل أشكاله.</li>
+                        <li>يُمنع التحريض على <strong>العنف، الإرهاب، أو إيذاء النفس</strong>.</li>
+                        <li>تُمنع <strong>خطابات الكراهية، التنمر، أو التمييز العنصري</strong>.</li>
+                        <li>يُمنع <strong>الابتزاز، التهديد، أو نشر بيانات خاصة</strong> للآخرين.</li>
+                    </ul>
+                    <p class="text-rose-700 dark:text-rose-400 text-xs mt-3 font-bold border-t border-rose-200 dark:border-rose-800/50 pt-2">مخالفة هذه الشروط تؤدي للحظر النهائي وإغلاق مساحتك بلا رجعة.</p>
+                </div>
+                <p class="text-center font-bold text-emerald-700 dark:text-emerald-400 mt-4 text-sm md:text-base">باستثناء ذلك.. استمتع بمساحتك وتواصل مع من تحب بأمان!</p>
+            </div><button onclick="acceptCharter()" class="w-full bg-slate-800 dark:bg-emerald-600 hover:bg-slate-900 dark:hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-colors mt-6 shadow-md flex justify-center items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> قرأت الميثاق وموافق عليه</button>
+        </div>
+    </div>
+    <div id="onboarding-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-opacity opacity-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-3xl shadow-2xl transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center flex items-center justify-center gap-2"><i data-lucide="sparkles" class="w-8 h-8 text-emerald-500"></i> أهلاً بك في مساحتك</h2>
+            <p class="text-center text-slate-500 dark:text-slate-400 mb-6 font-medium">اختر اهتماماتك لنقوم بضمك تلقائياً لأفضل المجتمعات المناسبة لك</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-8" id="onboarding-categories"></div><button onclick="window.completeOnboarding()" id="onboarding-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md text-lg flex items-center justify-center gap-2">متابعة وبدء الاستخدام <i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+        </div>
+    </div>
+    <div id="loading-view" class="flex h-screen w-full items-center justify-center bg-emerald-50 dark:bg-slate-900 absolute inset-0 z-50 transition-opacity duration-500">
+        <div class="flex flex-col items-center gap-4"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img h-16 w-16 object-contain animate-pulse drop-shadow-md" alt="Logo">
+            <h1 class="text-2xl font-bold text-emerald-900 dark:text-emerald-400 tracking-wider">MyTab</h1>
+            <p class="text-emerald-600/60 dark:text-emerald-500/60">يتم تجهيز مساحتك الآمنة...</p>
+        </div>
+    </div>
+    <div id="auth-view" class="hidden min-h-screen bg-emerald-50 dark:bg-slate-900 flex flex-col items-center p-4 absolute inset-0 z-40 overflow-y-auto">
+        <div class="absolute top-6 left-6 z-50"><button onclick="window.showWhyMyTabModal()" class="w-12 h-12 md:w-14 md:h-14 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-full shadow-xl border border-emerald-100 dark:border-slate-700 flex items-center justify-center hover:scale-110 active:scale-95 transition-all group animate-bounce" style="animation-duration:3s" title="دليل الاستخدام الشامل"><i data-lucide="help-circle" class="w-6 h-6 md:w-7 md:h-7"></i> <span class="absolute right-full mr-3 bg-slate-800 text-white text-[10px] md:text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold shadow-lg">إزاي تستخدم MyTab؟</span></button></div>
+        <div class="flex-1 w-full flex items-center justify-center min-h-fit py-8">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 dark:border-slate-700 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                <div class="flex flex-col items-center mb-8"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img w-16 h-16 object-contain mb-4 drop-shadow-md" alt="Logo">
+                    <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-wider">MyTab</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">مساحتك الآمنة والخاصة</p>
+                </div>
+                <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl"><button id="tab-login" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400" onclick='document.getElementById("register-extra-fields").classList.add("hidden"),document.getElementById("auth-forgot-pwd-btn").classList.remove("hidden"),document.getElementById("auth-submit-text").innerText="دخول",switchAuthTab("login")'>تسجيل الدخول</button> <button id="tab-register" class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white" onclick='document.getElementById("register-extra-fields").classList.remove("hidden"),document.getElementById("auth-forgot-pwd-btn").classList.add("hidden"),document.getElementById("auth-submit-text").innerText="إنشاء حساب",switchAuthTab("register")'>حساب جديد</button></div>
+                <div id="auth-error" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-xl text-sm mb-4 border border-rose-100 dark:border-rose-800/50 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> <span id="auth-error-text"></span></div>
+                <form id="auth-form" class="space-y-4">
+                    <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label> <input type="email" id="auth-email" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required></div>
+                    <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label> <input type="password" id="auth-password" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" required minlength="6"></div>
+                    <div id="register-extra-fields" class="hidden space-y-4">
+                        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الاسم الكامل *</label> <input id="reg-name" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">النوع *</label> <select id="reg-gender" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100">
+                                    <option value="male">ذكر</option>
+                                    <option value="female">أنثى</option>
+                                </select></div>
+                            <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الميلاد *</label> <input id="reg-dob" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" placeholder="مثال: 9 نوفمبر (السنة اختيارية)"></div>
+                        </div>
+                        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">رقم الهاتف (للواتساب - اختياري)</label>
+                            <div class="relative"><i data-lucide="smartphone" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i> <input type="tel" id="reg-phone" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl pr-10 pl-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" placeholder="مثال: 010xxxxxxxx"></div>
+                        </div>
+                        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">العنوان</label> <input id="reg-address" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100" placeholder="مثال: شبرا سندي - الدقهلية"></div>
+                        <div class="border-t border-slate-100 dark:border-slate-700 pt-4"><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">حسابات التواصل الاجتماعي (اختياري)</label>
+                            <div id="reg-socials-container"></div><button type="button" onclick="addRegSocialLink()" class="text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-2 hover:text-emerald-700 dark:hover:text-emerald-300"><i data-lucide="plus-circle" class="w-4 h-4"></i> إضافة رابط</button>
+                        </div>
+                    </div><input type="hidden" id="reg-is-verified" value="false"> <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 mt-6"><i data-lucide="mail" class="w-5 h-5"></i> <span id="auth-submit-text">دخول</span></button>
+                    
+                    <div id="auth-forgot-pwd-btn" class="text-left mt-3"><button type="button" onclick="window.openForgotPasswordModal()" class="text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">نسيت كلمة السر؟</button></div>
+                </form>
+                <div class="mt-6 border-t border-slate-100 dark:border-slate-700 pt-6"><button onclick="handleGoogleAuth()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex justify-center items-center gap-3"><svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                        </svg> المتابعة باستخدام Google</button></div>
+                <div class="mt-8 flex justify-center pb-2"><button type="button" onclick="window.showWhyMyTabModal()" class="relative overflow-hidden group bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-[13px] md:text-sm px-6 py-2.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2">
+                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div><i data-lucide="sparkles" class="w-4 h-4 relative z-10 text-emerald-100"></i> <span class="relative z-10">لماذا أنشأنا MyTab؟</span>
+                    </button></div>
+            </div>
+        </div>
+        <footer class="w-full text-center mt-auto pb-4 shrink-0">
+            <p class="text-[14px] font-bold text-slate-700 dark:text-slate-200 mb-4 drop-shadow-sm">حقوق النشر محفوظة MyTab &copy; 2026</p>
+            <div class="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 font-medium">
+                <div class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-default"><i data-lucide="code" class="w-4 h-4"></i> <span>تطوير خالد محي الدين</span></div><span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://wa.me/201018282460" target="_blank" class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" dir="ltr"><i data-lucide="phone" class="w-4 h-4"></i> <span>01018282460</span> </a><span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://www.facebook.com/khaledmohyalden" target="_blank" class="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg> <span>Facebook</span></a>
+            </div>
+        </footer>
+    </div>
+    <div id="verify-view" class="hidden min-h-screen bg-emerald-50 dark:bg-slate-900 flex items-center justify-center p-4 absolute inset-0 z-40">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-lg border border-emerald-100 dark:border-slate-700 text-center"><i data-lucide="mail" class="w-16 h-16 text-emerald-500 mx-auto mb-4"></i>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">تأكيد البريد الإلكتروني</h2>
+            <p class="text-slate-600 dark:text-slate-300 text-sm mb-6 leading-relaxed">لقد أرسلنا رابط تأكيد إلى <span id="verify-email-display" class="font-semibold"></span>.<br>يرجى الضغط على الرابط في الرسالة لتتمكن من الدخول.</p>
+            <p id="verify-msg" class="text-sm mb-4">ستصلك رسالة التفعيل على بريدك الإلكتروني (يرجى التحقق من مجلد الرسائل المهملة / Spam).<br>إذا لم تصلك، يمكنك التواصل مع الإدارة لتفعيل حسابك يدوياً من لوحة التحكم.</p>
+            <div class="space-y-3"><button onclick="checkEmailVerified()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors">لقد قمت بالتأكيد، دخول</button> <button onclick="resendVerification()" class="w-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">إعادة إرسال الرابط</button> <button onclick="handleLogout()" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white mt-4 underline underline-offset-4 block w-full">تسجيل الخروج أو استخدام حساب آخر</button></div>
+        </div>
+    </div>
+    <div id="register-details-view" class="hidden min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 absolute inset-0 z-40 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-lg w-full shadow-lg border border-emerald-100 dark:border-slate-700 my-auto">
+            <div class="flex flex-col items-center mb-8"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img w-12 h-12 object-contain mb-2 drop-shadow-sm" alt="Logo">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">إعداد مساحتك الآمنة</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">أكمل بياناتك لإنشاء حسابك في MyTab</p>
+            </div>
+            <form id="reg-form" class="hidden"></form>
+        </div>
+    </div>
+    <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900 relative">
+        <div id="maintenance-view" class="hidden absolute inset-0 z-[999] bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
+            <div class="bg-amber-100 dark:bg-amber-900/30 p-6 rounded-full mb-6 animate-pulse"><i data-lucide="settings-2" class="w-16 h-16 text-amber-600 dark:text-amber-400"></i></div>
+            <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-4">عفواً، الموقع مغلق للصيانة</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-lg max-w-md leading-relaxed">نحن نقوم ببعض التحديثات لتحسين تجربتك.<br>يرجى المعاودة في وقت لاحق.</p><button onclick="window.handleLogout()" class="mt-12 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-xl font-bold hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/40 dark:hover:text-rose-400 transition-colors flex items-center gap-2 shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
+        </div>
+        <nav class="w-14 md:w-64 bg-white dark:bg-slate-800 border-l border-emerald-100 dark:border-slate-700 flex flex-col justify-between py-4 md:py-6 shrink-0 z-10 shadow-sm overflow-y-auto transition-colors">
+            <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-4 md:gap-8">
+                <div class="flex items-center gap-2 md:gap-3 text-emerald-600 dark:text-emerald-400 font-bold text-xl md:text-2xl w-full justify-center md:justify-start"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img h-7 w-7 md:h-9 md:w-9 object-contain drop-shadow-sm" alt="Logo"> <span class="hidden md:block tracking-wide">MyTab</span></div>
+                <div class="flex flex-col w-full gap-1 md:gap-2 px-1.5 md:px-0"><button onclick='window.switchTab("feed")' id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium"><i data-lucide="home" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المساحات</span></button>
+                    <div class="relative w-full"><button onclick="window.copyMyId()" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold bg-emerald-50/50 dark:bg-transparent"><i data-lucide="fingerprint" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span id="mobile-myid" class="hidden md:block font-mono tracking-wider"></span></button></div><button onclick='window.switchTab("communities")' id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="layers" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المجتمعات</span></button> <button onclick='window.switchTab("friends")' id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button> <button onclick="window.viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button> <button onclick='window.switchTab("search")' id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button> <button onclick='window.switchTab("favorites")' id="nav-favorites" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="star" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المفضلة</span></button>
+                    <div class="relative w-full"><button onclick='window.switchTab("notifications")' id="nav-notifications" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell-ring" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الإشعارات</span></button> <span id="notif-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div>
+                    <div class="relative w-full"><button onclick='window.switchTab("requests")' id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button> <span id="req-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div>
+                    <div class="relative w-full hidden md:block"><button onclick='window.switchTab("messages")' id="nav-messages-desktop" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="message-circle" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الرسائل</span></button> <span id="msg-badge-desktop" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div><button onclick='window.switchTab("admin")' id="nav-admin" class="hidden nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30"><i data-lucide="shield-alert" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">لوحة الإدارة</span></button>
+                    <div class="mt-auto w-full flex flex-col gap-1"><button onclick="window.toggleFontSize()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="type" id="font-size-icon" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block" id="font-size-text">حجم الخط</span></button> <button onclick="window.toggleTheme()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="moon" id="theme-icon" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block" id="theme-text">الوضع الداكن</span></button> <button onclick="window.showCharterModal()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="scroll-text" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ميثاق المساحة</span></button> <button onclick="window.handleLogout()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30"><i data-lucide="log-out" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">خروج</span></button></div>
+                </div>
+            </div>
+            <div class="px-1.5 md:px-6 flex flex-col items-center md:items-start gap-2 mt-4 pb-4">
+                <div class="hidden md:flex flex-col text-xs text-slate-500 dark:text-slate-400 mb-2 bg-slate-100 dark:bg-slate-700 px-3 py-3 rounded-xl w-full group relative"><span class="font-semibold text-slate-700 dark:text-slate-300 mb-1">المعرف الخاص بك:</span> <button onclick="window.copyMyId()" class="flex items-center justify-between w-full bg-white dark:bg-slate-800 px-2 py-1.5 rounded border border-slate-200 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"><span id="sidebar-myid" class="font-mono text-emerald-600 dark:text-emerald-400 tracking-wider text-sm"></span> <i data-lucide="copy" class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors"></i></button></div>
+                <div class="flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-slate-700 p-1.5 md:p-2 rounded-xl transition-colors w-full cursor-pointer justify-center md:justify-start" onclick="window.handleUserAvatarClick(currentUser.uid,userData.photoUrl,event)"><img id="sidebar-avatar" src="" alt="profile" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-emerald-200 dark:border-emerald-700 object-cover bg-white dark:bg-slate-800 mx-auto md:mx-0">
+                    <div class="hidden md:flex flex-col items-start overflow-hidden"><span id="sidebar-name" class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate w-32"></span> <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span></div>
+                </div>
+            </div>
+        </nav>
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors h-full">
+            <div class="md:hidden flex justify-between items-center bg-white dark:bg-slate-800 p-3 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
+                <div class="flex items-center gap-3"><button onclick="window.toggleMobileMenu()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    <h1 class="text-emerald-600 dark:text-emerald-400 font-extrabold text-2xl flex items-center gap-1.5 tracking-wide"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img w-7 h-7 object-contain drop-shadow-sm" alt="Logo"> MyTab</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="mobile-bell-container" onclick='window.switchTab("notifications")' class="relative p-2 bg-slate-100 dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="bell" class="w-5 h-5"></i> <span id="mobile-bell-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow-sm">0</span></button>
+                    <button onclick='window.switchTab("messages")' id="nav-messages" class="relative p-2 bg-slate-100 dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="message-circle" class="w-5 h-5"></i> <span id="msg-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow-sm">0</span></button>
+                </div>
+            </div>
+            <div class="max-w-2xl mx-auto w-full min-h-full p-4 md:p-8">
+                <div id="tab-content-feed" class="tab-content space-y-6">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 px-1 relative z-10">
+                        <div class="flex items-center gap-3 md:gap-4">
+                            <img id="feed-cover-avatar" src="" class="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-emerald-100 dark:border-emerald-900/50 object-cover shadow-sm bg-slate-100 dark:bg-slate-800">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i data-lucide="home" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+                                    <span class="text-[11px] md:text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md">المساحات العامة</span>
+                                </div>
+                                <h3 id="feed-welcome-name" class="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100">مرحباً بك</h3>
+                                <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">ماذا تود أن تشارك في مساحتك اليوم؟</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        // تنظيف العناصر القديمة من على الغلاف لتجنب التكرار والتعارض
+                        (function cleanOldCoverElements() {
+                            setTimeout(() => {
+                                const oldAvatars = document.querySelectorAll('#feed-cover-avatar');
+                                if(oldAvatars.length > 1) {
+                                    const oldContainer = oldAvatars[1].closest('div.absolute.bottom-4');
+                                    if (oldContainer) oldContainer.remove();
+                                }
+                                const coverWrappers = document.querySelectorAll('#feed-cover-image');
+                                if(coverWrappers.length > 0) {
+                                    const parent = coverWrappers[0].parentElement;
+                                    const badges = parent.querySelectorAll('div.absolute.top-4');
+                                    badges.forEach(b => { if(b.innerHTML.includes('المساحات')) b.remove(); });
+                                }
+                            }, 100);
+                        })();
+                    </script>
+
+                    <div class="w-full h-32 md:h-40 rounded-3xl overflow-hidden relative shadow-sm border border-slate-200 dark:border-slate-700 mb-5 group transition-colors"><img id="feed-cover-image" src="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent pointer-events-none"></div>
+                        <div class="absolute top-4 right-4 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-2 text-white z-20 shadow-sm border border-white/10"><i data-lucide="home" class="w-4 h-4"></i><span class="font-bold text-sm">المساحات</span></div>
+                        <div class="absolute bottom-4 right-6 text-white z-10 flex items-center gap-3"><img id="feed-cover-avatar" src="" class="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white/40 object-cover shadow-md hidden sm:block bg-slate-800">
+                            <div>
+                                <h3 id="feed-welcome-name" class="text-xl md:text-2xl font-bold drop-shadow-md">مرحباً بك</h3>
+                                <p class="text-xs md:text-sm text-slate-200 drop-shadow-md mt-1">ماذا تود أن تشارك في مساحتك اليوم؟</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="quote-of-the-day-container" class="hidden w-full bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-3 overflow-hidden mb-6">
+                        <div class="bg-emerald-600 text-white px-3 py-1 rounded-xl text-[10px] md:text-xs font-black whitespace-nowrap z-10 shadow-sm flex items-center gap-1 shrink-0"><i data-lucide="quote" class="w-3 h-3"></i> حكمة اليوم</div>
+                        <div class="flex-1 overflow-hidden">
+                            <p id="quote-text-display" class="whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 animate-marquee-ltr"></p>
+                        </div>
+                    </div>
+                    <div id="create-post-container" class="rounded-3xl p-4 shadow-sm border bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 transition-colors">
+                        <div class="flex gap-3 md:gap-4"><img id="create-post-avatar" src="" class="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 dark:border-white/10 shrink-0 object-cover bg-white dark:bg-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.handleUserAvatarClick(currentUser.uid,userData.photoUrl,event)">
+                            <div class="flex-1 min-w-0"><input id="post-title" class="w-full bg-transparent border-b border-black/5 dark:border-white/5 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 font-bold text-lg md:text-xl mb-2 pb-2 placeholder-slate-400 transition-colors" placeholder="عنوان المنشور (اختياري)"> <textarea id="post-content" oninput='this.style.height="";this.style.height=this.scrollHeight+"px";window.handlePostInput(this,"post-link-preview-container")' class="w-full bg-transparent border-none focus:ring-0 resize-none overflow-hidden outline-none text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 p-1 text-base md:text-lg min-h-[120px]" rows="5" placeholder="بماذا تفكر؟ استخدم # للهاشتاج أو ضع روابط"></textarea>
+                                <div id="post-link-preview-container" class="hidden relative mt-2 mb-3 border border-black/10 dark:border-white/10 rounded-xl overflow-hidden bg-black/5 dark:bg-slate-900/50"></div>
+                                <div id="post-image-preview-container" class="hidden relative mt-2 mb-4 inline-block max-w-full"><img id="post-image-preview" src="" class="max-h-60 rounded-xl border border-black/10 dark:border-white/10 shadow-sm max-w-full object-contain"> <button onclick='removePostImage("post-image-preview-container","post-image-preview","post-image-input")' class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+                                <div class="flex flex-wrap sm:flex-nowrap items-center justify-between mt-3 md:mt-4 border-t border-black/5 dark:border-white/5 pt-3 md:pt-4 gap-4 relative">
+                                    <div class="flex flex-wrap items-center gap-1.5 md:gap-3 flex-1 min-w-0"><input type="file" id="post-image-input" accept="image/*" multiple class="hidden" onchange='handlePostImageSelect(event,"post-image-preview-container","post-image-preview")'> <button onclick='document.getElementById("post-image-input").click()' class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-black/5 dark:bg-white/5 p-1.5 md:p-2 rounded-full transition-colors shrink-0"><i data-lucide="image" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+                                        <div class="w-px h-4 md:h-6 bg-black/10 dark:bg-white/10 mx-1 shrink-0"></div>
+                                        <div class="relative"><button type="button" onclick='document.getElementById("color-picker-dropdown").classList.toggle("hidden")' class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-black/5 dark:bg-white/5 p-1.5 md:p-2 rounded-full shrink-0 transition-colors"><i data-lucide="palette" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+                                            <div id="color-picker-dropdown" class="hidden absolute bottom-full mb-2 right-0 md:left-0 md:right-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-2.5 z-20 w-[140px] md:w-[160px]">
+                                                <div id="color-picker-container" class="flex flex-wrap gap-2 justify-center"></div>
+                                            </div>
+                                        </div>
+                                    </div><button onclick='submitPost(null,"post-content","submit-post-btn","post-image-preview-container","post-image-preview","post-image-input","post-title")' id="submit-post-btn" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-1.5 md:gap-2 transition-colors shrink-0 ml-auto shadow-sm"><i data-lucide="send" class="w-3.5 h-3.5 md:w-4 md:h-4 rtl:-scale-x-100"></i> <span>نشر</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="feed-posts-list" class="space-y-6 mt-8"></div>
+                </div>
+                <div id="tab-content-admin" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-amber-600 dark:text-amber-500 mb-6 flex items-center gap-2"><i data-lucide="shield-alert" class="w-6 h-6"></i> لوحة التحكم الإدارية</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                            <div class="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-2xl"><i data-lucide="users" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i></div>
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي الأعضاء</p>
+                                <h3 id="admin-stat-users" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                            <div class="bg-emerald-100 dark:bg-emerald-900/50 p-3 rounded-2xl"><i data-lucide="file-text" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i></div>
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي المنشورات</p>
+                                <h3 id="admin-stat-posts" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                            <div class="bg-amber-100 dark:bg-amber-900/50 p-3 rounded-2xl"><i data-lucide="message-square" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i></div>
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-bold">إجمالي التعليقات</p>
+                                <h3 id="admin-stat-comments" class="text-2xl font-black text-slate-800 dark:text-white">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 border-r-4 border-amber-500 pr-2">تخصيص المظهر والهوية</h3>
+                        <div class="flex flex-col gap-6">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">غلاف المساحات العامة (Feed Cover)</label>
+                                    <div class="flex gap-2"><input type="file" id="admin-global-cover-input" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/50 dark:file:text-emerald-400 border border-slate-200 dark:border-slate-600 rounded-xl file:cursor-pointer"></div>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6"><button onclick="saveGlobalCover()" id="admin-save-cover-btn" class="flex-1 md:flex-none bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> رفع وحفظ</button> <button onclick="removeGlobalCover()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="إزالة الغلاف العام والعودة للأغلفة الشخصية"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            </div>
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">شعار الموقع (Logo)</label>
+                                    <div class="flex gap-2"><input type="file" id="admin-global-logo-input" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/50 dark:file:text-emerald-400 border border-slate-200 dark:border-slate-600 rounded-xl file:cursor-pointer"></div>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6"><button onclick="saveGlobalLogo()" id="admin-save-logo-btn" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> رفع وحفظ</button> <button onclick="removeGlobalLogo()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="استعادة الشعار الافتراضي"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            </div>
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">صورة البروفايل الافتراضية (للذكور)</label>
+                                    <div class="flex gap-2"><input type="file" id="admin-default-male-input" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/50 dark:file:text-emerald-400 border border-slate-200 dark:border-slate-600 rounded-xl file:cursor-pointer"></div>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6"><button onclick='window.saveDefaultAvatar("male")' id="admin-save-male-btn" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> حفظ</button> <button onclick='window.removeDefaultAvatar("male")' class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="استعادة الصورة الأصلية"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            </div>
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">صورة البروفايل الافتراضية (للإناث)</label>
+                                    <div class="flex gap-2"><input type="file" id="admin-default-female-input" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/50 dark:file:text-emerald-400 border border-slate-200 dark:border-slate-600 rounded-xl file:cursor-pointer"></div>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6"><button onclick='window.saveDefaultAvatar("female")' id="admin-save-female-btn" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> حفظ</button> <button onclick='window.removeDefaultAvatar("female")' class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="استعادة الصورة الأصلية"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            </div>                                                       
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-rose-50 dark:bg-rose-900/20 p-5 rounded-2xl border border-rose-100 dark:border-rose-800/50">
+                                <div>
+                                    <h4 class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-1"><i data-lucide="alert-triangle" class="w-5 h-5"></i> وضع الصيانة (إغلاق الموقع)</h4>
+                                    <p class="text-xs text-rose-600 dark:text-rose-300/70">عند التفعيل، لن يتمكن الأعضاء من الدخول للموقع وستظهر لهم شاشة الصيانة. (أنت فقط كمدير من يمكنك الدخول).</p>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0"><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="admin-maintenance-toggle" class="sr-only peer" onchange="window.toggleMaintenanceMode(this.checked)">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-rose-600"></div>
+                                    </label></div>
+                            </div>
+                            <hr class="border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div class="flex-1 w-full"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">قائمة حِكم المساحة (افصل بين كل حكمة وأخرى بعلامة *)</label> <textarea id="admin-quote-input" rows="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors" placeholder="اكتب الحكمة الأولى * ثم الحكمة الثانية * ثم الثالثة..."></textarea>
+                                    <p class="text-[10px] text-slate-400 mt-1">سيقوم النظام باختيار حكمة واحدة عشوائياً لكل يوم وتبديلها تلقائياً.</p>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6"><button onclick="window.saveGlobalQuote()" id="admin-save-quote-btn" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> حفظ الحكمة</button> <button onclick="window.removeGlobalQuote()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors" title="إزالة الحكمة"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                            </div>
+                            
+                            <hr class="border-slate-100 dark:border-slate-700 mt-6">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center mt-6">
+                                <div class="flex-1 w-full">
+                                    <label class="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2"><i data-lucide="megaphone" class="w-4 h-4 inline-block"></i> الإعلان المنبثق (Smart Pop-up)</label>
+                                    <textarea id="admin-ann-input" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors" placeholder="ضع كود الـ HTML، صورة، فيديو، أو النص هنا... سيظهر للمستخدمين لمرة واحدة لمدة 15 ثانية."></textarea>
+                                </div>
+                                <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0 pt-6">
+                                    <button onclick="window.saveSmartAnnouncement()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> نشر الإعلان</button>
+                                    <button onclick="window.removeSmartAnnouncement()" class="flex-1 md:flex-none bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-4 py-2.5 rounded-xl font-bold transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> إيقاف</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-4 border-r-4 border-emerald-500 pr-2 flex items-center gap-2"><i data-lucide="user-check" class="w-5 h-5"></i> طلبات التسجيل المعلقة (بانتظار الموافقة)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm mb-2">
+                                <thead class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold rounded-tr-xl">المستخدم والبريد</th>
+                                        <th class="px-4 py-3 font-bold">المعرف (MYT)</th>
+                                        <th class="px-4 py-3 font-bold">تاريخ التسجيل</th>
+                                        <th class="px-4 py-3 font-bold rounded-tl-xl text-center">القرار</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-pending-users-table" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mt-6">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 border-r-4 border-amber-500 pr-2">جميع أعضاء المنصة (المفعلين)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold rounded-tr-xl">المستخدم</th>
+                                        <th class="px-4 py-3 font-bold">المعرف (MYT)</th>
+                                        <th class="px-4 py-3 font-bold">تاريخ الانضمام</th>
+                                        <th class="px-4 py-3 font-bold rounded-tl-xl text-center">إجراءات (تصفح خفي)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-table" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-content-messages" class="tab-content hidden h-[85vh] flex-col relative">
+                    <div id="chat-lock-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                        <div class="bg-emerald-50 dark:bg-emerald-900/30 p-5 rounded-full mb-6"><i data-lucide="lock" class="w-12 h-12 text-emerald-600 dark:text-emerald-400"></i></div>
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">الرسائل مقفلة</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 text-center px-4">يرجى إدخال كلمة سر الرسائل لفتح المحادثات.</p>
+                        <div class="flex gap-2 w-full max-w-xs px-4"><input type="password" id="chat-unlock-input" placeholder="كلمة السر..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 text-center tracking-widest font-mono" onkeydown='"Enter"===event.key&&window.unlockChat()'> <button onclick="window.unlockChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 rounded-xl font-bold transition-colors shadow-sm flex items-center justify-center"><i data-lucide="unlock" class="w-5 h-5"></i></button></div>
+                        <p id="chat-unlock-error" class="text-rose-500 text-xs mt-3 hidden font-bold">كلمة السر غير صحيحة!</p><button onclick="window.requestChatPasswordReset()" class="text-[10px] text-slate-400 hover:text-emerald-500 mt-6 underline underline-offset-4 transition-colors">نسيت كلمة السر؟</button>
+                    </div>
+                    <div id="messages-list-view" class="w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center relative">
+                            <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="message-circle" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الرسائل الخاصة</h2>
+                            <div class="flex items-center gap-2"><button id="lock-chat-btn" onclick="window.lockChat()" class="hidden bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="قفل الرسائل الآن"><i data-lucide="lock" class="w-4 h-4"></i></button> <button onclick="window.openChatSettings()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm" title="إعدادات الرسائل"><i data-lucide="settings" class="w-4 h-4"></i></button></div>
+                        </div>
+                        <div id="chat-friends-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50/50 dark:bg-slate-900/50"></div>
+                    </div>
+                    <div id="chat-room-view" class="hidden w-full h-full flex flex-col bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden absolute inset-0 z-10 transition-colors">
+                        <div class="p-3 md:p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm shadow-sm z-10"><button onclick="closeChatRoom()" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-500 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><i data-lucide="arrow-right" class="w-5 h-5"></i></button> <img id="chat-room-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
+                            <div class="flex-1 cursor-pointer" onclick="viewProfile(activeChatFriendId)">
+                                <h3 id="chat-room-name" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"></h3>
+                            </div><button onclick="clearChat()" class="p-2 bg-rose-50 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="مسح المحادثة"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                        <div id="chat-auto-delete-banner" class="hidden bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] md:text-xs text-center py-2 font-bold shadow-sm z-10 relative border-b border-rose-100 dark:border-rose-800/50 flex justify-center items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> الحذف التلقائي مفعل (تتم إزالة الرسائل القديمة كل 12 ساعة)</div>
+                        <div id="chat-messages-area" class="flex-1 overflow-y-auto p-4 space-y-4 chat-doodle-bg flex flex-col relative pb-8 scroll-smooth"></div>
+                        <div class="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-2 relative">
+                            <div id="sticker-picker" class="hidden absolute bottom-[calc(100%+10px)] right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-3 grid grid-cols-4 gap-2 mb-2 w-64 h-48 overflow-y-auto z-20 transition-all duration-200"></div>
+                            <div id="chat-image-preview-container" class="hidden relative inline-block w-fit mb-2"><img id="chat-image-preview" src="" class="rounded-xl border border-black/10 dark:border-white/10 shadow-sm max-w-[150px] max-h-[150px] object-cover"> <button onclick="removeChatImage()" class="absolute -top-2 -right-2 bg-slate-900/60 text-white rounded-full p-1 hover:bg-rose-500 z-10"><i data-lucide="x" class="w-3 h-3"></i></button></div>
+                            <div class="animate-pulse flex items-center justify-center gap-2 mb-1 px-2 py-1 bg-rose-50/30 dark:bg-rose-900/10 rounded-lg"><i data-lucide="shield-alert" class="w-3 h-3 text-rose-500"></i>
+                                <p class="text-[10px] md:text-[11px] text-rose-600 dark:text-rose-400 font-bold leading-tight text-center">تنبيه: رغم أن المحادثات مشفرة، ننصحك بعدم مشاركة أسرار شديدة الخصوصية؛ فالتكنولوجيا ليست خالية من الثغرات، اجعل تبادلك في حدود ما لا تخشى تسريبه.</p>
+                            </div>
+                            <div id="reply-preview-container" class="hidden bg-slate-50 dark:bg-slate-700/50 border-r-4 border-emerald-500 rounded-lg p-2 mb-2 justify-between items-center relative" style="display:none">
+                                <div class="flex flex-col overflow-hidden w-full pl-6"><span class="text-emerald-600 dark:text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="reply" class="w-3 h-3 rtl:-scale-x-100"></i> الرد على رسالة</span> <span id="reply-preview-text" class="text-slate-600 dark:text-slate-300 text-xs truncate mt-0.5"></span></div><button onclick="window.cancelReply()" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-600 rounded-full p-1 shadow-sm transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                            <div class="flex items-center gap-2 relative w-full overflow-hidden"><input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageSelect(event)">
+                                <div id="recording-ui" class="hidden flex-1 items-center gap-2 bg-rose-50 dark:bg-rose-900/30 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800 transition-all w-full">
+                                    <div class="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold text-xs animate-pulse w-14 shrink-0"><i data-lucide="mic" class="w-3.5 h-3.5"></i> <span id="record-time">00:00</span></div>
+                                    <div class="flex-1 bg-rose-200 dark:bg-rose-700 h-2 rounded-full overflow-hidden">
+                                        <div id="record-progress" class="bg-rose-600 dark:bg-rose-500 h-full w-0 transition-all duration-100 ease-linear"></div>
+                                    </div><button onclick="window.cancelRecording()" class="text-rose-500 bg-rose-100 dark:bg-rose-800 p-1.5 rounded-full hover:bg-rose-200 transition-colors shrink-0" title="إلغاء"><i data-lucide="x" class="w-4 h-4"></i></button> <button onclick="window.stopRecordingAndSend()" class="bg-rose-600 text-white p-1.5 rounded-full hover:bg-rose-700 transition-colors shadow-sm shrink-0" title="إرسال"><i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i></button>
+                                </div>
+                                <div id="normal-chat-ui" class="flex items-center gap-1.5 sm:gap-2 w-full"><button onclick='document.getElementById("chat-image-input").click()' class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="إرسال صورة خاصة"><i data-lucide="image" class="w-5 h-5 sm:w-6 sm:h-6"></i></button> <button id="view-once-btn" onclick="window.toggleViewOnce()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-rose-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full" title="صورة للعرض مرة واحدة"><i data-lucide="eye-off" class="w-5 h-5 sm:w-6 sm:h-6"></i></button> <button onclick="toggleStickerPicker()" class="p-2 text-slate-400 dark:text-slate-300 hover:text-emerald-500 transition-colors bg-slate-50 dark:bg-slate-700 rounded-full shrink-0"><i data-lucide="smile-plus" class="w-5 h-5 sm:w-6 sm:h-6"></i></button> <input id="chat-input" placeholder="اكتب رسالة..." class="flex-1 min-w-[50px] bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-none rounded-xl px-3 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:placeholder-slate-400 transition-colors" onkeydown='"Enter"===event.key&&window.sendMessage("text")'> <button id="record-voice-btn" onclick="window.startRecording()" class="p-2.5 md:p-3 bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 rounded-xl hover:bg-rose-200 transition-colors shadow-sm shrink-0"><i data-lucide="mic" class="w-5 h-5"></i></button> <button onclick='window.sendMessage("text")' class="p-2.5 md:p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shrink-0"><i data-lucide="send" class="w-5 h-5 rtl:-scale-x-100"></i></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-content-communities" class="tab-content hidden pb-10"></div>
+                <div id="tab-content-friends" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2"><i data-lucide="users" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> أصدقائي بالمساحة</h2>
+                    <div id="friends-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+                <div id="tab-content-profile" class="tab-content hidden pb-10">
+                    <div id="profile-view-container"></div>
+                    <div id="profile-notifications-settings" class="hidden mt-6 bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mx-1 md:mx-0">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-r-4 border-emerald-500 pr-2">إعدادات الإشعارات</h3>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 transition-colors hover:border-emerald-500/30">
+                                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-emerald-500"></i> جرس الإشعارات المجمع</label>
+                                    <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-1">إظهار أو إخفاء أيقونة الجرس العلوية في الشريط الخاص بالهاتف.</p>
+                                </div><label class="relative inline-flex items-center cursor-pointer shrink-0"><input type="checkbox" id="setting-bell-icon" class="sr-only peer" onchange="window.toggleBellIcon(this.checked)">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500 shadow-sm"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 transition-colors hover:border-emerald-500/30">
+                                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-emerald-500"></i> صوت الإشعارات والرسائل</label>
+                                    <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-1">تشغيل نغمة تنبيه خفيفة فور وصول إشعار جديد.</p>
+                                </div><label class="relative inline-flex items-center cursor-pointer shrink-0"><input type="checkbox" id="setting-bell-sound" class="sr-only peer" onchange="window.toggleBellSound(this.checked)">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500 shadow-sm"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-6">
+                        <h3 id="profile-posts-header" class="text-lg font-bold text-slate-800 dark:text-slate-100 px-2 border-r-4 border-emerald-500 mr-2">المنشورات</h3>
+                        <div id="profile-posts-list" class="space-y-6"></div>
+                    </div>
+                </div>
+                <div id="tab-content-search" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="search" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> بحث واستكشاف</h2>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8 transition-colors">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">ابحث عن أشخاص (بالاسم أو معرف MYT)، منشورات، أو هاشتاجات.</p>
+                        <div class="flex gap-3"><input id="search-input" placeholder="اكتب للبحث... (مثال: #تقنية أو MYT-12345)" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-slate-800 dark:text-slate-100 transition-colors" onkeydown='"Enter"===event.key&&performSearch()'> <button onclick="performSearch()" class="bg-slate-800 dark:bg-slate-700 text-white px-6 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors shadow-sm"><i data-lucide="search" class="w-5 h-5"></i></button></div>
+                    </div>
+                    <div id="search-result-container"></div>
+                </div>
+                <div id="tab-content-requests" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">طلبات الانضمام</h2>
+                    <div id="requests-list" class="space-y-4"></div>
+                </div>
+                <div id="tab-content-favorites" class="tab-content hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2"><i data-lucide="star" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> منشوراتي المفضلة</h2>
+                    <div id="favorites-posts-list" class="space-y-6"></div>
+                </div>
+                <div id="tab-content-notifications" class="tab-content hidden">
+                    <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="bell" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> الإشعارات</h2>
+                        <div class="flex items-center gap-4"><button onclick="markAllNotifsRead()" class="text-sm font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors">تحديد كمقروء</button>
+                            <div class="w-px h-4 bg-slate-200 dark:bg-slate-700"></div><button onclick="clearAllNotifs()" class="text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 transition-colors">مسح الكل</button>
+                        </div>
+                    </div>
+                    <div id="notifications-list" class="space-y-3"></div>
+                </div>
+                <div id="tab-content-singlepost" class="tab-content hidden pb-10">
+                    <div class="flex items-center gap-3 mb-6"><button onclick='window.switchTab(window.lastTabBeforeSinglePost||"notifications")' class="text-slate-500 hover:text-emerald-600 transition-colors bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">عرض المنشور <span id="single-post-source-label" class="text-xs font-medium text-slate-400 dark:text-slate-500"></span></h2>
+                    </div>
+                    <div id="single-post-container"></div>
+                </div>
+                <footer class="mt-12 pt-8 pb-6 border-t border-slate-200 dark:border-slate-700/60 w-full text-center">
+                    <p class="text-[14px] font-bold text-slate-700 dark:text-slate-200 mb-4 drop-shadow-sm">حقوق النشر محفوظة MyTab &copy; 2026</p>
+                    <div class="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-[12px] md:text-[13px] text-slate-500 dark:text-slate-400 font-medium">
+                        <div class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-default"><i data-lucide="code" class="w-4 h-4"></i> <span>تطوير خالد محي الدين</span></div><span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://wa.me/201018282460" target="_blank" class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" dir="ltr"><i data-lucide="phone" class="w-4 h-4"></i> <span>01018282460</span> </a><span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://www.facebook.com/khaledmohyalden" target="_blank" class="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                            </svg> <span>Facebook</span></a>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <div id="floating-chat-bubble" class="hidden fixed bottom-24 left-6 z-[999] cursor-pointer transition-all duration-500 transform translate-y-32 opacity-0 scale-50 hover:scale-110 active:scale-95 drop-shadow-2xl" onclick='window.switchTab("messages")'>
+        <div class="relative bg-emerald-600 rounded-full p-4 border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-emerald-500/50 shadow-lg"><i data-lucide="message-circle" class="w-8 h-8 text-white animate-bounce" style="animation-duration:2s"></i> <span id="floating-bubble-count" class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-slate-800 animate-pulse">0</span></div>
+    </div>
+
+
+    
+    
+<script type="module" src="script.js"></script>
+<script type="module" src="script.js"></script>
+<script src="script.js"></script>
+<script src="script.js"></script>
+<script src="script.js"></script>
+<script src="script.js"></script>
+<div id="mentions-dropdown" class="hidden fixed z-[9999] bg-white dark:bg-slate-800 border border-emerald-100 dark:border-slate-700 shadow-2xl rounded-xl w-56 max-h-60 overflow-y-auto"></div>
+    <script src="script.js"></script>
+<script src="script.js"></script>
+<script>
+    // --- تحديث دالة استقبال المشاركات (Share Target) ---
+    // هذه النسخة تستخرج الرابط فقط وتستدعي المعاينة تلقائياً
+    window.receiveSharedText = function(text) {
+        if (!text || text.trim() === '') return;
+
+        // استخراج الرابط من النص المُشارك (لتجاهل الكلمات الإضافية التي ترسلها التطبيقات)
+        const urlMatch = text.match(/(https?:\/\/[^\s]+)/);
+        if (urlMatch) text = urlMatch[0];
+
+        // لو المستخدم لسه بيسجل دخول، احفظ الرابط في الذاكرة
+        if (typeof currentUser === 'undefined' || !currentUser) {
+            window.pendingSharedTextJS = text;
+            return;
+        }
+
+        // لو مسجل دخول، افتح الرئيسية
+        if (typeof window.switchTab === 'function') {
+            window.switchTab('feed');
+        }
+
+        setTimeout(() => {
+            const postInput = document.getElementById('post-content');
+            if (postInput) {
+                if (postInput.value.trim() !== '') {
+                    postInput.value += '\n\n' + text;
+                } else {
+                    postInput.value = text;
+                }
+                
+                postInput.focus();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+                
+                if (window.showToast) {
+                    window.showToast('تم إدراج الرابط! جاري جلب المعاينة...', 'success');
+                }
+
+                // تحفيز حدث الإدخال لتشغيل دالة handlePostInput التلقائية
+                setTimeout(() => {
+                    postInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (typeof window.handlePostInput === 'function') {
+                        window.handlePostInput(postInput, 'link-preview-container');
+                    }
+                }, 150);
+            }
+        }, 800);
+    };
+</script>
+<script>
+    // --- نظام الاستقبال التلقائي للمشاركات الخارجية (Web Share Target) ---
+    // يقوم هذا السكريبت بقراءة الروابط الممررة من نظام التشغيل وتحويلها تلقائياً لمنشور بداخل موقعك
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedTitle = urlParams.get('title');
+        const sharedText = urlParams.get('text');
+        const sharedUrl = urlParams.get('url');
+
+        let fullShareContent = '';
+        if (sharedTitle) fullShareContent += sharedTitle + ' \n';
+        if (sharedText) fullShareContent += sharedText + ' \n';
+        if (sharedUrl) fullShareContent += sharedUrl;
+
+        if (fullShareContent.trim() !== '') {
+            // ننتظر قليلاً حتى تكتمل تهيئة مصفوفات ودوال الموقع الرئيسية
+            setTimeout(() => {
+                if (typeof window.receiveSharedText === 'function') {
+                    window.receiveSharedText(fullShareContent);
+                    
+                    // تنظيف شريط الرابط فوراً حتى لا يتكرر إدراج المنشور إذا قام المستخدم بعمل ريفريش
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }, 1200);
+        }
+    });
+</script>
+</body>
+
+</html>
