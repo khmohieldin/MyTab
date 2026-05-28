@@ -73,8 +73,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- Numeric ID & Share Functions ---
-window.getPostNumericId = (post) => {
+// --- Post Hashing Helper ---
+function getPostNumericId(post) {
     if (!post) return 0;
     if (post.numericId) return post.numericId;
     let hash = 0;
@@ -84,124 +84,8 @@ window.getPostNumericId = (post) => {
         hash |= 0;
     }
     return Math.abs(hash) % 900000 + 100000;
-};
-
-window.getCommunityNumericId = (comm) => {
-    if (!comm) return 0;
-    if (comm.numericId) return comm.numericId;
-    let hash = 0;
-    const s = comm.id || '';
-    for (let i = 0; i < s.length; i++) {
-        hash = (hash << 5) - hash + s.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash) % 900000 + 100000;
-};
-
-window.sharePostLink = (postId) => {
-    const post = allPosts.find(p => p.id === postId);
-    if (!post) return;
-    const numId = window.getPostNumericId(post);
-    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
-    const link = window.location.origin + basePath + 'posts/' + numId + '.html';
-    const title = post.title || 'منشور في MyTab';
-    const text = post.content ? post.content.substring(0, 100) : 'شاهد هذا المنشور في MyTab';
-
-    if (navigator.share) {
-        navigator.share({
-            title: title,
-            text: text,
-            url: link
-        }).catch((err) => {
-            console.log('Share failed or canceled', err);
-        });
-    } else {
-        navigator.clipboard.writeText(link).then(() => {
-            showToast('تم نسخ رابط المنشور الرقمي بنجاح!', 'success');
-        }).catch(() => {
-            showToast('فشل نسخ الرابط', 'error');
-        });
-    }
-};
-
-window.shareCommunityLink = (commId) => {
-    const comm = allCommunities.find(c => c.id === commId);
-    if (!comm) return;
-    const numId = window.getCommunityNumericId(comm);
-    const link = window.location.origin + window.location.pathname + '?group=' + numId;
-    const title = comm.name || 'مجتمع في MyTab';
-    const text = comm.description || 'انضم إلينا في هذا المجتمع على MyTab';
-
-    if (navigator.share) {
-        navigator.share({
-            title: title,
-            text: text,
-            url: link
-        }).catch((err) => {
-            console.log('Share failed or canceled', err);
-        });
-    } else {
-        navigator.clipboard.writeText(link).then(() => {
-            showToast('تم نسخ رابط المجتمع الرقمي بنجاح!', 'success');
-        }).catch(() => {
-            showToast('فشل نسخ الرابط', 'error');
-        });
-    }
-};
-
-window.showAuthView = () => {
-    document.getElementById('main-layout').classList.add('hidden');
-    document.getElementById('auth-view').classList.remove('hidden');
-    showToast('يرجى تسجيل الدخول أو إنشاء حساب أولاً للتفاعل والمشاركة', 'info');
-};
-
-window.updateMetaTags = (title, description, imageUrl, url) => {
-    document.title = title || 'منصة MyTab';
-
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.setAttribute('name', 'description');
-        document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', description || 'مساحتك الآمنة للتواصل والتفاعل والمشاركة');
-
-    const setMetaProp = (property, content) => {
-        let meta = document.querySelector(`meta[property="${property}"]`);
-        if (!meta) {
-            meta = document.createElement('meta');
-            meta.setAttribute('property', property);
-            document.head.appendChild(meta);
-        }
-        meta.setAttribute('content', content);
-    };
-
-    const setMetaName = (name, content) => {
-        let meta = document.querySelector(`meta[name="${name}"]`);
-        if (!meta) {
-            meta = document.createElement('meta');
-            meta.setAttribute('name', name);
-            document.head.appendChild(meta);
-        }
-        meta.setAttribute('content', content);
-    };
-
-    const defTitle = title || 'منصة MyTab';
-    const defDesc = description || 'مساحتك الآمنة للتواصل والتفاعل والمشاركة';
-    const defImg = imageUrl || 'https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png';
-    const defUrl = url || window.location.href;
-
-    setMetaProp('og:title', defTitle);
-    setMetaProp('og:description', defDesc);
-    setMetaProp('og:image', defImg);
-    setMetaProp('og:url', defUrl);
-    setMetaProp('og:type', 'article');
-
-    setMetaName('twitter:title', defTitle);
-    setMetaName('twitter:description', defDesc);
-    setMetaName('twitter:image', defImg);
-};
-
+}
+window.getPostNumericId = getPostNumericId;
 
 // --- Toast & Modal Systems ---
 window.showToast = (msg, type = 'info', duration = 3500) => {
@@ -323,7 +207,7 @@ window.handleUserAvatarClick = (uid, photoUrl, e) => {
     if (e) e.stopPropagation();
     const hasStatus = window.hasActiveStatus(uid);
 
-    if (hasStatus || (currentUser && uid === currentUser.uid)) {
+    if (hasStatus || uid === currentUser.uid) {
         window.openStatusActionModal(uid, photoUrl, hasStatus);
     } else {
         window.openProfileLightbox(photoUrl);
@@ -333,7 +217,7 @@ window.handleUserAvatarClick = (uid, photoUrl, e) => {
 window.openStatusActionModal = (uid, photoUrl, hasStatus) => {
     const btnViewStatus = document.getElementById('btn-view-status');
     const btnCreateStatus = document.getElementById('btn-create-status');
-    const isMe = currentUser ? uid === currentUser.uid : false;
+    const isMe = uid === currentUser.uid;
 
     if (hasStatus) btnViewStatus.classList.remove('hidden');
     else btnViewStatus.classList.add('hidden');
@@ -1336,26 +1220,10 @@ function setupDataListeners() {
             };
             return getTime(b) - getTime(a);
         });
-
-        // --- فتح منشور مباشر من الرابط الرقمي (مرة واحدة فقط عند التحميل) ---
-        if (!window.hasCheckedUrlPost && allPosts.length > 0) {
-            window.hasCheckedUrlPost = true;
-            const urlParams = new URLSearchParams(window.location.search);
-            const postParam = urlParams.get('post') || urlParams.get('p');
-            if (postParam) {
-                const targetPost = allPosts.find(p => {
-                    const numId = window.getPostNumericId(p);
-                    return String(numId) === String(postParam) || p.id === postParam;
-                });
-                if (targetPost) {
-                    setTimeout(() => {
-                        window.openSinglePost(targetPost.id);
-                    }, 500);
-                }
-            }
-        }
-
         renderAll();
+        if (typeof window.handlePostDeepLink === 'function') {
+            window.handlePostDeepLink();
+        }
     }, (error) => console.error(error));
 
     const u3 = onSnapshot(collection(db, 'artifacts', appIdStr, 'public', 'data', 'friendRequests'), (snap) => {
@@ -1372,25 +1240,6 @@ function setupDataListeners() {
             id: d.id,
             ...d.data()
         }));
-
-        // --- فتح مجتمع مباشر من الرابط الرقمي (مرة واحدة فقط عند التحميل) ---
-        if (!window.hasCheckedUrlComm && allCommunities.length > 0) {
-            window.hasCheckedUrlComm = true;
-            const urlParams = new URLSearchParams(window.location.search);
-            const commParam = urlParams.get('group') || urlParams.get('comm') || urlParams.get('c');
-            if (commParam) {
-                const targetComm = allCommunities.find(c => {
-                    const numId = window.getCommunityNumericId(c);
-                    return String(numId) === String(commParam) || c.id === commParam;
-                });
-                if (targetComm) {
-                    setTimeout(() => {
-                        window.viewCommunity(targetComm.id);
-                    }, 600);
-                }
-            }
-        }
-
         if (activeTabStr === 'communities') window.renderCommunitiesTab();
         if (activeTabStr === 'profile') renderProfileTab();
     }, (error) => console.error(error));
@@ -1589,7 +1438,7 @@ function showView(viewId) {
     if (!isSwitchTabProtected && typeof window.switchTab === 'function') {
         const originalSwitch = window.switchTab;
         window.switchTab = function(tab, preserveState = false) {
-            if (!currentUser && tab !== 'feed' && tab !== 'singlepost') {
+            if (!currentUser && tab !== 'feed') {
                 document.getElementById('main-layout').classList.add('hidden');
                 document.getElementById('auth-view').classList.remove('hidden');
                 return;
@@ -1639,13 +1488,8 @@ window.toggleMobileMenu = () => {
 };
 
 window.switchTab = (tab, preserveState = false, fromHistory = false) => {
-    if (tab !== 'singlepost') {
-        if (typeof window.updateMetaTags === 'function') {
-            window.updateMetaTags();
-        }
-    }
     // توجيه الزوار إلى شاشة التسجيل إذا حاولوا فتح تاب غير مسموح به
-    if (!currentUser && tab !== 'feed' && tab !== 'singlepost') {
+    if (!currentUser && tab !== 'feed') {
         document.getElementById('main-layout').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
         return;
@@ -1667,15 +1511,7 @@ window.switchTab = (tab, preserveState = false, fromHistory = false) => {
     
     // إضافة خطوة التصفح إلى متصفح الموبايل
     if (!fromHistory) {
-        let newUrl = window.location.pathname;
-        if (tab === 'singlepost' && currentSinglePostId) {
-            const targetPost = allPosts.find(p => p.id === currentSinglePostId);
-            if (targetPost) newUrl += '?post=' + window.getPostNumericId(targetPost);
-        } else if (tab === 'communities' && activeCommunityId) {
-            const targetComm = allCommunities.find(c => c.id === activeCommunityId);
-            if (targetComm) newUrl += '?group=' + window.getCommunityNumericId(targetComm);
-        }
-        window.history.pushState({ tab: tab }, '', newUrl + '#' + tab);
+        window.history.pushState({ tab: tab }, '', `#${tab}`);
     }
     ['feed', 'profile', 'search', 'favorites', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
         const tc = document.getElementById(`tab-content-${t}`);
@@ -2872,10 +2708,8 @@ window.submitPost = async (commId = null, contentId = 'post-content', btnId = 's
             imageUrls = [await uploadToImgbb(postImageFile)];
         }
         
-        let numericId;
-        do {
-            numericId = Math.floor(100000 + Math.random() * 900000);
-        } while (allPosts.some(p => p.numericId === numericId || window.getPostNumericId(p) === numericId));
+        const newPostRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'));
+        const numericId = getPostNumericId({ id: newPostRef.id });
 
         const postData = {
             authorId: currentUser.uid,
@@ -2883,16 +2717,15 @@ window.submitPost = async (commId = null, contentId = 'post-content', btnId = 's
             authorPhoto: userData.photoUrl,
             title: titleStr,
             content: content,
+            numericId: numericId,
             imageUrls: imageUrls.length > 0 ? imageUrls : null,
             colorId: postSelectedColor,
             communityId: commId,
             linkPreview: window.currentLinkPreview || null,
             createdAt: new Date().toISOString(),
             reactions: {},
-            comments: [],
-            numericId: numericId
+            comments: []
         };
-        const newPostRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'));
         await setDoc(newPostRef, postData);
         
         // إرسال إشعارات دقيقة لمن تم ذكرهم (المنشن)
@@ -3203,19 +3036,140 @@ window.saveDefaultAvatar = async (gender) => {
         const imgUrl = await uploadToImgbb(file);
         const fieldName = gender === 'male' ? 'defaultMaleAvatar' : 'defaultFemaleAvatar';
         await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
-        ...globalSettings,
-        [fieldName]: imgUrl
-    }, {
-        merge: true
+            ...globalSettings,
+            [fieldName]: imgUrl
+        }, {
+            merge: true
+        });
+        showToast(`تم تحديث الصورة الافتراضية (${gender === 'male' ? 'للذكور' : 'للإناث'}) بنجاح!`, 'success');
+        fileInput.value = '';
+    } catch (e) {
+        showToast('حدث خطأ أثناء الرفع', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> حفظ';
+    lucide.createIcons();
+};
+
+window.removeDefaultAvatar = async (gender) => {
+    showConfirm(`هل أنت متأكد من استعادة الصورة الافتراضية الأصلية (${gender === 'male' ? 'للذكور' : 'للإناث'})؟`, async () => {
+        try {
+            const fieldName = gender === 'male' ? 'defaultMaleAvatar' : 'defaultFemaleAvatar';
+            await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+                ...globalSettings,
+                [fieldName]: ''
+            }, {
+                merge: true
+            });
+            showToast('تمت استعادة الصورة الافتراضية', 'success');
+        } catch (e) {
+            showToast('حدث خطأ', 'error');
+        }
     });
-    showToast('تم تحديث الصورة الافتراضية بنجاح!', 'success');
-    fileInput.value = '';
-} catch (e) {
-    showToast('حدث خطأ أثناء الرفع', 'error');
-}
-btn.disabled = false;
-btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> رفع وحفظ';
-lucide.createIcons();
+};
+
+window.saveDefaultAvatar = async (gender) => {
+    const inputId = gender === 'male' ? 'admin-default-male-input' : 'admin-default-female-input';
+    const btnId = gender === 'male' ? 'admin-save-male-btn' : 'admin-save-female-btn';
+    const fileInput = document.getElementById(inputId);
+    const file = fileInput.files[0];
+    if (!file) return showToast('يرجى اختيار صورة أولاً', 'error');
+
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn.innerHTML = '<i class="loader"></i> جاري...';
+
+    try {
+        const imgUrl = await uploadToImgbb(file);
+        const fieldName = gender === 'male' ? 'defaultMaleAvatar' : 'defaultFemaleAvatar';
+        await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+            ...globalSettings,
+            [fieldName]: imgUrl
+        }, {
+            merge: true
+        });
+        showToast(`تم تحديث الصورة الافتراضية (${gender === 'male' ? 'للذكور' : 'للإناث'}) بنجاح!`, 'success');
+        fileInput.value = '';
+    } catch (e) {
+        showToast('حدث خطأ أثناء الرفع', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="upload-cloud" class="w-4 h-4"></i> حفظ';
+    lucide.createIcons();
+};
+
+window.removeDefaultAvatar = async (gender) => {
+    showConfirm(`هل أنت متأكد من استعادة الصورة الافتراضية الأصلية (${gender === 'male' ? 'للذكور' : 'للإناث'})؟`, async () => {
+        try {
+            const fieldName = gender === 'male' ? 'defaultMaleAvatar' : 'defaultFemaleAvatar';
+            await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+                ...globalSettings,
+                [fieldName]: ''
+            }, {
+                merge: true
+            });
+            showToast('تمت استعادة الصورة الافتراضية', 'success');
+        } catch (e) {
+            showToast('حدث خطأ', 'error');
+        }
+    });
+};
+
+window.saveGlobalQuote = async () => {
+    const val = document.getElementById('admin-quote-input').value.trim();
+    const btn = document.getElementById('admin-save-quote-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="loader"></i> جاري...';
+    try {
+        await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+            ...globalSettings,
+            quoteOfTheDay: val
+        }, {
+            merge: true
+        });
+        showToast('تم حفظ حكمة اليوم بنجاح!', 'success');
+    } catch (e) {
+        showToast('حدث خطأ أثناء الحفظ', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> حفظ الحكمة';
+    lucide.createIcons();
+};
+
+window.removeGlobalQuote = async () => { showConfirm('هل أنت متأكد من مسح حكمة اليوم وإخفائها؟', async () => { try { await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), { ...globalSettings, quoteOfTheDay: '' }, { merge: true }); document.getElementById('admin-quote-input').value = ''; showToast('تم إخفاء حكمة اليوم', 'success'); } catch (e) { showToast('حدث خطأ', 'error'); } }); };
+window.saveSmartAnnouncement = async () => { const val = document.getElementById('admin-ann-input').value.trim(); if (!val) return showToast('يرجى كتابة محتوى الإعلان', 'error'); try { const newAnnId = Date.now().toString(); await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), { ...globalSettings, annCode: val, annId: newAnnId }, { merge: true }); showToast('تم نشر الإعلان للجميع بنجاح', 'success'); } catch (e) { showToast('حدث خطأ أثناء الحفظ', 'error'); } };
+window.removeSmartAnnouncement = async () => { showConfirm('تأكيد إيقاف الإعلان عن الجميع؟', async () => { try { await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), { ...globalSettings, annCode: '', annId: '' }, { merge: true }); document.getElementById('admin-ann-input').value = ''; showToast('تم الإيقاف بنجاح', 'success'); } catch (e) { showToast('حدث خطأ', 'error'); } }); };
+
+// --- دوال نظام الإعلان المنبثق الذكي (Smart Announcement) ---
+window.saveSmartAnnouncement = async () => {
+    const val = document.getElementById('admin-ann-input').value.trim();
+    if (!val) return showToast('يرجى كتابة محتوى الإعلان أولاً', 'error');
+    
+    // تعطيل الزر مؤقتاً وعرض لودر
+    const btns = document.querySelectorAll('button[onclick="window.saveSmartAnnouncement()"]');
+    btns.forEach(b => { b.disabled = true; b.innerHTML = '<i class="loader"></i> جاري النشر...'; });
+    
+    try {
+        // إنشاء ID فريد بالوقت عشان النظام يعرف إن ده إعلان جديد ويظهره للمستخدمين
+        const newAnnId = Date.now().toString();
+        
+        await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'global'), {
+            ...globalSettings,
+            annCode: val,
+            annId: newAnnId
+        }, { merge: true });
+        
+        showToast('تم نشر الإعلان الذكي للجميع بنجاح!', 'success');
+    } catch (e) {
+        showToast('حدث خطأ أثناء نشر الإعلان', 'error');
+    }
+    
+    // إعادة الزر لشكله الطبيعي
+    btns.forEach(b => {
+        b.disabled = false;
+        b.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> نشر الإعلان للجميع';
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 window.removeSmartAnnouncement = async () => {
@@ -3278,7 +3232,7 @@ function getSafeYMD(dateInput) {
 
 function extractEmbeds(text) {
     const ytMatch = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:shorts\/|[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    const tkMatch = text.match(/(?:tiktok\.com\/@\w+\.\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/|tiktok\.com\/embed\/v2\/|tiktok\.com\/share\/video\/)(\d+)/i);
+    const tkMatch = text.match(/(?:tiktok\.com\/@[\w.]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/|tiktok\.com\/embed\/v2\/|tiktok\.com\/share\/video\/)(\d+)/i);
     const fbMatch = text.match(/(https?:\/\/(?:www\.|web\.|m\.)?(?:facebook\.com\/(?:[^\/\n\s]+\/videos\/\d+|watch\/?\?v=\d+|share\/v\/[a-zA-Z0-9_-]+)|fb\.watch\/[a-zA-Z0-9_-]+))/i);
     const igMatch = text.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/i);
     return {
@@ -3299,7 +3253,7 @@ function formatPostContent(text) {
     // ميزة العناوين الذكية: تحويل الكلمات التي تطابق عناوين المنشورات إلى روابط
     const titles = [...new Set(allPosts.filter(p => p.title && p.title.trim() !== '').map(p => p.title))];
     titles.forEach(title => {
-        const escapedTitle = title.replace(/[.*+?^ ${}()|[\]\\]/g, '\\$&');
+        const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(?<!["'>])(${escapedTitle})(?!["'</])`, 'g');
         formatted = formatted.replace(regex, `<span class="text-indigo-600 dark:text-indigo-400 font-black cursor-pointer hover:underline decoration-dotted underline-offset-4" onclick="event.stopPropagation(); window.searchByTitle('$1')">$1</span>`);
     });
@@ -3321,8 +3275,8 @@ function generatePostHTML(post, idPrefix = '') {
 
     // جلب بيانات الكاتب الأصلي في حالة إعادة المشاركة
     const originalAuthor = post.isRepost ? allUsers.find(u => u.uid === post.originalAuthorId) : null;
-    const originalAuthorPhoto = originalAuthor ? originalAuthor.photoUrl : post.originalAuthorPhoto;
-    const originalAuthorName = originalAuthor ? originalAuthor.displayName : post.originalAuthorName;
+    const originalAuthorPhoto = originalAuthor ? originalAuthor.photoUrl : post.originalAuthorPhoto;
+    const originalAuthorName = originalAuthor ? originalAuthor.displayName : post.originalAuthorName;
     
     let relevantCommunity = null;
     let isOriginalPostInCommunity = false;
@@ -3360,13 +3314,65 @@ function generatePostHTML(post, idPrefix = '') {
             </div>`;
     }
 
-    const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
+    const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
 
-    const isMine = currentUser ? post.authorId === currentUser.uid : false;
+    // --- [ بداية كود الزوار: عرض آمن ومقطوع ] ---
+    if (!currentUser || (currentUser && currentUser.isAnonymous)) {
+        let shortText = post.content ? post.content.substring(0, 120) : '';
+        if (post.content && post.content.length > 120) shortText += '...';
+        
+        return `
+        <div class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6">
+            <div class="flex items-center gap-2.5 mb-4">
+                <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800">
+                <div class="flex flex-col">
+                    <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)}</h4>
+                    <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                </div>
+            </div>
+            <div class="relative">
+                ${post.title ? `<h3 class="text-xl md:text-2xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3">${post.title}</h3>` : ''}
+                <div class="${c.text} whitespace-pre-wrap leading-relaxed px-1 text-[14px] md:text-[15px] select-none" dir="auto" style="-webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%); mask-image: linear-gradient(to bottom, black 30%, transparent 100%);">${shortText || 'محتوى حصري للمسجلين...'}</div>
+            </div>
+            <div class="text-center mt-4 pt-2 relative z-10">
+                <button onclick="document.getElementById('main-layout').classList.add('hidden'); document.getElementById('auth-view').classList.remove('hidden');" class="bg-slate-800 dark:bg-slate-700 text-white font-bold py-2.5 px-6 rounded-xl hover:bg-emerald-600 dark:hover:bg-emerald-600 transition-colors shadow-lg text-sm inline-flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4"></i> سجل الدخول لقراءة باقي المنشور
+                </button>
+            </div>
+        </div>`;
+    }
+    // --- [ نهاية كود الزوار ] ---
+    // --- [ توحيد كود عرض المنشور للزوار (المجهولين أو غير المسجلين) ] ---
+    if (!currentUser || (currentUser && currentUser.isAnonymous)) {
+        let shortText = post.content ? post.content.substring(0, 150) : '';
+        if (post.content && post.content.length > 150) shortText += '...';
+        
+        return `
+        <div class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 relative overflow-hidden">
+            <div class="flex items-center gap-2.5 mb-4 relative z-10">
+                <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800">
+                <div class="flex flex-col">
+                    <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)}</h4>
+                    <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                </div>
+            </div>
+            <div class="relative z-10">
+                ${post.title ? `<h3 class="text-xl md:text-2xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3">${post.title}</h3>` : ''}
+                <div class="${c.text} whitespace-pre-wrap leading-relaxed px-1 text-[14px] md:text-[15px] select-none" dir="auto" style="-webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%);">${shortText || 'محتوى حصري...'}</div>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-slate-800 dark:via-slate-800/80 z-10 flex items-end justify-center pb-5">
+                <button onclick="window.handleLogout ? window.handleLogout() : (document.getElementById('main-layout').classList.add('hidden'), document.getElementById('auth-view').classList.remove('hidden'))" class="bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-xl hover:bg-emerald-700 transition-transform hover:scale-105 shadow-[0_4px_15px_rgba(16,185,129,0.3)] text-sm flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4"></i> سجل الدخول للمتابعة والتفاعل
+                </button>
+            </div>
+        </div>`;
+    }
+
+    const isMine = post.authorId === currentUser.uid;
     let canDelete = isMine;
     if (!canDelete && post.communityId) {
         const comm = allCommunities.find(c => c.id === post.communityId);
-        if (comm && comm.creatorId === (currentUser ? currentUser.uid : null)) canDelete = true;
+        if (comm && comm.creatorId === currentUser.uid) canDelete = true;
     }
 
     const textForEmbeds = (post.content || '') + ' ' + (post.linkPreview ? post.linkPreview.originalUrl : '') + ' ' + (post.originalContent || '') + ' ' + (post.originalLinkPreview ? post.originalLinkPreview.originalUrl : '');
@@ -3377,7 +3383,7 @@ function generatePostHTML(post, idPrefix = '') {
         igId
     } = extractEmbeds(textForEmbeds);
     const reactions = post.reactions || {};
-    const myReact = currentUser ? reactions[currentUser.uid] : null;
+    const myReact = reactions[currentUser.uid];
     const tReact = Object.keys(reactions).length;
     const reactNames = getReactorNames(reactions);
 
@@ -3385,7 +3391,7 @@ function generatePostHTML(post, idPrefix = '') {
     const shareCount = reposts.length;
     let shareNames = '';
     if (shareCount > 0) {
-        const names = [...new Set(reposts.map(r => (currentUser && r.authorId === currentUser.uid) ? "أنت" : r.authorName.split(' ')[0]))];
+        const names = [...new Set(reposts.map(r => r.authorId === currentUser.uid ? "أنت" : r.authorName.split(' ')[0]))];
         if (names.length <= 2) shareNames = names.join(' و ');
         else shareNames = `${names[0]} و ${names.length-1} آخرين`;
     }
@@ -3399,7 +3405,7 @@ function generatePostHTML(post, idPrefix = '') {
             const isLastVisible = images.length > 4 && idx === 3;
             const extraCount = images.length - 4;
             mediaHTML += `<div class="relative group cursor-zoom-in ${images.length===1 ? 'flex items-center justify-center w-full max-h-[500px]' : 'aspect-square'} overflow-hidden bg-black/5 dark:bg-white/5" onclick="window.openLightbox('${img}')">
-                <img src="${img}" class="${images.length===1 ? 'w-full h-auto max-h-[500px] object-cover' : 'w-full h-full object-cover'} &nbsp; ${images.length===1 ? 'rounded-xl' : 'rounded-md'} border border-black/5 dark:border-white/5 transition-transform duration-300 group-hover:scale-105">
+                <img src="${img}" class="${images.length===1 ? 'w-full h-auto max-h-[500px] object-cover' : 'w-full h-full object-cover'} ${images.length===1 ? 'rounded-xl' : 'rounded-md'} border border-black/5 dark:border-white/5 transition-transform duration-300 group-hover:scale-105">
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 dark:group-hover:bg-white/10 transition-colors flex items-center justify-center">
                     ${isLastVisible ? `<span class="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-2xl md:text-3xl font-black rounded-md">+${extraCount}</span>` : `<i data-lucide="maximize-2" class="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md"></i>`}
                 </div>
@@ -3445,27 +3451,27 @@ function generatePostHTML(post, idPrefix = '') {
     const replies = comments.filter(c => c.parentId);
 
     const MAX_VISIBLE = 3;
-    const visibleTopComments = topComments.slice(0, MAX_VISIBLE);
-    const hiddenTopComments = topComments.slice(MAX_VISIBLE);
+    const visibleTopComments = topComments.slice(0, MAX_VISIBLE);
+    const hiddenTopComments = topComments.slice(MAX_VISIBLE);
 
-    const generateThreadHTML = (tc) => {
-        const threadReplies = replies.filter(r => r.parentId === tc.id);
-        let threadHTML = generateCommentHTML(tc, post, canDelete, idPrefix, tc.id);
-        if (threadReplies.length > 0) {
-            const repliesHTML = threadReplies.map(r => generateCommentHTML(r, post, canDelete, idPrefix, tc.id)).join('');
-            threadHTML += `<div class="mr-6 md:mr-10 mt-2 space-y-1.5 relative before:absolute before:right-[-12px] before:top-0 before:bottom-0 before:w-px before:bg-slate-200 dark:before:bg-slate-700 pb-2">${repliesHTML}</div>`;
-        }
-        return `<div class="mb-3 bg-transparent py-1 transition-colors">${threadHTML}</div>`;
-    };
+    const generateThreadHTML = (tc) => {
+        const threadReplies = replies.filter(r => r.parentId === tc.id);
+        let threadHTML = generateCommentHTML(tc, post, canDelete, idPrefix, tc.id);
+        if (threadReplies.length > 0) {
+            const repliesHTML = threadReplies.map(r => generateCommentHTML(r, post, canDelete, idPrefix, tc.id)).join('');
+            threadHTML += `<div class="mr-6 md:mr-10 mt-2 space-y-1.5 relative before:absolute before:right-[-12px] before:top-0 before:bottom-0 before:w-px before:bg-slate-200 dark:before:bg-slate-700 pb-2">${repliesHTML}</div>`;
+        }
+        return `<div class="mb-3 bg-transparent py-1 transition-colors">${threadHTML}</div>`;
+    };
 
-    let commentsHTML = visibleTopComments.map(generateThreadHTML).join('');
-    if (hiddenTopComments.length > 0) {
-        const hiddenHTML = hiddenTopComments.map(generateThreadHTML).join('');
-        commentsHTML += `<div id="${idPrefix}hidden-comments-${post.id}" class="hidden">${hiddenHTML}</div><button onclick="document.getElementById('${idPrefix}hidden-comments-${post.id}').classList.remove('hidden'); this.style.display='none';" class="text-[14px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:underline mb-4 mt-1 cursor-pointer transition-colors w-fit text-right block">عرض ${hiddenTopComments.length} تعليقات أخرى...</button>`;
-    }
+    let commentsHTML = visibleTopComments.map(generateThreadHTML).join('');
+    if (hiddenTopComments.length > 0) {
+        const hiddenHTML = hiddenTopComments.map(generateThreadHTML).join('');
+        commentsHTML += `<div id="${idPrefix}hidden-comments-${post.id}" class="hidden">${hiddenHTML}</div><button onclick="document.getElementById('${idPrefix}hidden-comments-${post.id}').classList.remove('hidden'); this.style.display='none';" class="text-[14px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:underline mb-4 mt-1 cursor-pointer transition-colors w-fit text-right block">عرض ${hiddenTopComments.length} تعليقات أخرى...</button>`;
+    }
 
     return `
-            <div id=" &nbsp; ${idPrefix}post-view-${post.id}" class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 scroll-mt-24">
+            <div id="${idPrefix}post-view-${post.id}" class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 scroll-mt-24">
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.handleUserAvatarClick('${post.authorId}', '${authorPhoto}', event)">
                         <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity ${window.getStatusRingClass(post.authorId)}">
@@ -3475,8 +3481,8 @@ function generatePostHTML(post, idPrefix = '') {
                         </div>
                                             </div>
                         <div class="flex items-center gap-1">
-                            <button onclick="window.toggleFavorite('${post.id}')" class="${((userData && userData.favorites) || []).includes(post.id) ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/40' : 'text-slate-400 bg-white/50 dark:bg-slate-800/50'} hover:scale-110 rounded-full p-1.5 transition-all" title="أضف للمفضلة">
-                                <i data-lucide="star" class="w-[15px] h-[15px] ${ ((userData && userData.favorites) || []).includes(post.id) ? 'fill-current' : '' }"></i>
+                            <button onclick="window.toggleFavorite('${post.id}')" class="${(userData.favorites || []).includes(post.id) ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/40' : 'text-slate-400 bg-white/50 dark:bg-slate-800/50'} hover:scale-110 rounded-full p-1.5 transition-all" title="أضف للمفضلة">
+                                <i data-lucide="star" class="w-[15px] h-[15px] ${ (userData.favorites || []).includes(post.id) ? 'fill-current' : '' }"></i>
                             </button>
                             ${canDelete ? `
                                 ${isMine ? `
@@ -3484,7 +3490,7 @@ function generatePostHTML(post, idPrefix = '') {
                                         <i data-lucide="pin" class="w-[15px] h-[15px] ${post.isPinned ? 'fill-current' : ''}"></i>
                                     </button>
                                     <button onclick="window.openEditModal('${post.id}', 'post')" class="text-slate-400 hover:text-emerald-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="تعديل"><i data-lucide="edit-3" class="w-[15px] h-[15px]"></i></button>
-                                 ` : ''}
+                                ` : ''}
                                 <button onclick="window.deletePost('${post.id}')" class="text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-slate-800/50 rounded-full p-1.5 transition-colors" title="حذف"><i data-lucide="trash-2" class="w-[15px] h-[15px]"></i></button>
                             ` : ''}
                         </div>
@@ -3497,13 +3503,13 @@ function generatePostHTML(post, idPrefix = '') {
                         <span class="font-bold text-[13px] md:text-[14px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${originalAuthorName}${window.getUserBadge(post.originalAuthorId)}</span>
                     </div>
                     ${post.originalTitle ? `<h4 onclick="window.copyTitleToClipboard('${post.originalTitle.replace(/'/g, "\\'")}')" class="text-lg md:text-xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-2.5 cursor-copy hover:opacity-80 transition-all">${post.originalTitle}</h4>` : ''}
-                    <div class=" &nbsp; ${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[13px] md:text-[14px]" dir="auto">${formatPostContent(post.originalContent)}</div>
+                    <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[13px] md:text-[14px]" dir="auto">${formatPostContent(post.originalContent)}</div>
                     ${mediaHTML}
                     ${linkPreviewHTML}
                 </div>
                 ` : `
                 ${post.title ? `<h3 onclick="window.copyTitleToClipboard('${post.title.replace(/'/g, "\\'")}')" class="text-xl md:text-2xl font-black mb-3 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3 cursor-copy hover:opacity-80 active:scale-[0.98] transition-all" title="انقر لنسخ العنوان">${post.title}</h3>` : ''}
-                <div class="${c.text} whitespace-pre-wrap mb-3 px-1 ${(!post.title && !mediaHTML && !linkPreviewHTML && post.content && post.content.trim().length <= 130) ? 'text-2xl md:text-3xl font-medium text-center py-6 leading-normal' : 'text-[14px] md:text-[15px] leading-relaxed'}" dir="auto">${formatPostContent(post.content)}</div>
+                <div class="${c.text} whitespace-pre-wrap mb-3 px-1 ${(!post.title && !mediaHTML && !linkPreviewHTML && post.content && post.content.trim().length <= 130) ? 'text-2xl md:text-3xl font-medium text-center py-6 leading-normal' : 'text-[14px] md:text-[15px] leading-relaxed'}" dir="auto">${formatPostContent(post.content)}</div>
                 ${mediaHTML}
                 ${linkPreviewHTML}
                 `}
@@ -3521,7 +3527,7 @@ function generatePostHTML(post, idPrefix = '') {
                     <button onclick="window.togglePicker('${post.id}', '${idPrefix}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors ${myReact && ['like','heart','sad','angry'].includes(myReact) ? getRColor(myReact) : (myReact ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300')}">
                         ${myReact ? (['like','heart','sad','angry'].includes(myReact) ? `<i data-lucide="${getRIconName(myReact)}" class="w-[18px] h-[18px] ${myReact==='heart'?'fill-current text-rose-500':''}"></i>` : `<span class="text-lg leading-none">${myReact}</span>`) : `<i data-lucide="thumbs-up" class="w-[18px] h-[18px]"></i>`} <span>${myReact ? 'تفاعلت' : 'تفاعل'}</span>
                     </button>
-                    <button onclick="if(!currentUser) { window.showAuthView(); } else { document.getElementById('${idPrefix}c-input-${post.id}').focus(); }" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                    <button onclick="document.getElementById('${idPrefix}c-input-${post.id}').focus()" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                         <i data-lucide="message-square" class="w-[18px] h-[18px]"></i> <span>تعليق</span>
                     </button>
                     <button onclick="window.repostPost('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
@@ -3530,7 +3536,7 @@ function generatePostHTML(post, idPrefix = '') {
                     <button onclick="window.openShareModal('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                         <i data-lucide="send" class="w-[18px] h-[18px]"></i> <span>إرسال</span>
                     </button>
-                    <button onclick="window.sharePostLink('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" title="مشاركة رابط الموضوع الرقمي">
+                    <button onclick="window.copyPostLink('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" title="نسخ رابط المنشور">
                         <i data-lucide="link" class="w-[18px] h-[18px]"></i> <span>رابط</span>
                     </button>
                     <button onclick="window.capturePost('${idPrefix}post-view-${post.id}', '${authorName}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors" title="حفظ كصورة">
@@ -3540,15 +3546,14 @@ function generatePostHTML(post, idPrefix = '') {
                 <div class="mt-2 bg-white dark:bg-slate-900 rounded-2xl p-3 md:p-4 border border-black/5 dark:border-white/5 shadow-sm text-slate-800 dark:text-slate-200">
                     <div class="space-y-2 mb-3 pr-1">${commentsHTML}</div>
                     <div class="flex gap-2 items-center">
-                        <textarea id="${idPrefix}c-input-${post.id}" onfocus="if(!currentUser) { this.blur(); window.showAuthView(); }" placeholder="اكتب تعليقاً..." class="flex-1 bg-black/5 dark:bg-slate-800/80 border border-black/10 dark:border-slate-600 rounded-2xl px-4 py-2.5 text-[14px] md:text-[16px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-800 dark:text-slate-100 dark:placeholder-slate-400 transition-colors resize-none overflow-hidden min-h-[44px] max-h-[150px]" rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); window.addComment('${post.id}', '${idPrefix}'); }" oninput="this.style.height='';this.style.height=this.scrollHeight+'px';if(this.value.trim() === '') this.dataset.parentId = '';"></textarea>
-                        <button onclick="window.addComment('${post.id}', '${idPrefix}');" class="bg-emerald-600 hover:bg-emerald-700 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors"><i data-lucide="send" class="w-[14px] h-[14px] rtl:-scale-x-100"></i></button>
+                        <textarea id="${idPrefix}c-input-${post.id}" placeholder="اكتب تعليقاً..." class="flex-1 bg-black/5 dark:bg-slate-800/80 border border-black/10 dark:border-slate-600 rounded-2xl px-4 py-2.5 text-[14px] md:text-[16px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-800 dark:text-slate-100 dark:placeholder-slate-400 transition-colors resize-none overflow-hidden min-h-[44px] max-h-[150px]" rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); window.addComment('${post.id}', '${idPrefix}'); }" oninput="this.style.height='';this.style.height=this.scrollHeight+'px';if(this.value.trim() === '') this.dataset.parentId = '';"></textarea>
+                        <button onclick="window.addComment('${post.id}', '${idPrefix}')" class="bg-emerald-600 hover:bg-emerald-700 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors"><i data-lucide="send" class="w-[14px] h-[14px] rtl:-scale-x-100"></i></button>
                     </div>
                 </div>
             </div>`;
 }
 
 window.replyToComment = (postId, rootCommentId, authorName, idPrefix = '') => {
-    if (!currentUser) { window.showAuthView(); return; }
     const input = document.getElementById(`${idPrefix}c-input-${postId}`);
     if (input) {
         input.dataset.parentId = rootCommentId;
@@ -3562,14 +3567,14 @@ window.replyToComment = (postId, rootCommentId, authorName, idPrefix = '') => {
 
 function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentId = null) {
     const author = allUsers.find(u => u.uid === c.authorId);
-    const isDeletedUser = (currentUser ? c.authorId !== currentUser.uid : true) && !author;
-    const plainName = (currentUser && c.authorId === currentUser.uid) ? 'أنت' : (author ? author.displayName : 'مستخدم محذوف');
+    const isDeletedUser = c.authorId !== currentUser.uid && !author;
+    const plainName = c.authorId === currentUser.uid ? 'أنت' : (author ? author.displayName : 'مستخدم محذوف');
     const aNameHTML = isDeletedUser ? '<span class="text-rose-600 dark:text-rose-500">مستخدم محذوف</span>' : plainName;
     const aPic = author ? author.photoUrl : `https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
     const reacts = c.reactions || {};
-    const myR = currentUser ? reacts[currentUser.uid] : null;
+    const myR = reacts[currentUser.uid];
     const tR = Object.keys(reacts).length;
-    const canDeleteComment = (currentUser && c.authorId === currentUser.uid) || canDeletePost;
+    const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
 
     const isReply = c.parentId != null;
     const avatarSize = isReply ? 'w-8 h-8 md:w-9 md:h-9' : 'w-10 h-10 md:w-11 md:h-11';
@@ -3620,7 +3625,7 @@ function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentI
                             <button onclick="window.replyToComment('${post.id}', '${rootCommentId || c.id}', '${plainName}', '${idPrefix}')" class="text-[12px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors hover:underline">رد</button>
                         </div>
                     </div>
-                    ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="window.deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${(currentUser && c.authorId === currentUser.uid) ? `<button onclick="window.openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
+                    ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="window.deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${c.authorId === currentUser.uid ? `<button onclick="window.openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
                 </div>
             </div>`;
 }
@@ -3628,7 +3633,7 @@ function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentI
 function getReactorNames(r) {
     const uids = Object.keys(r || {});
     if (!uids.length) return '';
-    const names = uids.map(id => (currentUser && id === currentUser.uid) ? "أنت" : (allUsers.find(u => u.uid === id)?.displayName.split(' ')[0] || "مستخدم"));
+    const names = uids.map(id => id === currentUser.uid ? "أنت" : (allUsers.find(u => u.uid === id)?.displayName.split(' ')[0] || "مستخدم"));
     if (names.length <= 2) return names.join(' و ');
     return `${names[0]} و ${names.length-1} آخرين`;
 }
@@ -3665,7 +3670,7 @@ window.togglePicker = (postId, idPrefix = '') => {
 }
 
 window.handleReact = async (postId, type, idPrefix = '') => {
-    if (!currentUser) { window.showAuthView(); return; }
+    if (!currentUser) return;
     const picker = document.getElementById(`${idPrefix}picker-${postId}`);
     if (picker) picker.classList.remove('show');
 
@@ -3701,7 +3706,7 @@ window.handleReact = async (postId, type, idPrefix = '') => {
 }
 
 window.handleCReact = async (postId, commentId, type, idPrefix = '') => {
-    if (!currentUser) { window.showAuthView(); return; }
+    if (!currentUser) return;
     const cpicker = document.getElementById(`${idPrefix}cpicker-${commentId}`);
     if (cpicker) cpicker.classList.remove('show');
 
@@ -3742,7 +3747,6 @@ window.handleCReact = async (postId, commentId, type, idPrefix = '') => {
 }
 
 window.addComment = async (postId, idPrefix = '') => {
-    if (!currentUser) { window.showAuthView(); return; }
     const input = document.getElementById(`${idPrefix}c-input-${postId}`);
     if (!input) return;
     const text = input.value.trim();
@@ -3836,7 +3840,6 @@ window.addComment = async (postId, idPrefix = '') => {
 }
 
 window.deleteComment = async (postId, commentId) => {
-    if (!currentUser) { window.showAuthView(); return; }
     showConfirm('هل تريد حذف هذا التعليق؟', async () => {
         const postRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId);
         const post = allPosts.find(p => p.id === postId);
@@ -3854,7 +3857,6 @@ window.deleteComment = async (postId, commentId) => {
 }
 
 window.deletePost = async (postId) => {
-    if (!currentUser) { window.showAuthView(); return; }
     showConfirm('هل تريد حذف هذا المنشور نهائياً؟', async () => {
         try {
             await deleteDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId));
@@ -3888,7 +3890,6 @@ window.removeEditModalImage = () => {
 }
 
 window.openEditModal = (id, type) => {
-    if (!currentUser) { window.showAuthView(); return; }
     editingItemId = id;
     editingItemType = type;
     let currentText = '';
@@ -4151,7 +4152,6 @@ window.closeReactorsModal = () => {
 let postToShareId = null;
 
 window.openShareModal = (postId) => {
-    if (!currentUser) { window.showAuthView(); return; }
     postToShareId = postId;
     const list = document.getElementById('share-friends-list');
     const friends = userData ? (userData.friends || []) : [];
@@ -4185,6 +4185,67 @@ window.closeShareModal = () => {
         modal.classList.add('hidden');
     }, 300);
 }
+
+window.copyPostLink = (postId) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    const numericId = getPostNumericId(post);
+    const shareUrl = `${window.location.origin}/posts/${numericId}.html`;
+    const shareTitle = post.title || 'منشور على MyTab';
+    const shareText = post.content ? post.content.substring(0, 100) : 'اقرأ هذا الموضوع وتفاعل معه على منصة MyTab';
+
+    if (navigator.share) {
+        navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl
+        }).catch((err) => {
+            console.log('Web Share API error:', err);
+        });
+    } else {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showToast('تم نسخ رابط المنشور بنجاح!', 'success'))
+                .catch(() => showToast('تعذر نسخ الرابط تلقائياً', 'error'));
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = shareUrl;
+            textarea.style.position = 'fixed';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('تم نسخ رابط المنشور بنجاح!', 'success');
+            } catch (err) {
+                showToast('تعذر نسخ الرابط', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+    }
+};
+
+let hasHandledDeepLink = false;
+window.handlePostDeepLink = () => {
+    if (hasHandledDeepLink) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const deepPostId = urlParams.get('post');
+    if (deepPostId && allPosts.length > 0) {
+        const matchedPost = allPosts.find(p => {
+            const numId = getPostNumericId(p);
+            return String(numId) === String(deepPostId) || p.id === deepPostId;
+        });
+        if (matchedPost) {
+            hasHandledDeepLink = true;
+            setTimeout(() => {
+                if (typeof window.openSinglePost === 'function') {
+                    window.openSinglePost(matchedPost.id);
+                    const cleanUrl = window.location.pathname + window.location.hash;
+                    window.history.replaceState({ tab: 'singlepost' }, '', cleanUrl);
+                }
+            }, 800);
+        }
+    }
+};
 
 // --- Chat Settings Logic ---
 window.openChatSettings = () => {
@@ -4294,7 +4355,6 @@ window.saveChatSettings = async () => {
 let postToRepostId = null;
 
 window.repostPost = (postId) => {
-    if (!currentUser) { window.showAuthView(); return; }
     postToRepostId = postId;
     document.getElementById('repost-modal-input').value = '';
 
@@ -4356,11 +4416,6 @@ window.confirmRepost = async () => {
         const imageUrl = op.imageUrl || null;
         const originalLinkPreview = op.isRepost ? op.originalLinkPreview : (op.linkPreview || null);
 
-        let numericId;
-        do {
-            numericId = Math.floor(100000 + Math.random() * 900000);
-        } while (allPosts.some(p => p.numericId === numericId || window.getPostNumericId(p) === numericId));
-
         const newPostRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'posts'));
         await setDoc(newPostRef, {
             authorId: currentUser.uid,
@@ -4380,8 +4435,7 @@ window.confirmRepost = async () => {
             communityId: null,
             createdAt: new Date().toISOString(),
             reactions: {},
-            comments: [],
-            numericId: numericId
+            comments: []
         });
         showToast('تمت المشاركة على صفحتك بنجاح', 'success');
 
@@ -4484,11 +4538,7 @@ function renderFeedTab() {
                     ${archPosts.map(p => generatePostHTML(p)).join('')}
                 `;
     } else {
-        if (!currentUser) {
-            createBox.classList.add('hidden');
-        } else {
-            createBox.classList.remove('hidden');
-        }
+        createBox.classList.remove('hidden');
         const nowMs = Date.now();
         const todayPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) <= (12 * 60 * 60 * 1000));
         const olderPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) > (12 * 60 * 60 * 1000));
@@ -4551,7 +4601,6 @@ function renderFeedTab() {
 }
 
 window.togglePinPost = async (postId) => {
-    if (!currentUser) { window.showAuthView(); return; }
     const post = allPosts.find(p => p.id === postId);
     if (!post || post.authorId !== currentUser.uid) return;
     
@@ -6098,9 +6147,6 @@ window.renderCommunitiesTab = () => {
                                     <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="users" class="w-4 h-4"></i> ${comm.members.length}</span>
                                     <span class="bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-100 shadow-sm border border-black/5 dark:border-white/10"><i data-lucide="${comm.isPrivate?'lock':'globe'}" class="w-4 h-4"></i> ${comm.isPrivate?'خاص':'عام'}</span>
                                     ${isAdmin ? `<button onclick="window.showAddMemberModal('${comm.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"><i data-lucide="user-plus" class="w-4 h-4"></i> إضافة أصدقاء</button>` : ''}
-                                    <button onclick="window.shareCommunityLink('${comm.id}')" class="bg-white/80 hover:bg-white dark:bg-slate-900/80 dark:hover:bg-slate-950 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-blue-600 dark:text-blue-400 shadow-sm border border-black/5 dark:border-white/10 transition-colors" title="مشاركة رابط المجتمع الرقمي">
-                                        <i data-lucide="share-2" class="w-4 h-4"></i> مشاركة الرابط
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -6471,11 +6517,6 @@ window.submitCreateComm = async () => {
         if (window.tmpCommImgFile) iconUrl = await uploadToImgbb(window.tmpCommImgFile);
         if (window.tmpCommCoverFile) coverUrl = await uploadToImgbb(window.tmpCommCoverFile);
 
-        let numericId;
-        do {
-            numericId = Math.floor(100000 + Math.random() * 900000);
-        } while (allCommunities.some(c => c.numericId === numericId || window.getCommunityNumericId(c) === numericId));
-
         await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'communities')), {
             name,
             description: desc,
@@ -6487,8 +6528,7 @@ window.submitCreateComm = async () => {
             creatorId: currentUser.uid,
             members: [currentUser.uid],
             joinRequests: [],
-            createdAt: new Date().toISOString(),
-            numericId: numericId
+            createdAt: new Date().toISOString()
         });
 
         window.closeCreateCommModal();
@@ -6681,17 +6721,6 @@ window.renderSinglePostTab = () => {
 
     if (post) {
         container.innerHTML = generatePostHTML(post, 'notif-');
-        
-        // تحديث الميتا تاغز للمنشور
-        const title = post.title || (post.content ? post.content.substring(0, 60) + (post.content.length > 60 ? '...' : '') : 'منشور على MyTab');
-        const desc = post.content ? post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') : 'اقرأ هذا الموضوع وتفاعل معه على منصة MyTab';
-        const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
-        const imgUrl = images.length > 0 ? images[0] : (post.authorPhoto || '');
-        const postUrl = window.location.origin + window.location.pathname + '?post=' + post.id;
-        if (typeof window.updateMetaTags === 'function') {
-            window.updateMetaTags(title, desc, imgUrl, postUrl);
-        }
-
         if (sourceLabel) {
             if (post.communityId) {
                 const comm = allCommunities.find(c => c.id === post.communityId);
@@ -6708,7 +6737,7 @@ window.renderSinglePostTab = () => {
 };
 
 window.toggleFavorite = async (postId) => {
-    if (!currentUser) { window.showAuthView(); return; }
+    if (!currentUser) return;
     const isFav = (userData.favorites || []).includes(postId);
     try {
         await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'users', currentUser.uid), {
@@ -7227,15 +7256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.switchTab = function () {
                 const tabId = arguments[0];
                 if (historyStack.length === 0 || historyStack[historyStack.length - 1].id !== tabId) {
-                    let newUrl = window.location.pathname;
-                    if (tabId === 'singlepost' && currentSinglePostId) {
-                        const targetPost = allPosts.find(p => p.id === currentSinglePostId);
-                        if (targetPost) newUrl += '?post=' + window.getPostNumericId(targetPost);
-                    } else if (tabId === 'communities' && activeCommunityId) {
-                        const targetComm = allCommunities.find(c => c.id === activeCommunityId);
-                        if (targetComm) newUrl += '?group=' + window.getCommunityNumericId(targetComm);
-                    }
-                    window.history.pushState({ action: 'tab', id: tabId }, '', newUrl + '#' + tabId);
+                    // إضافة # ضرورية للأندرويد عشان يفهم التغيير
+                    window.history.pushState({ action: 'tab', id: tabId }, '', '#' + tabId);
                     historyStack.push({ type: 'tab', id: tabId });
                 }
                 updateBackBtnState();
@@ -7279,7 +7301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // تسجيل الصفحة الرئيسية كأول خطوة لمنع الخروج الفوري
-    window.history.replaceState({ action: 'base' }, '', window.location.pathname + window.location.search);
+    window.history.replaceState({ action: 'base' }, '', window.location.pathname);
     connectOldHooks();
 
     // --- معالجة أمر الرجوع بنفس طريقتك الأصلية الذكية --- //
@@ -7721,7 +7743,6 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
 
         window.togglePinPost = async (postId) => {
-            if (!currentUser) { window.showAuthView(); return; }
             const post = allPosts.find(p => p.id === postId);
             if (!post || post.authorId !== currentUser.uid) return;
             

@@ -109,7 +109,9 @@ async function run() {
             const images = post.imageUrls || (post.imageUrl ? [post.imageUrl] : []);
             const imageUrl = escapeHtml(images.length > 0 ? images[0] : (post.authorPhoto || 'https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png'));
             
-            const postUrl = `https://khmohieldin.github.io/MyTab/posts/${numericId}.html`;
+            const siteUrl = process.env.URL || 'https://mytab.netlify.app';
+            const postUrl = `${siteUrl}/posts/${numericId}.html`;
+
 
             const htmlContent = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
