@@ -4189,8 +4189,13 @@ window.closeShareModal = () => {
 window.copyPostLink = (postId) => {
     const post = allPosts.find(p => p.id === postId);
     if (!post) return;
-    const numericId = getPostNumericId(post);
-    const shareUrl = `${window.location.origin}/posts/${numericId}.html`;
+    let basePath = window.location.pathname;
+    if (basePath.endsWith('.html')) {
+        basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);
+    } else if (!basePath.endsWith('/')) {
+        basePath += '/';
+    }
+    const shareUrl = `${window.location.origin}${basePath}posts/${numericId}.html`;
     const shareTitle = post.title || 'منشور على MyTab';
     const shareText = post.content ? post.content.substring(0, 100) : 'اقرأ هذا الموضوع وتفاعل معه على منصة MyTab';
 
