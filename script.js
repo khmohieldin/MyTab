@@ -2728,6 +2728,24 @@ window.submitPost = async (commId = null, contentId = 'post-content', btnId = 's
         };
         await setDoc(newPostRef, postData);
         
+        // إرسال المنشور تلقائياً إلى Make.com للنشر في فيسبوك
+        const webhookUrl = 'https://hook.us2.make.com/pqjjnu54j6etb1r0fvilngtbn5zes3r2';
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: newPostRef.id,
+                numericId: numericId,
+                title: titleStr,
+                content: content,
+                imageUrl: imageUrls.length > 0 ? imageUrls[0] : null,
+                authorName: userData.displayName
+            })
+        }).catch(e => console.error('Webhook post failed:', e));
+
+        
         // إرسال إشعارات دقيقة لمن تم ذكرهم (المنشن)
         const mentionMatch = content.match(/@([a-zA-Z\u0600-\u06FF_]+)/g);
         if (mentionMatch && userData && userData.friends) {
