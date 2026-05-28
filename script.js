@@ -4189,6 +4189,7 @@ window.closeShareModal = () => {
 window.copyPostLink = (postId) => {
     const post = allPosts.find(p => p.id === postId);
     if (!post) return;
+    const numericId = getPostNumericId(post);
     let basePath = window.location.pathname;
     if (basePath.endsWith('.html')) {
         basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);

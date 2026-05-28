@@ -6,14 +6,13 @@
     <link rel="manifest" href="manifest.json">
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(() => {
+        navigator.serviceWorker.register('sw.js').then(() => {
           console.log('Service Worker Registered');
         }).catch(err => console.error('Service Worker Failed', err));
       }
     </script>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="script.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
@@ -917,14 +916,7 @@
     
     
 <script type="module" src="script.js"></script>
-<script type="module" src="script.js"></script>
-<script src="script.js"></script>
-<script src="script.js"></script>
-<script src="script.js"></script>
-<script src="script.js"></script>
 <div id="mentions-dropdown" class="hidden fixed z-[9999] bg-white dark:bg-slate-800 border border-emerald-100 dark:border-slate-700 shadow-2xl rounded-xl w-56 max-h-60 overflow-y-auto"></div>
-    <script src="script.js"></script>
-<script src="script.js"></script>
 <script>
     // --- تحديث دالة استقبال المشاركات (Share Target) ---
     // هذه النسخة تستخرج الرابط فقط وتستدعي المعاينة تلقائياً
