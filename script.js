@@ -2836,7 +2836,7 @@ window.handlePostInput = (element, containerId) => {
         // فك الروابط المختصرة لفيسبوك عبر السيرفر للحصول على الرابط الأصلي القابل للتضمين
         if (isFB) {
             const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'https://mytabgo.netlify.app'
+                ? 'https://mytabgo.vercel.app'
                 : '';
             fetch(`${apiHost}/.netlify/functions/resolve-fb?url=${encodeURIComponent(url)}`)
                 .then(res => res.json())
@@ -3515,7 +3515,7 @@ window.resolveTikTokShortUrl = async (containerId, shortUrl) => {
     if (!videoId) {
         try {
             const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'https://mytabgo.netlify.app'
+                ? 'https://mytabgo.vercel.app'
                 : '';
             const resolveUrl = `${apiHost}/.netlify/functions/resolve-tiktok?url=${encodeURIComponent(shortUrl)}`;
             const res = await fetch(resolveUrl);
@@ -3571,7 +3571,7 @@ window.resolveAndEmbedFacebook = (id, originalUrl) => {
     if (!isShortUrl) return;
 
     const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'https://mytabgo.netlify.app'
+        ? 'https://mytabgo.vercel.app'
         : '';
 
     fetch(`${apiHost}/.netlify/functions/resolve-fb?url=${encodeURIComponent(originalUrl)}`)
@@ -8425,8 +8425,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // سكريبت ذكي لإضافة متجر التطبيقات بجوار اسم المطور في جميع الفوترات
         document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll('footer .flex-wrap').forEach(container => {
-                if (!container.innerHTML.includes('anubis-apps')) {
-                    const storeLink = `<span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://anubis-apps.netlify.app/" target="_blank" class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> <span>متجر تطبيقاتنا</span></a>`;
+                if (!container.innerHTML.includes('anubis-delta')) {
+                    const storeLink = `<span class="hidden sm:block text-slate-300 dark:text-slate-600">|</span> <a href="https://anubis-delta.vercel.app/" target="_blank" class="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> <span>متجر تطبيقاتنا</span></a>`;
                     
                     // البحث عن عنصر اسم المطور
                     const devNode = Array.from(container.children).find(el => el.innerHTML.includes('تطوير خالد'));
