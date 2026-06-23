@@ -1,7 +1,59 @@
+/* ============================================
+   🚀 تحسين حساسية اللمس والتفاعل - شامل
+   ============================================ */
+
+/* إزالة تأخير اللمس 300ms من كل العناصر */
+* {
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation;
+}
+
+/* أزرار وروابط: استجابة فورية */
+button, a, [onclick], [role="button"],
+input[type="button"], input[type="submit"],
+label[for], .cursor-pointer {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Active state واضح لكل العناصر القابلة للنقر - فقط للموبايل والأجهزة اللوحية لتجنب مشاكل النقر بالماوس على الكمبيوتر */
+@media (max-width: 1024px) {
+    button:active, a:active,
+    [onclick]:active, [role="button"]:active,
+    .cursor-pointer:active {
+        transform: scale(0.97);
+        transition: transform 0.08s ease;
+    }
+
+    /* استثناء الأزرار الكبيرة من التقليص */
+    button.w-full:active,
+    button.px-6:active,
+    button.px-8:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Scroll سلس مع momentum على iOS */
+.overflow-y-auto, .overflow-auto, main, #chat-messages-area {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* تسريع rendering على الموبايل */
+.tab-content, #main-layout, nav {
+    will-change: auto;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
 .screenshot-protection {
     pointer-events: none !important;
     user-select: none !important
 }
+
 
 .screenshot-protection::after {
     content: "🛡️\A تم إخفاء المحتوى لحماية الخصوصية \A (يُمنع أخذ لقطة شاشة)";
@@ -53,9 +105,7 @@
     -webkit-touch-callout: none
 }
 
-* {
-    font-weight: 700 !important
-}
+/* font-weight مُحدَّد لكل عنصر بشكل صريح - لا override جماعي */
 
 body {
     font-family: Cairo, sans-serif;
@@ -65,21 +115,26 @@ body {
     font-weight: 700 !important
 }
 
-#chat-messages-area,
-#main-layout,
-body {
+/* خلفية WhatsApp Doodle على الشات فقط - ليس الصفحة كاملها */
+#chat-messages-area {
     background-color: #efeae2 !important;
     background-image: url(https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png) !important;
     background-repeat: repeat !important;
-    background-size: 350px !important;
-    background-attachment: fixed !important
+    background-size: 350px !important
 }
 
-html.dark #chat-messages-area,
+html.dark #chat-messages-area {
+    background-color: #0f172a !important;
+    background-image: none !important
+}
+
+#main-layout, body {
+    background-color: #f8fafc;
+}
+
 html.dark #main-layout,
 html.dark body {
     background-color: #0f172a !important;
-    background-image: none !important
 }
 
 main {
@@ -90,20 +145,19 @@ html.dark main {
     background-color: rgba(15, 23, 42, .3) !important
 }
 
-html.dark .dark\:text-slate-100,
-html.dark .dark\:text-slate-200,
-html.dark .dark\:text-slate-300,
-html.dark .dark\:text-slate-400,
-html.dark .dark\:text-slate-500,
-html.dark .dark\:text-slate-600,
-html.dark .text-slate-100,
-html.dark .text-slate-200,
-html.dark .text-slate-300,
-html.dark .text-slate-400,
-html.dark .text-slate-500,
-html.dark .text-slate-600 {
-    color: #fff !important
-}
+/* Dark Mode: تدرج ألوان صحيح واضح على الخلفية الداكنة */
+html.dark .dark\:text-slate-100 { color: #f8fafc !important }
+html.dark .dark\:text-slate-200 { color: #f1f5f9 !important }
+html.dark .dark\:text-slate-300 { color: #e2e8f0 !important }
+html.dark .dark\:text-slate-400 { color: #cbd5e1 !important }
+html.dark .dark\:text-slate-500 { color: #94a3b8 !important }
+html.dark .dark\:text-slate-600 { color: #64748b !important }
+html.dark .text-slate-100 { color: #f8fafc !important }
+html.dark .text-slate-200 { color: #f1f5f9 !important }
+html.dark .text-slate-300 { color: #e2e8f0 !important }
+html.dark .text-slate-400 { color: #cbd5e1 !important }
+html.dark .text-slate-500 { color: #94a3b8 !important }
+html.dark .text-slate-600 { color: #94a3b8 !important }
 
 html.dark ::placeholder {
     color: #f1f5f9 !important;
@@ -170,11 +224,18 @@ html.dark ::placeholder {
 }
 
 .reaction-picker {
-    display: none
+    display: none;
+    transform-origin: bottom center;
 }
 
 .reaction-picker.show {
-    display: flex
+    display: flex;
+    animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.75) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .chat-doodle-bg {
@@ -529,18 +590,54 @@ html.dark .post-bg-25 {
 }
 
 @keyframes marquee-ltr {
-    0% {
-        transform: translateX(-100%)
-    }
-
-    100% {
-        transform: translateX(100%)
-    }
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 .animate-marquee-ltr {
     display: inline-block;
-    animation: marquee-ltr 15s linear infinite
+    animation: marquee-ltr 18s linear infinite;
+    will-change: transform;
+}
+
+/* انتقال التبويبات - fade + slide */
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content:not(.hidden) {
+    animation: tabFadeIn 0.25s ease forwards;
+}
+
+/* ظهور المنشورات الجديدة */
+@keyframes slideInPost {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.post-new {
+    animation: slideInPost 0.3s ease forwards;
+}
+
+/* Toast slide من اليمين للـ RTL */
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(60px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-item {
+    animation: toastSlideIn 0.3s ease forwards;
+}
+
+/* إخفاء Toast */
+@keyframes toastSlideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(60px); }
+}
+
+.toast-item.removing {
+    animation: toastSlideOut 0.25s ease forwards;
 }
 
 html {
@@ -554,4 +651,85 @@ html.font-md {
 
 html.font-lg {
     font-size: 19px
+}
+
+/* ===== Top Nav Bar - دايماً ظاهر على كل الأجهزة ===== */
+#sidebar-nav {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    transform: none !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    right: auto !important;
+    top: auto !important;
+    inset: auto !important;
+}
+
+/* ثبات الـ nav - لا يتحرك أبداً */
+#sidebar-nav > div.flex-1 {
+    overflow: visible !important;
+}
+
+/* حساسية اللمس لأزرار الـ nav - كل الأزرار */
+#sidebar-nav .nav-btn {
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* أزرار الـ top bar فقط - ثبات العرض */
+#sidebar-nav > div.flex-1 .nav-btn {
+    flex-shrink: 0 !important;
+    width: auto !important;
+}
+
+/* Active nav button - خط أخضر تحت الأيقونة النشطة */
+#sidebar-nav .nav-btn.bg-emerald-100,
+#sidebar-nav .nav-btn.bg-emerald-50 {
+    border-bottom-width: 3px !important;
+    border-bottom-color: #059669 !important;
+    background: transparent !important;
+    color: #059669 !important;
+}
+
+/* Dark Mode: أيقونات الـ nav واضحة */
+html.dark #sidebar-nav .nav-btn {
+    color: #cbd5e1 !important;
+}
+html.dark #sidebar-nav .nav-btn:hover {
+    color: #34d399 !important;
+}
+html.dark #sidebar-nav .nav-btn.border-emerald-500 {
+    color: #34d399 !important;
+}
+
+/* Dark Mode: الأيقونات العامة في كل الصفحة */
+html.dark [data-lucide] {
+    color: inherit;
+}
+
+/* Dark Mode: النصوص الثانوية واضحة */
+html.dark .text-slate-500,
+html.dark .dark\:text-slate-400,
+html.dark .text-slate-400 {
+    opacity: 1 !important;
+}
+
+
+/* ===== Notifications Dropdown - موبايل ===== */
+@media (max-width: 640px) {
+    #notif-dropdown {
+        position: fixed !important;
+        top: 57px !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        border-radius: 16px !important;
+    }
 }

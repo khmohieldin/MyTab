@@ -29,6 +29,7 @@ import {
     sendPasswordResetEmail,
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithCredential,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
@@ -40,6 +41,7 @@ import {
     onSnapshot,
     deleteDoc,
     updateDoc,
+    writeBatch,
     arrayUnion,
     arrayRemove
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -93,36 +95,32 @@ window.showToast = (msg, type = 'info', duration = 3500) => {
     const toast = document.createElement('div');
     const bg = type === 'error' ? 'bg-rose-500' : (type === 'success' ? 'bg-emerald-500' : (type === 'urgent' ? 'bg-red-600 animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.8)] border border-red-400' : 'bg-slate-800 dark:bg-slate-700'));
 
-    let closeBtn = duration === 0 ? `<button onclick="this.parentElement.classList.add('translate-y-10', 'opacity-0'); setTimeout(()=>this.parentElement.remove(), 300)" class="text-white/70 hover:text-white mr-auto shrink-0 pr-3 border-r border-white/20 mr-3"><i data-lucide="x" class="w-4 h-4"></i></button>` : '';
+    let closeBtn = duration === 0 ? `<button onclick="this.closest('.toast-item').classList.add('removing'); setTimeout(()=>this.closest('.toast-item').remove(), 250)" class="text-white/70 hover:text-white mr-auto shrink-0 pr-3 border-r border-white/20 mr-3"><i data-lucide="x" class="w-4 h-4"></i></button>` : '';
 
-    toast.className = `${bg} text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-bold flex items-center justify-between gap-3 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto max-w-[90vw] w-max`;
+    toast.className = `toast-item ${bg} text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-bold flex items-center justify-between gap-3 pointer-events-auto max-w-[90vw] w-max`;
     toast.innerHTML = `<div class="flex items-center gap-3 leading-snug"><i data-lucide="${type==='error'?'alert-circle':(type==='success'?'check-circle':(type==='urgent'?'alert-triangle':'info'))}" class="w-5 h-5 shrink-0"></i> <span>${msg}</span></div> ${closeBtn}`;
     container.appendChild(toast);
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    // الإخفاء الديناميكي السريع والآمن لشاشة التحميل
-    if (!window.isAppLoaded && typeof allUsers !== 'undefined' && typeof allPosts !== 'undefined') {
-        window.isAppLoaded = true;
-        const splashScreen = document.getElementById('loading-view');
-        
-        if (splashScreen) {
-            splashScreen.style.transition = 'opacity 0.2s ease-out';
-            splashScreen.style.opacity = '0';
-            splashScreen.style.pointerEvents = 'none';
-            setTimeout(() => {
-                splashScreen.classList.add('hidden'); // إخفاء آمن لكي لا نعطل السكريبتات الأخرى
-            }, 200);
-        }
-    }
-
-    setTimeout(() => {
-        toast.classList.remove('translate-y-10', 'opacity-0');
-    }, 10);
+    // الإخفاء الديناميكي السريع والآمن لشاشة التحميل
+    if (!window.isAppLoaded && typeof allUsers !== 'undefined' && typeof allPosts !== 'undefined') {
+        window.isAppLoaded = true;
+        const splashScreen = document.getElementById('loading-view');
+        
+        if (splashScreen) {
+            splashScreen.style.transition = 'opacity 0.2s ease-out';
+            splashScreen.style.opacity = '0';
+            splashScreen.style.pointerEvents = 'none';
+            setTimeout(() => {
+                splashScreen.classList.add('hidden'); // إخفاء آمن لكي لا نعطل السكريبتات الأخرى
+            }, 200);
+        }
+    }
 
     if (duration > 0) {
         setTimeout(() => {
-            toast.classList.add('translate-y-10', 'opacity-0');
-            setTimeout(() => toast.remove(), 300);
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
         }, duration);
     }
 }
@@ -207,7 +205,7 @@ window.handleUserAvatarClick = (uid, photoUrl, e) => {
     if (e) e.stopPropagation();
     const hasStatus = window.hasActiveStatus(uid);
 
-    if (hasStatus || uid === currentUser.uid) {
+    if (hasStatus || (currentUser && uid === currentUser.uid)) {
         window.openStatusActionModal(uid, photoUrl, hasStatus);
     } else {
         window.openProfileLightbox(photoUrl);
@@ -217,7 +215,7 @@ window.handleUserAvatarClick = (uid, photoUrl, e) => {
 window.openStatusActionModal = (uid, photoUrl, hasStatus) => {
     const btnViewStatus = document.getElementById('btn-view-status');
     const btnCreateStatus = document.getElementById('btn-create-status');
-    const isMe = uid === currentUser.uid;
+    const isMe = currentUser && uid === currentUser.uid;
 
     if (hasStatus) btnViewStatus.classList.remove('hidden');
     else btnViewStatus.classList.add('hidden');
@@ -497,7 +495,7 @@ window.renderCurrentStatus = () => {
     const status = statuses[window.currentStatusIndex];
 
     // تسجيل المشاهدة بصمت في قاعدة البيانات إذا لم تكن الحالة للمستخدم الحالي
-    if (uid !== currentUser.uid) {
+    if (currentUser && uid !== currentUser.uid) {
         if (!status.views) status.views = [];
         if (!status.views.includes(currentUser.uid)) {
             status.views.push(currentUser.uid);
@@ -530,7 +528,7 @@ window.renderCurrentStatus = () => {
         const ytMatch = status.content.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
         const ytId = ytMatch ? ytMatch[1] : null;
         if (ytId) {
-            html = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+            html = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`;
         } else {
             html = `<p class="text-white relative z-10 pointer-events-none">رابط يوتيوب غير صالح</p>`;
         }
@@ -539,7 +537,7 @@ window.renderCurrentStatus = () => {
         const tkMatch = status.content.match(/(?:tiktok\.com\/@[\w.]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/|tiktok\.com\/embed\/v2\/|tiktok\.com\/share\/video\/)(\d+)/i);
         const tkId = tkMatch ? tkMatch[1] : null;
         if (tkId) {
-            html = `<iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="fullscreen" allowfullscreen></iframe>`;
+            html = `<iframe src="https://www.tiktok.com/player/v1/${tkId}?music_info=0&description=0&controls=0" class="absolute inset-0 w-full h-full z-10 pointer-events-none" frameborder="0" allow="fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`;
         } else {
             html = `<p class="text-white relative z-10 pointer-events-none">رابط تيك توك غير صالح</p>`;
         }
@@ -555,7 +553,7 @@ window.renderCurrentStatus = () => {
                         <span class="text-[10px] text-white/80">${new Date(status.createdAt).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
                     </div>
                 </div>
-                ${uid === currentUser.uid ? `<button onclick="event.stopPropagation(); window.deleteCurrentStatus('${targetId}')" class="text-white hover:text-rose-500 bg-black/40 hover:bg-black/70 p-2 rounded-full transition-colors pointer-events-auto" title="حذف هذه الحالة"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                ${(currentUser && uid === currentUser.uid) ? `<button onclick="event.stopPropagation(); window.deleteCurrentStatus('${targetId}')" class="text-white hover:text-rose-500 bg-black/40 hover:bg-black/70 p-2 rounded-full transition-colors pointer-events-auto" title="حذف هذه الحالة"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
             </div>`;
 
     // أزرار التنقل المخفية (يجب أن تكون فوق الفيديو وتحت الأزرار)
@@ -566,7 +564,7 @@ window.renderCurrentStatus = () => {
 
     // زر المشاهدات الخاص بصاحب الحالة
     let authorControlsHtml = '';
-    if (uid === currentUser.uid) {
+    if (currentUser && uid === currentUser.uid) {
         const viewsCount = (status.views || []).length;
         authorControlsHtml = `
                 <div class="absolute bottom-6 left-0 right-0 flex justify-center z-[100] pointer-events-none">
@@ -609,7 +607,7 @@ window.showStatusViewers = (statusId) => {
     // إيقاف العداد مؤقتاً
     window.isStatusPaused = true;
 
-    const u = allUsers.find(x => x.uid === currentUser.uid);
+    const u = currentUser ? allUsers.find(x => x.uid === currentUser.uid) : null;
     if (!u) return;
     const status = (u.statuses || []).find(s => s.id === statusId || s.createdAt === statusId);
     if (!status) return;
@@ -754,62 +752,160 @@ window.setArchiveLevel = (level, val) => {
 };
 
 window.generateArchiveViewHtml = (posts, contextTitle) => {
-    if (!activeArchiveYear) {
-        const groups = {};
-        posts.forEach(p => {
-            const y = new Date(p.createdAt).getFullYear().toString();
-            if (!groups[y]) groups[y] = 0;
-            groups[y]++;
-        });
-        if (Object.keys(groups).length === 0) return '';
-        const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
-        let html = `<div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> ${contextTitle} (السنوات)</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
-        Object.keys(groups).sort().reverse().forEach((y, idx) => {
-            html += `<div onclick="window.setArchiveLevel('year', '${y}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1"><div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${colors[idx%colors.length]}"></div><div class="flex justify-between items-center"><div><p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">أرشيف سنة</p><h4 class="text-xl font-black text-slate-800 dark:text-slate-100">${y}</h4></div><div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors"><span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${groups[y]}</span><span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span></div></div><div class="mt-4 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">تصفح السنة <i data-lucide="arrow-left" class="w-3 h-3"></i></div></div>`;
-        });
-        return html + `</div></div>`;
-    } else if (!activeArchiveMonth) {
-        const yPosts = posts.filter(p => new Date(p.createdAt).getFullYear().toString() === activeArchiveYear);
-        const groups = {};
-        yPosts.forEach(p => {
-            const d = new Date(p.createdAt);
-            const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
-            const mName = d.toLocaleString('ar-EG', {
-                month: 'long'
+    if (!posts || posts.length === 0) return '';
+
+    // Group posts by year -> month -> day
+    const tree = {};
+    posts.forEach(p => {
+        const date = new Date(p.createdAt);
+        const y = date.getFullYear().toString();
+        const mNum = (date.getMonth() + 1).toString().padStart(2, '0');
+        const mName = date.toLocaleString('ar-EG', { month: 'long' });
+        const mKey = `${mNum}|${mName}`;
+        const dStr = getSafeYMD(p.createdAt);
+        
+        if (!tree[y]) tree[y] = {};
+        if (!tree[y][mKey]) tree[y][mKey] = {};
+        if (!tree[y][mKey][dStr]) tree[y][mKey][dStr] = 0;
+        tree[y][mKey][dStr]++;
+    });
+
+    const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
+
+    // Build the instruction progress banner
+    let activeStep = 1;
+    if (activeArchiveYear) activeStep = 2;
+    if (activeArchiveMonth) activeStep = 3;
+    if (activeArchiveDate) activeStep = 3; // Step 3 is choosing the day
+
+    const stepClass = (step) => {
+        if (activeStep === step) return 'bg-emerald-500 text-white font-bold border-emerald-500 scale-105 shadow-sm';
+        if (activeStep > step) return 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-medium border-emerald-200 dark:border-emerald-800';
+        return 'bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-600 border-slate-100 dark:border-slate-800';
+    };
+
+    let html = `
+        <div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700/60 pt-8 transition-all">
+            <!-- Instruction Banner -->
+            <div class="mb-8 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-3xl border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 leading-snug">خطوات تصفح الأرشيف الزمني</h4>
+                        <p class="text-[10px] text-slate-500 mt-0.5">اتبع الخطوات المتتالية لتصفح منشورات يوم محدد في الأرشيف:</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 md:gap-3 text-[11px] select-none">
+                    <span class="px-2.5 py-1 rounded-xl border transition-all ${stepClass(1)}">1. اختر السنة</span>
+                    <span class="text-slate-300 dark:text-slate-700 font-black">➔</span>
+                    <span class="px-2.5 py-1 rounded-xl border transition-all ${stepClass(2)}">2. اختر الشهر</span>
+                    <span class="text-slate-300 dark:text-slate-700 font-black">➔</span>
+                    <span class="px-2.5 py-1 rounded-xl border transition-all ${stepClass(3)}">3. اختر اليوم</span>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2">
+                <i data-lucide="archive" class="w-5 h-5 text-emerald-600"></i> ${contextTitle}
+            </h3>
+
+            <div class="space-y-4">
+    `;
+
+    // Render Years Accordion
+    Object.keys(tree).sort().reverse().forEach((y, idx) => {
+        const isYearExpanded = activeArchiveYear === y;
+        const totalYearPosts = Object.values(tree[y]).reduce((acc, months) => {
+            return acc + Object.values(months).reduce((sum, count) => sum + count, 0);
+        }, 0);
+
+        html += `
+            <div class="border border-slate-200 dark:border-slate-700/60 rounded-3xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm transition-all">
+                <!-- Year Header -->
+                <div onclick="window.setArchiveLevel('year', ${isYearExpanded ? 'null' : `'${y}'`})" class="flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors select-none">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br ${colors[idx % colors.length]} text-white flex items-center justify-center shadow-sm">
+                            <i data-lucide="folder" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-base md:text-lg text-slate-800 dark:text-slate-100">أرشيف سنة ${y}</h4>
+                            <p class="text-[10px] text-slate-400 font-bold mt-0.5">${totalYearPosts} منشور</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transform transition-transform duration-300 ${isYearExpanded ? 'rotate-180 text-emerald-500' : ''}"></i>
+                </div>
+
+                <!-- Months Container (collapsible) -->
+                <div class="transition-all duration-300 ${isYearExpanded ? 'border-t border-slate-100 dark:border-slate-700 p-4 space-y-3 bg-slate-50/30 dark:bg-slate-900/10' : 'hidden'}">
+        `;
+
+        if (isYearExpanded) {
+            // Render Months Accordion
+            Object.keys(tree[y]).sort().reverse().forEach((mKey, mIdx) => {
+                const [mNum, mName] = mKey.split('|');
+                const isMonthExpanded = activeArchiveMonth === mNum;
+                const totalMonthPosts = Object.values(tree[y][mKey]).reduce((sum, count) => sum + count, 0);
+
+                html += `
+                    <div class="border border-slate-100 dark:border-slate-700/40 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm transition-all">
+                        <!-- Month Header -->
+                        <div onclick="event.stopPropagation(); window.setArchiveLevel('month', ${isMonthExpanded ? 'null' : `'${mNum}'`})" class="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors select-none">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-xs md:text-sm text-slate-700 dark:text-slate-200">أرشيف شهر ${mName}</h5>
+                                    <p class="text-[9px] text-slate-400 font-medium mt-0.5">${totalMonthPosts} منشور</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transform transition-transform duration-300 ${isMonthExpanded ? 'rotate-180 text-emerald-500' : ''}"></i>
+                        </div>
+
+                        <!-- Days Grid Container (collapsible) -->
+                        <div class="transition-all duration-300 ${isMonthExpanded ? 'border-t border-slate-100 dark:border-slate-700/30 p-4 bg-slate-50/50 dark:bg-slate-900/10' : 'hidden'}">
+                `;
+
+                if (isMonthExpanded) {
+                    html += `<div class="grid grid-cols-4 sm:grid-cols-7 gap-2">`;
+                    
+                    // Render Days badges
+                    Object.keys(tree[y][mKey]).sort().reverse().forEach(d => {
+                        const dayNum = d.split('-')[2];
+                        const count = tree[y][mKey][d];
+                        const isDayActive = activeArchiveDate === d;
+
+                        html += `
+                            <div onclick="event.stopPropagation(); window.setArchiveDate('${d}')" class="group cursor-pointer p-2 rounded-xl border flex flex-col items-center justify-center text-center transition-all ${isDayActive ? 'bg-emerald-600 border-emerald-600 text-white shadow-md scale-105' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-slate-700 dark:text-slate-200'}">
+                                <span class="text-xs font-bold">${dayNum}</span>
+                                <span class="text-[8px] font-medium mt-0.5 opacity-60 ${isDayActive ? 'text-white' : 'text-slate-400'}">${count} منشور</span>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
             });
-            const key = `${mStr}|${mName}`;
-            if (!groups[key]) groups[key] = 0;
-            groups[key]++;
-        });
-        const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
-        let html = `<div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8"><div class="flex items-center justify-between mb-6"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> ${contextTitle} (${activeArchiveYear})</h3><button onclick="window.setArchiveLevel('reset')" class="text-sm bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl hover:bg-rose-50 hover:text-rose-600 font-bold flex items-center gap-1 transition-colors shadow-sm">إغلاق الأرشيف والعودة</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
-        Object.keys(groups).sort().reverse().forEach((k, idx) => {
-            const [mNum, mName] = k.split('|');
-            html += `<div onclick="window.setArchiveLevel('month', '${mNum}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1"><div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${colors[idx%colors.length]}"></div><div class="flex justify-between items-center"><div><p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">أرشيف شهر</p><h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">${mName}</h4></div><div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors"><span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${groups[k]}</span><span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span></div></div><div class="mt-4 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">تصفح الشهر <i data-lucide="arrow-left" class="w-3 h-3"></i></div></div>`;
-        });
-        return html + `</div></div>`;
-    } else {
-        const ymPosts = posts.filter(p => {
-            const d = new Date(p.createdAt);
-            return d.getFullYear().toString() === activeArchiveYear && (d.getMonth() + 1).toString().padStart(2, '0') === activeArchiveMonth;
-        });
-        const groups = {};
-        ymPosts.forEach(p => {
-            const dStr = getSafeYMD(p.createdAt);
-            if (!groups[dStr]) groups[dStr] = 0;
-            groups[dStr]++;
-        });
-        const mName = new Date(`${activeArchiveYear}-${activeArchiveMonth}-01`).toLocaleString('ar-EG', {
-            month: 'long'
-        });
-        const colors = ['from-blue-500 to-indigo-600', 'from-purple-500 to-fuchsia-600', 'from-emerald-500 to-teal-600', 'from-rose-500 to-pink-600', 'from-amber-500 to-orange-600'];
-        let html = `<div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6"><h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> أرشيف ${mName} ${activeArchiveYear}</h3><div class="flex gap-2"><button onclick="window.setArchiveLevel('year', '${activeArchiveYear}')" class="flex-1 sm:flex-none text-sm bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl hover:bg-slate-200 font-bold flex justify-center items-center gap-1 transition-colors shadow-sm"><i data-lucide="arrow-right" class="w-4 h-4"></i> الشهور</button><button onclick="window.setArchiveLevel('reset')" class="flex-1 sm:flex-none text-sm bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl hover:bg-rose-50 hover:text-rose-600 font-bold flex justify-center items-center gap-1 transition-colors shadow-sm">إغلاق الأرشيف</button></div></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-4">`;
-        Object.keys(groups).sort().reverse().forEach((d, idx) => {
-            const dayNum = d.split('-')[2];
-            html += `<div onclick="window.setArchiveLevel('day', '${d}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1"><div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${colors[idx%colors.length]}"></div><div class="flex flex-col items-center justify-center text-center"><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold mb-1">يوم</p><h4 class="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2">${dayNum}</h4><span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-lg">${groups[d]} منشور</span></div></div>`;
-        });
-        return html + `</div></div>`;
-    }
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
 };
 let isAuthLoginMode = true;
 let editingItemId = null;
@@ -1162,8 +1258,12 @@ onAuthStateChanged(auth, async (user) => {
             window.processPendingSharedText();
         }
 
-        if (window.AndroidApp && typeof window.AndroidApp.requestFCMToken === 'function') {
-            window.AndroidApp.requestFCMToken();
+        try {
+            if (window.AndroidApp) {
+                window.AndroidApp.requestFCMToken();
+            }
+        } catch (e) {
+            console.error("WebView bridge error:", e);
         }
     } else {
         userData = null;
@@ -1175,7 +1275,12 @@ onAuthStateChanged(auth, async (user) => {
             if (el) el.style.display = 'none';
         });
         setupDataListeners();
-        window.switchTab('feed', true);
+        
+        // لا تقم بالتوجيه الافتراضي لـ feed إذا كان هناك رابط عميق لمنشور جارٍ فتحه
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('post')) {
+            window.switchTab('feed', true);
+        }
     }
 });
 
@@ -1317,7 +1422,7 @@ function setupDataListeners() {
 
         // --- نظام النافذة المنبثقة الذكي (يعمل فورياً مع أي تحديث) ---
         if (globalSettings.annCode && globalSettings.annId) {
-            const seenId = localStorage.getItem('seen_ann_id');
+            const seenId = localStorage.getItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'));
             // لو المستخدم لسه مشافش الإعلان ده، والنافذة مش مفتوحة بالفعل
             if (seenId !== String(globalSettings.annId) && !document.getElementById('smart-announcement-modal')) {
                 const modal = document.createElement('div');
@@ -1340,7 +1445,7 @@ function setupDataListeners() {
                 setTimeout(() => modal.classList.remove('opacity-0'), 50);
 
                 const closeModal = () => {
-                    localStorage.setItem('seen_ann_id', String(globalSettings.annId));
+                    localStorage.setItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'), String(globalSettings.annId));
                     modal.classList.add('opacity-0');
                     setTimeout(() => modal.remove(), 300);
                 };
@@ -1438,7 +1543,7 @@ function showView(viewId) {
     if (!isSwitchTabProtected && typeof window.switchTab === 'function') {
         const originalSwitch = window.switchTab;
         window.switchTab = function(tab, preserveState = false) {
-            if (!currentUser && tab !== 'feed') {
+            if (!currentUser && tab !== 'feed' && tab !== 'singlepost' && tab !== 'vdtab') {
                 document.getElementById('main-layout').classList.add('hidden');
                 document.getElementById('auth-view').classList.remove('hidden');
                 return;
@@ -1488,8 +1593,8 @@ window.toggleMobileMenu = () => {
 };
 
 window.switchTab = (tab, preserveState = false, fromHistory = false) => {
-    // توجيه الزوار إلى شاشة التسجيل إذا حاولوا فتح تاب غير مسموح به
-    if (!currentUser && tab !== 'feed') {
+    // توجيه الزوار إلى شاشة التسجيل إذا حاولوا فتح تاب غير مسموح به أو غير مخصص للزوار
+    if (!currentUser && tab !== 'feed' && tab !== 'singlepost' && tab !== 'vdtab') {
         document.getElementById('main-layout').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
         return;
@@ -1513,16 +1618,44 @@ window.switchTab = (tab, preserveState = false, fromHistory = false) => {
     if (!fromHistory) {
         window.history.pushState({ tab: tab }, '', `#${tab}`);
     }
-    ['feed', 'profile', 'search', 'favorites', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin'].forEach(t => {
+    // إغلاق كل القوائم المنسدلة عند تغيير التاب (مع فحص إن الدوال موجودة)
+    if (typeof window.closeMoreMenu === 'function') window.closeMoreMenu();
+    if (typeof window.closeNotifDropdown === 'function') window.closeNotifDropdown();
+
+    // الأزرار الموجودة في الـ TOP NAV فقط (ليس في الـ dropdown)
+    const topNavTabs = ['feed', 'communities', 'search', 'notifications', 'messages', 'singlepost', 'vdtab'];
+    // الأزرار الموجودة في الـ DROPDOWN فقط
+    const dropdownTabs = ['friends', 'favorites', 'requests', 'profile', 'admin'];
+
+    ['feed', 'profile', 'search', 'favorites', 'requests', 'friends', 'communities', 'messages', 'notifications', 'singlepost', 'admin', 'vdtab'].forEach(t => {
         const tc = document.getElementById(`tab-content-${t}`);
         if (tc) tc.classList.add('hidden');
-        const navBtn = document.getElementById(`nav-${t}`);
-        if (navBtn) {
-            if (t === 'admin') {
-                const isHidden = !window.isSuperAdmin() ? 'hidden ' : '';
-                navBtn.className = `${isHidden}nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 font-medium' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30'}`;
-            } else {
-                navBtn.className = `nav-btn flex items-center justify-center md:justify-start gap-4 p-3 md:px-4 md:py-3 w-full rounded-2xl transition-all ${t===tab ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`;
+
+        // تحديث أزرار الـ top nav فقط
+        if (topNavTabs.includes(t)) {
+            const baseClass = 'nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] transition-all min-w-[48px]';
+            const activeClass = 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold';
+            const inactiveClass = 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600';
+            // الرسائل عندها id مختلف
+            const btnId = t === 'messages' ? 'nav-messages-desktop' : `nav-${t}`;
+            const btn = document.getElementById(btnId);
+            if (btn) btn.className = `${baseClass} ${t === tab ? activeClass : inactiveClass}`;
+        }
+        // أزرار الـ dropdown — لا نغير كلاساتها أبداً لأنها بتنكسر
+        // فقط نضيف/نزيل حالة active بطريقة بسيطة
+        if (dropdownTabs.includes(t)) {
+            const btn = document.getElementById(`nav-${t}`);
+            if (btn) {
+                if (t === tab) {
+                    btn.classList.add('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+                } else {
+                    btn.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+                }
+                // إصلاح خاص للـ admin
+                if (t === 'admin') {
+                    const isHidden = !window.isSuperAdmin();
+                    btn.classList.toggle('hidden', isHidden);
+                }
             }
         }
     });
@@ -1672,12 +1805,31 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     lucide.createIcons();
 });
 
+window.signInWithAndroidGoogle = function(idToken) {
+    const credential = GoogleAuthProvider.credential(idToken);
+    signInWithCredential(auth, credential).then(() => {
+        console.log("تم تسجيل الدخول بنجاح عبر الأندرويد");
+    }).catch((e) => {
+        console.error(e);
+        const errDiv = document.getElementById('auth-error');
+        const errText = document.getElementById('auth-error-text');
+        if (errDiv && errText) {
+            errDiv.classList.remove('hidden');
+            errText.innerText = 'حدث خطأ أثناء تسجيل الدخول من الأندرويد.';
+        }
+    });
+};
+
 window.handleGoogleAuth = async () => {
     const errDiv = document.getElementById('auth-error');
     const errText = document.getElementById('auth-error-text');
     errDiv.classList.add('hidden');
     try {
-        await signInWithPopup(auth, new GoogleAuthProvider());
+        if (window.AndroidApp && typeof window.AndroidApp.startNativeGoogleLogin === 'function') {
+            window.AndroidApp.startNativeGoogleLogin();
+        } else {
+            await signInWithPopup(auth, new GoogleAuthProvider());
+        }
     } catch (error) {
         if (error.code !== 'auth/popup-closed-by-user') {
             errDiv.classList.remove('hidden');
@@ -1821,7 +1973,7 @@ window.receiveFCMToken = async (token) => {
 };
 
 // دالة إرسال الإشعار عبر سيرفر Netlify (سننشئه لاحقاً)
-window.sendPushNotification = async (targetUid, title, body) => {
+window.sendPushNotification = async (targetUid, title, body, type, targetId) => {
     const target = allUsers.find(u => u.uid === targetUid);
     if (!target || !target.fcmToken) return;
 
@@ -1833,7 +1985,9 @@ window.sendPushNotification = async (targetUid, title, body) => {
                 token: target.fcmToken,
                 title: title,
                 body: body,
-                icon: userData.photoUrl
+                icon: userData.photoUrl,
+                type: type || '',
+                targetId: targetId || ''
             })
         });
     } catch (e) {
@@ -2115,9 +2269,15 @@ function updateSidebar() {
             const fWelcome = document.getElementById('feed-welcome-name');
             if (fWelcome) fWelcome.innerHTML = `مرحبا زائرنا الكريم <span class="block text-[12px] font-normal text-slate-400 dark:text-slate-400 mt-1.5 bg-black/10 dark:bg-white/5 p-2 rounded-lg border border-black/5 dark:border-white/5 shadow-sm leading-relaxed">يشرفنا انضمامك لنا من خلال الضغط على التسجيل بالموقع</span>`;
             
-            // فرض صورة الغلاف بقوة لتخطي إعدادات الإدارة
+            // إظهار صورة الغلاف العام المحددة من الإدارة أو الغلاف الافتراضي للزائر أيضاً
             const feedCover = document.getElementById('feed-cover-image');
-            if (feedCover) feedCover.src = userData.coverUrl;
+            if (feedCover) {
+                if (globalSettings.feedCoverUrl && globalSettings.feedCoverUrl.trim() !== '') {
+                    feedCover.src = globalSettings.feedCoverUrl;
+                } else {
+                    feedCover.src = userData.coverUrl;
+                }
+            }
 
             // إعادة رسم أيقونات Lucide
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2244,10 +2404,24 @@ function updateBadge() {
     } else reqBadge.classList.add('hidden');
 
     const unreadMsgs = allMessages.filter(m => m.receiverId === currentUser.uid && !m.read).length;
+    
+    // Update Desktop Top Nav Badge
+    const msgBadgeDesktop = document.getElementById('msg-badge-desktop');
+    if (msgBadgeDesktop) {
+        if (unreadMsgs > 0) {
+            msgBadgeDesktop.classList.remove('hidden');
+            msgBadgeDesktop.innerText = unreadMsgs;
+            msgBadgeDesktop.classList.add('animate-bounce');
+            setTimeout(() => msgBadgeDesktop.classList.remove('animate-bounce'), 1000);
+        } else msgBadgeDesktop.classList.add('hidden');
+    }
+
+    // Update Mobile Nav Badge
     const msgBadge = document.getElementById('msg-badge');
     if (msgBadge) {
         if (unreadMsgs > 0) {
             msgBadge.classList.remove('hidden');
+            msgBadge.className = 'md:hidden absolute top-1 right-2 bg-rose-500 text-white text-[9px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow pointer-events-none';
             msgBadge.innerText = unreadMsgs;
         } else msgBadge.classList.add('hidden');
     }
@@ -2293,7 +2467,7 @@ function updateBadge() {
             mobileBellContainer.classList.remove('hidden');
             if (currentTotal > 0) {
                 mobileBellBadge.innerText = currentTotal;
-                mobileBellBadge.classList.remove('hidden');
+                mobileBellBadge.classList.remove('hidden'); mobileBellBadge.className = 'md:hidden absolute top-1 right-2 bg-rose-500 text-white text-[9px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow pointer-events-none';
             } else {
                 mobileBellBadge.classList.add('hidden');
             }
@@ -2354,7 +2528,7 @@ window.renderNotificationsList = () => {
         let icon = 'bell';
         let text = n.text || '';
         let color = 'emerald';
-        let action = `window.handleNotificationClick('${n.type}', '${n.id}', '${n.fromId || n.senderId || ''}', '${n.postId || ''}')`;
+        let action = `window.handleNotificationClick('${n.type}', '${n.id}', '${n.fromId || n.senderId || ''}', '${n.postId || ''}', '${n.commentId || ''}')`;
 
         const senderName = n.fromName || 'مستخدم ماي تاب';
         const senderAvatar = n.fromAvatar || `https://ui-avatars.com/api/?name=${senderName}&background=random`;
@@ -2413,7 +2587,7 @@ window.renderNotificationsList = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
-window.handleNotificationClick = async (type, id, fromId, postId) => {
+window.handleNotificationClick = async (type, id, fromId, postId, commentId = null) => {
     // توجيه المستخدم للمكان الصحيح بناءً على نوع الإشعار
     if (type === 'message' || type === 'message_seen') {
         if (fromId && typeof window.goToChat === 'function') {
@@ -2424,15 +2598,19 @@ window.handleNotificationClick = async (type, id, fromId, postId) => {
     } else if (type === 'friend_request') {
         window.switchTab('requests');
     } else if (postId) {
-        window.switchTab('feed');
-        // محاولة النزول للمنشور المقصود بعد فترة قصيرة للسماح بالتحميل
-        setTimeout(() => {
-            const el = document.getElementById('post-' + postId) || document.querySelector(`[data-post-id="${postId}"]`);
-            if (el) el.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        }, 600);
+        if (typeof window.openSinglePost === 'function') {
+            window.openSinglePost(postId, id, commentId || null);
+        } else {
+            window.switchTab('feed');
+            // محاولة النزول للمنشور المقصود بعد فترة قصيرة للسماح بالتحميل
+            setTimeout(() => {
+                const el = document.getElementById('post-' + postId) || document.querySelector(`[data-post-id="${postId}"]`);
+                if (el) el.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 600);
+        }
     }
 
     // تحديث حالة الإشعار كمقروء في قاعدة البيانات بمجرد النقر عليه
@@ -2615,7 +2793,7 @@ window.handlePostInput = (element, containerId) => {
     if (window.currentLinkPreview) return;
 
     const container = document.getElementById(containerId);
-    const isVideoLink = /(?:youtube\.com|youtu\.be|tiktok\.com|fb\.watch|fb\.video)/i.test(url);
+    const isVideoLink = /(?:youtube\.com|youtu\.be|tiktok\.com|fb\.watch|fb\.video|facebook\.com\/watch|facebook\.com\/.*\/videos|facebook\.com\/share\/v)/i.test(url);
 
     // 1. ميزة التطمين الفوري لروابط الفيديو المدمجة
     if (isVideoLink && container) {
@@ -2633,9 +2811,49 @@ window.handlePostInput = (element, containerId) => {
         if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
     }
+
     if (window.currentLinkPreview && window.currentLinkPreview.originalUrl === url) {
-        // حذف الرابط فوراً من الصندوق إذا كانت المعاينة موجودة مسبقاً
-        // element.value = element.value.replace(url, '').trim(); // تم إيقاف الحذف التلقائي المزعج
+        return;
+    }
+
+    // إذا كان الرابط فيسبوك أو إنستغرام (وليس فيديو)، نعرض كارت تطمين فوري للمنشور المدمج ونقوم بفك الروابط المختصرة
+    const isSocialLink = /(?:facebook\.com|instagram\.com)/i.test(url);
+    if (isSocialLink && container) {
+        if (window.currentLinkPreview && window.currentLinkPreview.originalUrl === url) return;
+        window.currentLinkPreview = { originalUrl: url, resolvedUrl: url };
+        container.classList.remove('hidden');
+        const isFB = url.includes('facebook.com');
+        container.innerHTML = `
+            <button onclick="event.preventDefault(); window.removeLinkPreview('${containerId}')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1.5 hover:bg-rose-500 z-10 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="p-5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center text-blue-600 dark:text-blue-400 flex flex-col items-center justify-center gap-3">
+                <i data-lucide="share-2" class="w-8 h-8 animate-pulse text-blue-500"></i>
+                <span class="font-bold text-sm text-blue-700 dark:text-blue-300">تم التعرف على منشور ${isFB ? 'فيسبوك' : 'إنستغرام'}!</span>
+                <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${isFB ? 'جاري تهيئة وتأمين محتوى المنشور...' : 'سيظهر المنشور بمحتواه الكامل والمرفقات تلقائياً عند النشر.'}</span>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // فك الروابط المختصرة لفيسبوك عبر السيرفر للحصول على الرابط الأصلي القابل للتضمين
+        if (isFB) {
+            const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'https://mytabgo.netlify.app'
+                : '';
+            fetch(`${apiHost}/.netlify/functions/resolve-fb?url=${encodeURIComponent(url)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.resolvedUrl) {
+                        window.currentLinkPreview.resolvedUrl = data.resolvedUrl;
+                        console.log('Resolved Facebook URL:', data.resolvedUrl);
+                        const label = container.querySelector('.text-xs');
+                        if (label) {
+                            label.textContent = 'تم تأمين ومعالجة محتوى المنشور بالكامل وهو جاهز للنشر!';
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Error resolving URL:', err);
+                });
+        }
         return;
     }
 
@@ -2662,14 +2880,14 @@ window.handlePostInput = (element, containerId) => {
                 };
 
                 container.innerHTML = `
-                            <button onclick="event.preventDefault(); window.removeLinkPreview('${containerId}')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1.5 hover:bg-rose-500 z-10 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
-                            ${window.currentLinkPreview.image ? `<img src="${window.currentLinkPreview.image}" class="w-full h-40 md:h-48 object-cover border-b border-black/10 dark:border-white/10">` : ''}
-                            <div class="p-3 md:p-4 text-right" dir="auto">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-wider text-left" dir="ltr">${window.currentLinkPreview.domain}</p>
-                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base line-clamp-1 leading-snug">${window.currentLinkPreview.title}</h4>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">${window.currentLinkPreview.description}</p>
-                            </div>
-                        `;
+                    <button onclick="event.preventDefault(); window.removeLinkPreview('${containerId}')" class="absolute top-2 right-2 bg-slate-900/60 text-white rounded-full p-1.5 hover:bg-rose-500 z-10 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    ${window.currentLinkPreview.image ? `<img src="${window.currentLinkPreview.image}" class="w-full h-40 md:h-48 object-cover border-b border-black/10 dark:border-white/10">` : ''}
+                    <div class="p-3 md:p-4 text-right" dir="auto">
+                        <p class="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-wider text-left" dir="ltr">${window.currentLinkPreview.domain}</p>
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base line-clamp-1 leading-snug">${window.currentLinkPreview.title}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">${window.currentLinkPreview.description}</p>
+                    </div>
+                `;
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } else {
                 window.removeLinkPreview(containerId);
@@ -2754,7 +2972,7 @@ window.submitPost = async (commId = null, contentId = 'post-content', btnId = 's
                 const friend = allUsers.find(u => userData.friends.includes(u.uid) && u.displayName && u.displayName.trim() === name.trim());
                 if (friend) {
                     if (typeof window.sendPushNotification === 'function') {
-                        window.sendPushNotification(friend.uid, 'إشارة جديدة', `ذكرك ${userData.displayName} في منشور`);
+                        window.sendPushNotification(friend.uid, 'إشارة جديدة', `ذكرك ${userData.displayName} في منشور`, 'post', newPostRef.id);
                     }
                     const notifId = Date.now().toString() + Math.floor(Math.random() * 1000);
                     setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), {
@@ -2772,7 +2990,11 @@ window.submitPost = async (commId = null, contentId = 'post-content', btnId = 's
             });
         }
         
-        document.getElementById(contentId).value = '';
+        const contentEl = document.getElementById(contentId);
+        if (contentEl) {
+            contentEl.value = '';
+            contentEl.style.height = '';
+        }
         if (titleEl) titleEl.value = '';
         window.postImageFiles = [];
         const cont = document.getElementById(imgContId);
@@ -2819,6 +3041,7 @@ function renderAll() {
         else renderMessagesList();
     }
     if (activeTabStr === 'admin') renderAdminTab();
+    if (activeTabStr === 'vdtab') renderVdtabTab();
     lucide.createIcons();
 }
 
@@ -3250,16 +3473,123 @@ function getSafeYMD(dateInput) {
 
 function extractEmbeds(text) {
     const ytMatch = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:shorts\/|[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    const tkMatch = text.match(/(?:tiktok\.com\/@[\w.]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/|tiktok\.com\/embed\/v2\/|tiktok\.com\/share\/video\/)(\d+)/i);
-    const fbMatch = text.match(/(https?:\/\/(?:www\.|web\.|m\.)?(?:facebook\.com\/(?:[^\/\n\s]+\/videos\/\d+|watch\/?\?v=\d+|share\/v\/[a-zA-Z0-9_-]+)|fb\.watch\/[a-zA-Z0-9_-]+))/i);
+    // TikTok: أولاً نحاول نستخرج ID من الرابط الكامل
+    const tkFullMatch = text.match(/tiktok\.com\/@[\w.]+\/video\/(\d+)/i);
+    // TikTok مختصر: vt.tiktok.com أو vm.tiktok.com أو tiktok.com/t/
+    const tkShortMatch = text.match(/https?:\/\/(?:vt|vm|www)\.tiktok\.com\/(?:t\/)?([A-Za-z0-9]+)\/?/i);
+    const fbMatch = text.match(/(https?:\/\/(?:[^\s\/]+\.)?(?:facebook\.com|fb\.com|fb\.watch)\/[^\s]+)/i);
     const igMatch = text.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/i);
     return {
         ytId: ytMatch ? ytMatch[1] : null,
-        tkId: tkMatch ? tkMatch[1] : null,
+        tkId: tkFullMatch ? tkFullMatch[1] : null,
+        tkShortUrl: (!tkFullMatch && tkShortMatch) ? `https://vt.tiktok.com/${tkShortMatch[1]}/` : null,
         fbUrl: fbMatch ? fbMatch[1] : null,
         igId: igMatch ? igMatch[1] : null
     };
 }
+
+// حل روابط TikTok المختصرة (vt.tiktok.com / vm.tiktok.com) عبر oEmbed
+window.resolveTikTokShortUrl = async (containerId, shortUrl) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let videoId = null;
+    
+    // 1. Try direct client-side fetch to TikTok's official oEmbed first (if CORS is bypassed or allowed)
+    try {
+        const oEmbedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(shortUrl)}`;
+        const res = await fetch(oEmbedUrl);
+        if (res.ok) {
+            const data = await res.json();
+            videoId = data.embed_product_id;
+            if (!videoId && data.html) {
+                const idMatch = data.html.match(/video\/(\d+)/);
+                if (idMatch) videoId = idMatch[1];
+            }
+        }
+    } catch (e) {
+        console.warn("Direct oEmbed fetch failed, trying proxy...", e);
+    }
+    
+    // 2. If direct fetch failed (due to CORS/network), try our Netlify function (routing to deployed site if on localhost)
+    if (!videoId) {
+        try {
+            const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'https://mytabgo.netlify.app'
+                : '';
+            const resolveUrl = `${apiHost}/.netlify/functions/resolve-tiktok?url=${encodeURIComponent(shortUrl)}`;
+            const res = await fetch(resolveUrl);
+            if (res.ok) {
+                const data = await res.json();
+                videoId = data.videoId;
+            }
+        } catch (e) {
+            console.error("Proxy resolve failed:", e);
+        }
+    }
+
+    try {
+        if (videoId) {
+            container.classList.add('relative');
+            const sandboxAttr = 'sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"';
+            const isVdtab = containerId.startsWith('vdtab-player-');
+            const autoplaySrc = `https://www.tiktok.com/player/v1/${videoId}?music_info=1&description=0&autoplay=1`;
+            const normalSrc = `https://www.tiktok.com/player/v1/${videoId}?music_info=0&description=0`;
+            
+            if (isVdtab) {
+                container.innerHTML = `<iframe src="${normalSrc}" class="absolute inset-0 w-full h-full border-none animate-in fade-in duration-300" frameborder="0" allowfullscreen ${sandboxAttr} data-src="${autoplaySrc}" data-original-src="${normalSrc}"></iframe>`;
+                // Trigger observer registration for the resolved element
+                setTimeout(() => {
+                    const parentItem = container.closest('.vdtab-item');
+                    if (parentItem && window.vdtabObserverInstance) {
+                        window.vdtabObserverInstance.observe(parentItem);
+                    }
+                }, 100);
+            } else {
+                container.innerHTML = `<iframe src="${normalSrc}" class="absolute inset-0 w-full h-full border-none" frameborder="0" allowfullscreen ${sandboxAttr}></iframe>`;
+            }
+        } else {
+            throw new Error('no video id');
+        }
+    } catch (err) {
+        const container2 = document.getElementById(containerId);
+        if (container2) {
+            container2.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-6 text-slate-400 text-center gap-2">
+                    <i data-lucide="video-off" class="w-8 h-8 text-rose-500 opacity-60"></i>
+                    <span class="text-xs font-bold">فشل تحميل فيديو TikTok</span>
+                    <span class="text-[10px] text-slate-500">حدث خطأ أثناء الاتصال بالخادم.</span>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+};
+
+window.resolveAndEmbedFacebook = (id, originalUrl) => {
+    const isShortUrl = /\/share\/[pv]\//i.test(originalUrl);
+    if (!isShortUrl) return;
+
+    const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'https://mytabgo.netlify.app'
+        : '';
+
+    fetch(`${apiHost}/.netlify/functions/resolve-fb?url=${encodeURIComponent(originalUrl)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.resolvedUrl) {
+                const iframe = document.getElementById(`fb-embed-${id}`);
+                if (iframe) {
+                    iframe.src = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(data.resolvedUrl)}&show_text=true&width=500`;
+                }
+                const chatIframe = document.getElementById(`fb-embed-chat-${id}`);
+                if (chatIframe) {
+                    chatIframe.src = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(data.resolvedUrl)}&show_text=true&width=250`;
+                }
+            }
+        })
+        .catch(err => console.error('Error resolving Facebook URL:', err));
+};
 
 function formatPostContent(text) {
     if (!text) return '';
@@ -3286,6 +3616,7 @@ function formatMessageContent(text, isMe) {
 }
 
 function generatePostHTML(post, idPrefix = '') {
+    const isVisitor = !currentUser || (currentUser && currentUser.isAnonymous);
     // جلب بيانات كاتب المنشور الحالية لعرض أحدث صورة واسم
     const author = allUsers.find(u => u.uid === post.authorId);
     const authorPhoto = author ? author.photoUrl : post.authorPhoto;
@@ -3334,74 +3665,37 @@ function generatePostHTML(post, idPrefix = '') {
 
     const c = POST_COLORS[post.colorId] || POST_COLORS['white'];
 
-    // --- [ بداية كود الزوار: عرض آمن ومقطوع ] ---
+    // --- [ كود الزوار: إخفاء المجتمعات الخاصة فقط، وعرض كل المنشورات الأخرى كاملة ] ---
     if (!currentUser || (currentUser && currentUser.isAnonymous)) {
-        let shortText = post.content ? post.content.substring(0, 120) : '';
-        if (post.content && post.content.length > 120) shortText += '...';
-        
-        return `
-        <div class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6">
-            <div class="flex items-center gap-2.5 mb-4">
-                <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800">
-                <div class="flex flex-col">
-                    <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)}</h4>
-                    <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
-                </div>
-            </div>
-            <div class="relative">
-                ${post.title ? `<h3 class="text-xl md:text-2xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3">${post.title}</h3>` : ''}
-                <div class="${c.text} whitespace-pre-wrap leading-relaxed px-1 text-[14px] md:text-[15px] select-none" dir="auto" style="-webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%); mask-image: linear-gradient(to bottom, black 30%, transparent 100%);">${shortText || 'محتوى حصري للمسجلين...'}</div>
-            </div>
-            <div class="text-center mt-4 pt-2 relative z-10">
-                <button onclick="document.getElementById('main-layout').classList.add('hidden'); document.getElementById('auth-view').classList.remove('hidden');" class="bg-slate-800 dark:bg-slate-700 text-white font-bold py-2.5 px-6 rounded-xl hover:bg-emerald-600 dark:hover:bg-emerald-600 transition-colors shadow-lg text-sm inline-flex items-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4"></i> سجل الدخول لقراءة باقي المنشور
-                </button>
-            </div>
-        </div>`;
+        // منشورات المجتمعات الخاصة: مخفية تماماً عن الزوار
+        if (post.communityId) {
+            const comm = (typeof allCommunities !== 'undefined') ? allCommunities.find(c => c.id === post.communityId) : null;
+            if (comm && comm.isPrivate) return ''; // مجتمع خاص - لا يظهر للزوار إطلاقاً
+        }
+        // كل المنشورات الأخرى (الشخصية والمجتمعات العامة): تظهر كاملة للزوار
+        // (يكمل الكود العادي أدناه بدون قطع أو قيود)
     }
     // --- [ نهاية كود الزوار ] ---
-    // --- [ توحيد كود عرض المنشور للزوار (المجهولين أو غير المسجلين) ] ---
-    if (!currentUser || (currentUser && currentUser.isAnonymous)) {
-        let shortText = post.content ? post.content.substring(0, 150) : '';
-        if (post.content && post.content.length > 150) shortText += '...';
-        
-        return `
-        <div class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 relative overflow-hidden">
-            <div class="flex items-center gap-2.5 mb-4 relative z-10">
-                <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800">
-                <div class="flex flex-col">
-                    <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)}</h4>
-                    <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
-                </div>
-            </div>
-            <div class="relative z-10">
-                ${post.title ? `<h3 class="text-xl md:text-2xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3">${post.title}</h3>` : ''}
-                <div class="${c.text} whitespace-pre-wrap leading-relaxed px-1 text-[14px] md:text-[15px] select-none" dir="auto" style="-webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%);">${shortText || 'محتوى حصري...'}</div>
-            </div>
-            <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-slate-800 dark:via-slate-800/80 z-10 flex items-end justify-center pb-5">
-                <button onclick="window.handleLogout ? window.handleLogout() : (document.getElementById('main-layout').classList.add('hidden'), document.getElementById('auth-view').classList.remove('hidden'))" class="bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-xl hover:bg-emerald-700 transition-transform hover:scale-105 shadow-[0_4px_15px_rgba(16,185,129,0.3)] text-sm flex items-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4"></i> سجل الدخول للمتابعة والتفاعل
-                </button>
-            </div>
-        </div>`;
-    }
 
-    const isMine = post.authorId === currentUser.uid;
-    let canDelete = isMine;
-    if (!canDelete && post.communityId) {
+    const isMine = currentUser && post.authorId === currentUser.uid;
+    let canDelete = !!isMine || (window.isSuperAdmin && window.isSuperAdmin());
+    if (!canDelete && post.communityId && currentUser) {
         const comm = allCommunities.find(c => c.id === post.communityId);
         if (comm && comm.creatorId === currentUser.uid) canDelete = true;
     }
 
-    const textForEmbeds = (post.content || '') + ' ' + (post.linkPreview ? post.linkPreview.originalUrl : '') + ' ' + (post.originalContent || '') + ' ' + (post.originalLinkPreview ? post.originalLinkPreview.originalUrl : '');
+    const lpUrl = post.linkPreview ? (post.linkPreview.resolvedUrl || post.linkPreview.originalUrl) : '';
+    const olpUrl = post.originalLinkPreview ? (post.originalLinkPreview.resolvedUrl || post.originalLinkPreview.originalUrl) : '';
+    const textForEmbeds = (post.content || '') + ' ' + lpUrl + ' ' + (post.originalContent || '') + ' ' + olpUrl;
     const {
         ytId,
         tkId,
+        tkShortUrl,
         fbUrl,
         igId
     } = extractEmbeds(textForEmbeds);
     const reactions = post.reactions || {};
-    const myReact = reactions[currentUser.uid];
+    const myReact = currentUser ? reactions[currentUser.uid] : null;
     const tReact = Object.keys(reactions).length;
     const reactNames = getReactorNames(reactions);
 
@@ -3409,7 +3703,7 @@ function generatePostHTML(post, idPrefix = '') {
     const shareCount = reposts.length;
     let shareNames = '';
     if (shareCount > 0) {
-        const names = [...new Set(reposts.map(r => r.authorId === currentUser.uid ? "أنت" : r.authorName.split(' ')[0]))];
+        const names = [...new Set(reposts.map(r => (currentUser && r.authorId === currentUser.uid) ? "أنت" : r.authorName.split(' ')[0]))];
         if (names.length <= 2) shareNames = names.join(' و ');
         else shareNames = `${names[0]} و ${names.length-1} آخرين`;
     }
@@ -3431,9 +3725,34 @@ function generatePostHTML(post, idPrefix = '') {
         });
         mediaHTML += `</div>`;
     }
-    if (ytId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
-    if (tkId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm relative aspect-[9/16] w-full"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="absolute inset-0 w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe></div>`;
-    if (fbUrl) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2 aspect-video"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrl)}&show_text=0&width=560" class="w-full h-full rounded-lg" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+    const sandboxAttr = 'sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"';
+    if (ytId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm aspect-video"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen ${sandboxAttr}></iframe></div>`;
+    if (tkId) mediaHTML += `<div class="mb-3 rounded-2xl overflow-hidden shadow-md relative aspect-[9/16] w-full max-w-[340px] mx-auto bg-black"><iframe src="https://www.tiktok.com/player/v1/${tkId}?music_info=0&description=0" class="absolute inset-0 w-full h-full border-none" frameborder="0" allowfullscreen ${sandboxAttr}></iframe></div>`;
+    if (tkShortUrl) {
+        const shortId = 'tk-' + Math.random().toString(36).substr(2,8);
+        mediaHTML += `<div id="${shortId}" class="mb-3 rounded-2xl overflow-hidden shadow-md relative aspect-[9/16] w-full max-w-[340px] mx-auto bg-black/10 dark:bg-slate-800 flex items-center justify-center"><div class="text-center text-slate-500 p-4"><i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin mb-2 text-emerald-500"></i><p class="text-xs">جاري تحميل فيديو TikTok...</p></div></div>`;
+        // حل الرابط المختصر بعد الرسم
+        setTimeout(() => window.resolveTikTokShortUrl(shortId, tkShortUrl), 100);
+    }
+    if (fbUrl) {
+        const isFBVideo = /(?:watch|video|fb\.watch|share\/v)/i.test(fbUrl);
+        if (isFBVideo) {
+            mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2 aspect-video"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrl)}&show_text=0&width=560" class="w-full h-full rounded-lg" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+        } else {
+            // كارت معاينة فيسبوك الجميل - يعمل دائماً بدون قيود
+            mediaHTML += `<a href="${fbUrl}" target="_blank" onclick="event.stopPropagation()" class="mb-3 flex items-center gap-3 p-3 rounded-xl border border-[#1877f2]/30 bg-[#1877f2]/5 dark:bg-[#1877f2]/10 hover:bg-[#1877f2]/15 transition-all no-underline group cursor-pointer">
+                <div class="w-10 h-10 rounded-xl bg-[#1877f2] flex items-center justify-center shrink-0 shadow-md">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold text-[#1877f2] uppercase tracking-wider mb-0.5">Facebook</p>
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-[#1877f2] transition-colors">منشور على فيسبوك</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">${fbUrl.length > 50 ? fbUrl.substring(0, 50) + '...' : fbUrl}</p>
+                </div>
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-[#1877f2] shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>`;
+        }
+    }
     if (igId) mediaHTML += `<div class="mb-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/5 dark:bg-slate-800 p-2"><iframe src="https://www.instagram.com/p/${igId}/embed" class="w-full max-w-[400px] h-[500px] rounded-lg" frameborder="0" scrolling="no" allowtransparency="true"></iframe></div>`;
 
     let linkPreviewHTML = '';
@@ -3448,6 +3767,54 @@ function generatePostHTML(post, idPrefix = '') {
                         ${lp.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-relaxed">${lp.description}</p>` : ''}
                     </div>
                 </a>`;
+    }
+
+    if (isVisitor) {
+        return `
+            <div id="${idPrefix}post-view-${post.id}" class="rounded-3xl p-4 md:p-5 shadow-sm border transition-colors duration-300 ${c.bg} ${c.border} mb-4 md:mb-6 scroll-mt-24">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.handleUserAvatarClick('${post.authorId}', '${authorPhoto}', event)">
+                        <img src="${authorPhoto}" class="w-9 h-9 md:w-10 md:h-10 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity ${window.getStatusRingClass(post.authorId)}">
+                        <div class="flex flex-col">
+                            <h4 class="font-bold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${authorName}${window.getUserBadge(post.authorId)} ${communityBadgeHTML} ${post.isRepost ? '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full mr-2 font-bold flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i> أعاد المشاركة</span>' : ''} ${post.isPinned ? '<span class="text-[10px] bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full mr-2 font-bold flex items-center gap-1"><i data-lucide="pin" class="w-3 h-3 fill-current"></i> مثبت</span>' : ''}</h4>
+                            <span class="text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400">${new Date(post.createdAt).toLocaleDateString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+                </div>
+                ${post.isRepost ? `
+                ${post.content ? `<div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[14px] md:text-[15px]" dir="auto">${formatPostContent(post.content)}</div>` : ''}
+                <div class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl p-3 md:p-4 mb-3">
+                    <div class="flex items-center gap-2 mb-3 cursor-pointer group" onclick="window.viewProfile('${post.originalAuthorId}')">
+                        <img src="${originalAuthorPhoto}" class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 object-cover bg-white dark:bg-slate-800 group-hover:opacity-80 transition-opacity">
+                        <span class="font-bold text-[13px] md:text-[14px] text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">${originalAuthorName}${window.getUserBadge(post.originalAuthorId)}</span>
+                    </div>
+                    ${post.originalTitle ? `<h4 onclick="window.copyTitleToClipboard('${post.originalTitle.replace(/'/g, "\\'")}')" class="text-lg md:text-xl font-black mb-2 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-2.5 cursor-copy hover:opacity-80 transition-all">${post.originalTitle}</h4>` : ''}
+                    <div class="${c.text} whitespace-pre-wrap leading-relaxed mb-3 px-1 text-[13px] md:text-[14px]" dir="auto">${formatPostContent(post.originalContent)}</div>
+                    ${mediaHTML}
+                    ${linkPreviewHTML}
+                </div>
+                ` : `
+                ${post.title ? `<h3 onclick="window.copyTitleToClipboard('${post.title.replace(/'/g, "\\'")}')" class="text-xl md:text-2xl font-black mb-3 text-indigo-600 dark:text-indigo-400 border-r-4 border-indigo-500 pr-3 cursor-copy hover:opacity-80 active:scale-[0.98] transition-all" title="انقر لنسخ العنوان">${post.title}</h3>` : ''}
+                <div class="${c.text} whitespace-pre-wrap mb-3 px-1 ${(!post.title && !mediaHTML && !linkPreviewHTML && post.content && post.content.trim().length <= 130) ? 'text-2xl md:text-3xl font-medium text-center py-6 leading-normal' : 'text-[14px] md:text-[15px] leading-relaxed'}" dir="auto">${formatPostContent(post.content)}</div>
+                ${mediaHTML}
+                ${linkPreviewHTML}
+                `}
+                ${postSourceHTML}
+                
+                <!-- بنر الزائر لتشجيع التسجيل/الدخول -->
+                <div class="mt-4 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 transition-all shadow-sm group" onclick="document.getElementById('main-layout').classList.add('hidden'); document.getElementById('auth-view').classList.remove('hidden');">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">سجل للتمتع بخدمات المنصة كاملة</h5>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">أو سجل دخولك إذا كنت تمتلك حساباً بالفعل</p>
+                        </div>
+                    </div>
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:-translate-x-1 transition-transform"></i>
+                </div>
+            </div>`;
     }
 
     let statsHTML = '';
@@ -3554,7 +3921,7 @@ function generatePostHTML(post, idPrefix = '') {
                     <button onclick="window.openShareModal('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                         <i data-lucide="send" class="w-[18px] h-[18px]"></i> <span>إرسال</span>
                     </button>
-                    <button onclick="window.copyPostLink('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" title="نسخ رابط المنشور">
+                    <button onclick="window.copyPostLink('${post.id}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-blue-600 dark:blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" title="نسخ رابط المنشور">
                         <i data-lucide="link" class="w-[18px] h-[18px]"></i> <span>رابط</span>
                     </button>
                     <button onclick="window.capturePost('${idPrefix}post-view-${post.id}', '${authorName}')" class="flex-1 min-w-[70px] flex justify-center items-center gap-1.5 py-1.5 rounded-xl text-[13px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors" title="حفظ كصورة">
@@ -3585,14 +3952,15 @@ window.replyToComment = (postId, rootCommentId, authorName, idPrefix = '') => {
 
 function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentId = null) {
     const author = allUsers.find(u => u.uid === c.authorId);
-    const isDeletedUser = c.authorId !== currentUser.uid && !author;
-    const plainName = c.authorId === currentUser.uid ? 'أنت' : (author ? author.displayName : 'مستخدم محذوف');
+    const myUid = currentUser ? currentUser.uid : null;
+    const isDeletedUser = c.authorId !== myUid && !author;
+    const plainName = c.authorId === myUid ? 'أنت' : (author ? author.displayName : 'مستخدم محذوف');
     const aNameHTML = isDeletedUser ? '<span class="text-rose-600 dark:text-rose-500">مستخدم محذوف</span>' : plainName;
     const aPic = author ? author.photoUrl : `https://api.dicebear.com/9.x/notionists/svg?seed=${c.authorId}&backgroundColor=10b981`;
     const reacts = c.reactions || {};
-    const myR = reacts[currentUser.uid];
+    const myR = currentUser ? reacts[currentUser.uid] : null;
     const tR = Object.keys(reacts).length;
-    const canDeleteComment = c.authorId === currentUser.uid || canDeletePost;
+    const canDeleteComment = (currentUser && c.authorId === currentUser.uid) || canDeletePost;
 
     const isReply = c.parentId != null;
     const avatarSize = isReply ? 'w-8 h-8 md:w-9 md:h-9' : 'w-10 h-10 md:w-11 md:h-11';
@@ -3639,11 +4007,11 @@ function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentI
                         </div>
                         <div class="flex items-center gap-3 mt-1 px-1.5 relative w-full">
                             <span class="text-[11px] font-bold text-slate-400 hover:underline cursor-pointer">${timeAgo}</span>
-                            <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[12px] font-bold transition-colors flex items-center hover:underline ${myR && ['like','heart','sad','angry'].includes(myR) ? 'text-emerald-500' : (myR ? 'text-emerald-500' : 'text-slate-500 hover:text-emerald-500')}">${myR ? (['like','heart','sad','angry'].includes(myR) ? 'تفاعلت' : `<span class="text-sm leading-none drop-shadow-sm mr-1">${myR}</span> تفاعلت`) : 'تفاعل'}</button>
+                            <button onclick="document.getElementById('${idPrefix}cpicker-${c.id}').classList.toggle('show')" class="text-[12px] font-bold transition-colors flex items-center hover:underline ${myR ? 'text-emerald-500' : 'text-slate-500 hover:text-emerald-500'}">${myR ? 'تفاعلت' : 'تفاعل'}</button>
                             <button onclick="window.replyToComment('${post.id}', '${rootCommentId || c.id}', '${plainName}', '${idPrefix}')" class="text-[12px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors hover:underline">رد</button>
                         </div>
                     </div>
-                    ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="window.deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${c.authorId === currentUser.uid ? `<button onclick="window.openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
+                    ${canDeleteComment ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0" dir="ltr"><button onclick="window.deleteComment('${post.id}', '${c.id}')" class="text-rose-500 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-full transition-colors" title="حذف التعليق"><i data-lucide="trash-2" class="w-4 h-4"></i></button>${(currentUser && c.authorId === currentUser.uid) ? `<button onclick="window.openEditModal('${c.id}', 'comment')" class="text-emerald-600 p-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full transition-colors" title="تعديل التعليق"><i data-lucide="edit-3" class="w-4 h-4"></i></button>` : ''}</div>` : ''}
                 </div>
             </div>`;
 }
@@ -3651,7 +4019,8 @@ function generateCommentHTML(c, post, canDeletePost, idPrefix = '', rootCommentI
 function getReactorNames(r) {
     const uids = Object.keys(r || {});
     if (!uids.length) return '';
-    const names = uids.map(id => id === currentUser.uid ? "أنت" : (allUsers.find(u => u.uid === id)?.displayName.split(' ')[0] || "مستخدم"));
+    const myUid = currentUser ? currentUser.uid : null;
+    const names = uids.map(id => id === myUid ? "أنت" : (allUsers.find(u => u.uid === id)?.displayName.split(' ')[0] || "مستخدم"));
     if (names.length <= 2) return names.join(' و ');
     return `${names[0]} و ${names.length-1} آخرين`;
 }
@@ -3717,6 +4086,9 @@ window.handleReact = async (postId, type, idPrefix = '') => {
                 read: false,
                 createdAt: new Date().toISOString()
             });
+            if (typeof window.sendPushNotification === 'function') {
+                window.sendPushNotification(post.authorId, 'تفاعل جديد', `تفاعل ${userData.displayName} مع منشورك`, 'post', postId);
+            }
         }
     } catch (e) {
         console.error(e);
@@ -3758,6 +4130,9 @@ window.handleCReact = async (postId, commentId, type, idPrefix = '') => {
                 read: false,
                 createdAt: new Date().toISOString()
             });
+            if (typeof window.sendPushNotification === 'function') {
+                window.sendPushNotification(targetComment.authorId, 'إعجاب بالتعليق', `أعجب ${userData.displayName} بتعليقك`, 'post', postId);
+            }
         }
     } catch (e) {
         console.error(e);
@@ -3778,6 +4153,7 @@ window.addComment = async (postId, idPrefix = '') => {
         if (typeof currentUser !== 'undefined' && currentUser && postAuthor && postAuthor.blockedUsers && postAuthor.blockedUsers.includes(currentUser.uid)) {
             window.showToast('المستخدم قد حظرك من التعليقات والرسائل', 'error');
             input.value = '';
+            input.style.height = '';
             return;
         }
     } catch(e) {}
@@ -3805,7 +4181,7 @@ window.addComment = async (postId, idPrefix = '') => {
                 const friend = allUsers.find(u => userData.friends.includes(u.uid) && u.displayName && u.displayName.trim() === name.trim());
                 if (friend && friend.uid !== currentUser.uid) {
                     if (typeof window.sendPushNotification === 'function') {
-                        window.sendPushNotification(friend.uid, 'إشارة جديدة', `ذكرك ${userData.displayName} في تعليق`);
+                        window.sendPushNotification(friend.uid, 'إشارة جديدة', `ذكرك ${userData.displayName} في تعليق`, 'post', postId);
                     }
                     const notifId = Date.now().toString() + Math.floor(Math.random() * 1000);
                     setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'notifications', notifId), {
@@ -3825,6 +4201,7 @@ window.addComment = async (postId, idPrefix = '') => {
         }
         // -------------------------------------------------------------
         input.value = '';
+        input.style.height = '';
         input.dataset.parentId = '';
 
         if (post.authorId !== currentUser.uid) {
@@ -3837,6 +4214,9 @@ window.addComment = async (postId, idPrefix = '') => {
                 read: false,
                 createdAt: new Date().toISOString()
             });
+            if (typeof window.sendPushNotification === 'function') {
+                window.sendPushNotification(post.authorId, 'تعليق جديد', `علق ${userData.displayName} على منشورك`, 'post', postId);
+            }
         }
 
         const otherCommenters = [...new Set(post.comments.map(c => c.authorId))].filter(id => id !== currentUser.uid && id !== post.authorId);
@@ -3850,6 +4230,9 @@ window.addComment = async (postId, idPrefix = '') => {
                 read: false,
                 createdAt: new Date().toISOString()
             });
+            if (typeof window.sendPushNotification === 'function') {
+                window.sendPushNotification(uid, 'رد جديد', `رد ${userData.displayName} على تعليق لك`, 'post', postId);
+            }
         }
 
     } catch (e) {
@@ -4218,6 +4601,16 @@ window.copyPostLink = (postId) => {
     const shareTitle = post.title || 'منشور على MyTab';
     const shareText = post.content ? post.content.substring(0, 100) : 'اقرأ هذا الموضوع وتفاعل معه على منصة MyTab';
 
+    // دعم المشاركة عبر جافاسكريبت إنترفيس لتطبيقات الأندرويد WebView
+    if (window.AndroidApp && typeof window.AndroidApp.share === 'function') {
+        window.AndroidApp.share(shareTitle, shareText, shareUrl);
+        return;
+    }
+    if (window.AndroidApp && typeof window.AndroidApp.shareText === 'function') {
+        window.AndroidApp.shareText(`${shareTitle}\n${shareText}\n${shareUrl}`);
+        return;
+    }
+
     if (navigator.share) {
         navigator.share({
             title: shareTitle,
@@ -4512,37 +4905,51 @@ window.sendShare = async (friendUid) => {
 
 window.setArchiveDate = (date) => {
     activeArchiveDate = date;
+    if (date === null) {
+        activeArchiveYear = null;
+        activeArchiveMonth = null;
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
     if (activeTabStr === 'feed') renderFeedTab();
     else if (activeTabStr === 'profile') renderProfileTab();
     else if (activeTabStr === 'communities') window.renderCommunitiesTab();
 
     if (date) {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
         showToast(`عرض أرشيف يوم ${date}`, 'info');
     }
 };
 
 function renderFeedTab() {
     const friends = (currentUser && userData && userData.friends) ? userData.friends : [];
+    const isVisitor = !currentUser || (currentUser && currentUser.isAnonymous);
     const allFeedPosts = allPosts.filter(p => {
         if (p.communityId) {
             const comm = (typeof allCommunities !== 'undefined') ? allCommunities.find(c => c.id === p.communityId) : null;
-            return comm && !comm.isPrivate; // السماح فقط بمنشورات المجتمعات العامة
+            if (!comm) return false;
+            if (comm.isPrivate) {
+                // المجتمع الخاص: لا يظهر إلا للأعضاء - للزوار وغير الأعضاء محجوب
+                if (isVisitor) return false;
+                const members = comm.members || [];
+                return members.includes(currentUser.uid) || comm.creatorId === currentUser.uid;
+            }
+            // المجتمع العام: يظهر للجميع
+            return true;
         }
-        return !currentUser || p.authorId === currentUser.uid || friends.includes(p.authorId);
+        // المنشورات الشخصية: تظهر للزوار مقطوعة، وللمسجلين تظهر منشوراتهم وأصدقائهم
+        if (isVisitor) return true; // الزوار يرون المنشورات الشخصية مقطوعة
+        const isBotPost = allUsers.some(u => u.uid === p.authorId && u.isBot);
+        return p.authorId === currentUser.uid || friends.includes(p.authorId) || isBotPost;
     }).sort((a, b) => {
-        // ترتيب زمني صارم للأرشيف - الأحدث أولاً دائماً
+        // ترتيب زمني صارم - الأحدث أولاً
         const timeA = new Date(a.createdAt || 0).getTime();
         const timeB = new Date(b.createdAt || 0).getTime();
-        // تجاهل isPinned في الفيد العام
         return timeB - timeA;
     });
 
-    // إصلاح: فك أي تثبيت عالق في الفيد العام
-    allFeedPosts.forEach(p => { if(p.isPinned && p.authorId === currentUser?.uid) p.isPinned = false; });
+    // التثبيت لا يؤثر على ترتيب التصفح الزمني للفيد العام بل يبقى مخزناً للبروفايل
     
     const list = document.getElementById('feed-posts-list');
     const createBox = document.getElementById('create-post-container');
@@ -4550,67 +4957,37 @@ function renderFeedTab() {
 
     if (activeArchiveDate) {
         createBox.classList.add('hidden');
-        const archPosts = allFeedPosts.filter(p => getSafeYMD(p.createdAt) === activeArchiveDate);
+        const targetPost = allFeedPosts.find(p => getSafeYMD(p.createdAt) === activeArchiveDate);
         list.innerHTML = `
-                    <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
+                    <div class="sticky top-0 z-30 flex items-center justify-between bg-emerald-50/95 dark:bg-emerald-900/95 backdrop-blur-md p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
-                            <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
+                            <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
+                            <span class="font-bold text-sm text-emerald-800 dark:text-emerald-300">تصفح الأرشيف: ${activeArchiveDate}</span>
                         </div>
                         <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف والعودة</button>
                     </div>
-                    ${archPosts.map(p => generatePostHTML(p)).join('')}
+                    ${allFeedPosts.length ? allFeedPosts.map(p => generatePostHTML(p)).join('') : '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700/60 p-6"><p class="text-slate-500 text-sm">لا توجد منشورات في الأرشيف.</p></div>'}
                 `;
+
+        if (targetPost) {
+            setTimeout(() => {
+                const targetEl = document.getElementById(`post-view-${targetPost.id}`);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    targetEl.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                    setTimeout(() => {
+                        targetEl.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                    }, 3000);
+                }
+            }, 150);
+        }
     } else {
         createBox.classList.remove('hidden');
         const nowMs = Date.now();
-        const todayPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) <= (12 * 60 * 60 * 1000));
-        const olderPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) > (12 * 60 * 60 * 1000));
+        const todayPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) <= (12 * 60 * 60 * 1000));
+        const olderPosts = allFeedPosts.filter(p => (nowMs - new Date(p.createdAt || 0).getTime()) > (12 * 60 * 60 * 1000));
 
-        const archiveGroups = {};
-        olderPosts.forEach(p => {
-            const d = getSafeYMD(p.createdAt);
-            if (!archiveGroups[d]) archiveGroups[d] = 0;
-            archiveGroups[d]++;
-        });
-
-        const archiveColors = [
-            'from-blue-500 to-indigo-600',
-            'from-purple-500 to-fuchsia-600',
-            'from-emerald-500 to-teal-600',
-            'from-rose-500 to-pink-600',
-            'from-amber-500 to-orange-600'
-        ];
-
-        let archiveHtml = '';
-        if (Object.keys(archiveGroups).length > 0) {
-            archiveHtml = `
-                    <div class="mt-12 mb-6 border-t border-slate-200 dark:border-slate-700 pt-8">
-                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2"><i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i> الأرشيف الزمني</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            ${Object.keys(archiveGroups).sort().reverse().map((date, idx) => {
-                                const color = archiveColors[idx % archiveColors.length];
-                                return `
-                                <div onclick="window.setArchiveDate('${date}')" class="group cursor-pointer relative overflow-hidden bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
-                                    <div class="absolute top-0 right-0 w-2 h-full bg-gradient-to-b ${color}"></div>
-                                    <div class="flex justify-between items-center">
-                                        <div>
-                                            <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mb-1">ذكريات يوم</p>
-                                            <h4 class="text-lg font-bold text-slate-800 dark:text-slate-100">${date}</h4>
-                                        </div>
-                                        <div class="bg-slate-50 dark:bg-slate-700/50 w-12 h-12 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
-                                            <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${archiveGroups[date]}</span>
-                                            <span class="text-[9px] font-bold text-slate-400 uppercase">منشور</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                        تصفح اليوم <i data-lucide="arrow-left" class="w-3 h-3"></i>
-                                    </div>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>`;
-        }
+        const archiveHtml = window.generateArchiveViewHtml(olderPosts, 'الأرشيف الزمني');
 
         list.innerHTML = `
                     <div class="space-y-6">
@@ -4627,33 +5004,34 @@ function renderFeedTab() {
 window.togglePinPost = async (postId) => {
     const post = allPosts.find(p => p.id === postId);
     if (!post || post.authorId !== currentUser.uid) return;
-    
-    const newPinnedState = !post.isPinned;
-    try {
-        // 1. التحديث المحلي الفوري لضمان سرعة الواجهة
-        if (newPinnedState) {
-            allPosts.forEach(p => {
-                if (p.authorId === currentUser.uid && p.isPinned) p.isPinned = false;
-            });
-        }
-        post.isPinned = newPinnedState;
-        
-        if (typeof renderAll === 'function') renderAll();
-        setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 50);
 
-        // 2. تحديث قاعدة البيانات بثبات
-        if (newPinnedState) {
-            const pinnedQuery = allPosts.filter(p => p.authorId === currentUser.uid && p.id !== postId);
-            for (const p of pinnedQuery) {
-                try { await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id), { isPinned: false }); } catch(e){}
-            }
-        }
-        await updateDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId), { isPinned: newPinnedState });
-        
-        showToast(newPinnedState ? 'تم التثبيت بنجاح' : 'تم إلغاء التثبيت', 'success');
+    const newPinnedState = !post.isPinned;
+
+    // ✅ احفظ المنشورات المثبتة سابقاً قبل أي تعديل محلي
+    const previouslyPinned = newPinnedState
+        ? allPosts.filter(p => p.authorId === currentUser.uid && p.id !== postId && p.isPinned === true)
+        : [];
+
+    // 1. تحديث محلي فوري
+    previouslyPinned.forEach(p => { p.isPinned = false; });
+    post.isPinned = newPinnedState;
+    if (typeof renderAll === 'function') renderAll();
+    setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 50);
+
+    // 2. Firestore batch write — عملية واحدة atomic
+    try {
+        const batch = writeBatch(db);
+        // إلغاء تثبيت المنشورات السابقة
+        previouslyPinned.forEach(p => {
+            batch.update(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id), { isPinned: false });
+        });
+        // تثبيت المنشور الحالي
+        batch.update(doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId), { isPinned: newPinnedState });
+        await batch.commit();
+        showToast(newPinnedState ? '📌 تم تثبيت المنشور' : 'تم إلغاء التثبيت', 'success');
     } catch (e) {
-        console.error(e);
-        showToast('حدث خطأ أثناء التثبيت', 'error');
+        console.error('togglePinPost error:', e);
+        showToast('📌 تم التثبيت — تحقق من اتصالك', 'success');
     }
 };
 
@@ -4926,12 +5304,14 @@ function renderProfileTab() {
     const postsContainer = document.getElementById('profile-posts-list');
     const postsSectionHeader = document.getElementById('profile-posts-header');
 
-    const tUser = allUsers.find(u => u.uid === viewingUid) || userData;
-    const isMe = tUser.uid === currentUser.uid;
-    const isFriend = (userData.friends || []).includes(tUser.uid);
-    const isPending = friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
+    const isVisitor = !currentUser || (currentUser && currentUser.isAnonymous);
+    const tUser = (viewingUid ? allUsers.find(u => u.uid === viewingUid) : null) || userData;
+    if (!tUser) return;
+    const isMe = currentUser && tUser.uid === currentUser.uid;
+    const isFriend = userData && (userData.friends || []).includes(tUser.uid);
+    const isPending = currentUser && friendRequests.some(r => r.from === currentUser.uid && r.to === tUser.uid);
 
-    const canView = isMe || isFriend || isAdminStealthMode;
+    const canView = isMe || isFriend || isAdminStealthMode || tUser.isBot;
 
     if (canView) {
         const myP = allPosts.filter(p => !p.communityId && p.authorId === tUser.uid).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0) || (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()));
@@ -4940,17 +5320,29 @@ function renderProfileTab() {
         if (!myP.length) {
             postsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات.</p>';
         } else if (activeArchiveDate) {
-            const archPosts = myP.filter(p => getSafeYMD(p.createdAt) === activeArchiveDate);
+            const targetPost = myP.find(p => getSafeYMD(p.createdAt) === activeArchiveDate);
             postsHtml = `
-                        <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
+                        <div class="sticky top-0 z-30 flex items-center justify-between bg-emerald-50/95 dark:bg-emerald-900/95 backdrop-blur-md p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800 shadow-sm">
                             <div class="flex items-center gap-3">
-                                <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
-                                <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
+                                <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
+                                <span class="font-bold text-sm text-emerald-800 dark:text-emerald-300">تصفح الأرشيف: ${activeArchiveDate}</span>
                             </div>
-                            <button onclick="window.setArchiveLevel('month', '${activeArchiveMonth}')" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">عودة للأيام</button>
+                            <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف والعودة</button>
                         </div>
-                        ${archPosts.map(p => generatePostHTML(p, 'profile-')).join('')}
+                        ${myP.length ? myP.map(p => generatePostHTML(p, 'profile-')).join('') : '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700/60 p-6"><p class="text-slate-500 text-sm">لا توجد منشورات في الأرشيف.</p></div>'}
                     `;
+            if (targetPost) {
+                setTimeout(() => {
+                    const targetEl = document.getElementById(`profile-post-view-${targetPost.id}`);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        targetEl.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                        setTimeout(() => {
+                            targetEl.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                        }, 3000);
+                    }
+                }, 150);
+            }
         } else {
             const today = getSafeYMD();
             const nowMs = Date.now();
@@ -4961,22 +5353,17 @@ function renderProfileTab() {
             postsHtml = todayPosts.map(p => generatePostHTML(p, 'profile-')).join('') + archiveHtml;
         }
 
-        // فصل المنشورات المثبتة عن سياق الأرشيف الزمني وعرضها دائماً في الأعلى
-                if (activeArchiveDate) {
-                    const pinnedPosts = myP.filter(p => p.isPinned && getSafeYMD(p.createdAt) !== activeArchiveDate);
-                    if (pinnedPosts.length) {
-                        postsHtml = pinnedPosts.map(p => generatePostHTML(p, 'profile-')).join('') + postsHtml;
-                    }
-                } else if (myP.length) {
-                    const nowMs = Date.now();
-                    // المنشورات المثبتة ستعرض دائماً هنا بغض النظر عن وقتها
-                    const todayPosts = myP.filter(p => p.isPinned || (nowMs - new Date(p.createdAt || 0).getTime()) <= (12 * 60 * 60 * 1000));
-                    // الأرشيف سيأخذ فقط المنشورات القديمة التي "ليست مثبتة"
-                    const olderPosts = myP.filter(p => !p.isPinned && (nowMs - new Date(p.createdAt || 0).getTime()) > (12 * 60 * 60 * 1000));
-                    const archiveHtml = window.generateArchiveViewHtml(olderPosts, 'الأرشيف الزمني');
-                    postsHtml = todayPosts.map(p => generatePostHTML(p, 'profile-')).join('') + archiveHtml;
-                }
-                postsContainer.innerHTML = postsHtml;
+        // فصل المنشورات المثبتة عن سياق الأرشيف الزمني وعرضها دائماً في الأعلى (فقط في الوضع الطبيعي)
+        if (!activeArchiveDate && myP.length) {
+            const nowMs = Date.now();
+            // المنشورات المثبتة ستعرض دائماً هنا بغض النظر عن وقتها
+            const todayPosts = myP.filter(p => p.isPinned || (nowMs - new Date(p.createdAt || 0).getTime()) <= (12 * 60 * 60 * 1000));
+            // الأرشيف سيأخذ فقط المنشورات القديمة التي "ليست مثبتة"
+            const olderPosts = myP.filter(p => !p.isPinned && (nowMs - new Date(p.createdAt || 0).getTime()) > (12 * 60 * 60 * 1000));
+            const archiveHtml = window.generateArchiveViewHtml(olderPosts, 'الأرشيف الزمني');
+            postsHtml = todayPosts.map(p => generatePostHTML(p, 'profile-')).join('') + archiveHtml;
+        }
+        postsContainer.innerHTML = postsHtml;
         postsSectionHeader.classList.remove('hidden');
     } else {
         postsContainer.innerHTML = '';
@@ -5047,9 +5434,11 @@ function renderProfileTab() {
 
         let isBlockedByMe = false;
         try { isBlockedByMe = userData && userData.blockedUsers && userData.blockedUsers.includes(tUser.uid); } catch(e){}
-        const blockBtnHtml = !isMe ? `<button onclick="window.toggleBlockUser('${tUser.uid}')" class="${btnBaseClass.replace('w-full', 'w-10 h-10 min-w-0 p-0 rounded-full flex items-center justify-center')} ${isBlockedByMe ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-rose-100 hover:text-rose-600'} shrink-0 mx-1 transition-colors" title="${isBlockedByMe ? 'فك الحظر عن المستخدم' : 'حظر هذا المستخدم'}"><i data-lucide="slash" class="w-4 h-4"></i></button>` : '';
+        const blockBtnHtml = (currentUser && !isMe) ? `<button onclick="window.toggleBlockUser('${tUser.uid}')" class="${btnBaseClass.replace('w-full', 'w-10 h-10 min-w-0 p-0 rounded-full flex items-center justify-center')} ${isBlockedByMe ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-rose-100 hover:text-rose-600'} shrink-0 mx-1 transition-colors" title="${isBlockedByMe ? 'فك الحظر عن المستخدم' : 'حظر هذا المستخدم'}"><i data-lucide="slash" class="w-4 h-4"></i></button>` : '';
 
-        if (isMe) {
+        if (isVisitor) {
+            actionBtn = `<button onclick="document.getElementById('main-layout').classList.add('hidden'); document.getElementById('auth-view').classList.remove('hidden');" class="${btnBaseClass} bg-emerald-600 hover:bg-emerald-700 text-white"><i data-lucide="sparkles" class="w-4 h-4"></i> سجل للتفاعل</button>`;
+        } else if (isMe) {
             actionBtn = `<button onclick="window.toggleEditProfile()" class="${btnBaseClass} bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 mx-auto md:mx-0"><i data-lucide="settings" class="w-4 h-4"></i> تعديل بياناتي</button>`;
         } else if (!isFriend) {
             if (isPending) actionBtn = `<div class="flex items-center justify-center w-full md:w-auto"><button disabled class="${btnBaseClass} bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed"><i data-lucide="clock" class="w-4 h-4"></i> طلب معلق</button>${blockBtnHtml}</div>`;
@@ -5122,15 +5511,17 @@ function renderProfileTab() {
                     <div class="w-full h-40 md:h-56 relative overflow-hidden">
                         <img src="${tUser.coverUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover/profile:scale-105">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent pointer-events-none"></div>
-                        ${tUser.profileMessage && tUser.profileMessage.trim() !== '' ? `
-                        <div class="absolute top-4 left-4 md:left-6 max-w-[60%] md:max-w-sm bg-black/50 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 z-20 shadow-lg text-white cursor-default animate-in fade-in duration-700">
-                            <div class="flex items-center gap-1.5 mb-1.5 text-emerald-400 border-b border-white/10 pb-1">
-                                <i data-lucide="quote" class="w-4 h-4"></i><span class="text-[11px] font-bold tracking-wider">رسالة ${tUser.displayName.split(' ')[0]}</span>
-                            </div>
-                            <p class="text-xs md:text-sm font-medium leading-relaxed drop-shadow-sm whitespace-pre-wrap">${tUser.profileMessage}</p>
-                        </div>
-                        ` : ''}
                     </div>
+                    ${tUser.profileMessage && tUser.profileMessage.trim() !== '' ? `
+                    <div class="w-full bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 px-3 py-2 flex items-center gap-3 overflow-hidden">
+                        <div class="bg-emerald-600 text-white px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap z-10 shadow-sm flex items-center gap-1 shrink-0">
+                            <i data-lucide="quote" class="w-3 h-3"></i> رسالة ${tUser.displayName.split(' ')[0]}
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <p class="whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 animate-marquee-ltr">${tUser.profileMessage}</p>
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="p-6 md:p-8 relative z-10 bg-white dark:bg-slate-800">
                         <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start text-center md:text-right">
                             <img src="${tUser.photoUrl}" class="-mt-16 md:-mt-20 lg:-mt-24 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-white dark:bg-slate-800 object-cover shrink-0 relative z-20 transition-transform duration-300 hover:scale-105 cursor-pointer mx-auto md:mx-0 ${window.getStatusRingClass(tUser.uid)}" onclick="window.handleUserAvatarClick('${tUser.uid}', '${tUser.photoUrl}', event)">
@@ -5613,6 +6004,7 @@ window.renderChatRoom = () => {
             const {
                 ytId,
                 tkId,
+                tkShortUrl,
                 fbUrl,
                 igId
             } = extractEmbeds(m.content || '');
@@ -5645,9 +6037,26 @@ window.renderChatRoom = () => {
             if (m.content) {
                 messageBody += formatMessageContent(m.content, isMe);
             }
-            if (ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen style="pointer-events: none;"></iframe></div>`;
-            if (tkId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-[9/16] w-full" onclick="event.stopPropagation()"><iframe src="https://www.tiktok.com/embed/v2/${tkId}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen style="pointer-events: none;"></iframe></div>`;
-            if (fbUrl) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrl)}&show_text=0&width=560" class="w-full h-full rounded-lg" style="border:none;overflow:hidden; pointer-events: none;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+            const sandboxAttr = 'sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"';
+            if (ytId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.youtube.com/embed/${ytId}" class="w-full h-full" frameborder="0" allowfullscreen style="pointer-events: none;" ${sandboxAttr}></iframe></div>`;
+            if (tkId) messageBody += `<div class="mt-3 rounded-2xl overflow-hidden shadow-md relative aspect-[9/16] w-full max-w-[250px] bg-black" onclick="event.stopPropagation()"><iframe src="https://www.tiktok.com/player/v1/${tkId}?music_info=0&description=0&controls=1" class="absolute inset-0 w-full h-full border-none" frameborder="0" allowfullscreen style="pointer-events: none;" ${sandboxAttr}></iframe></div>`;
+            if (fbUrl) {
+                const isFBVideo = /(?:watch|video|fb\.watch|share\/v)/i.test(fbUrl);
+                if (isFBVideo) {
+                    messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm aspect-video min-w-[250px]" onclick="event.stopPropagation()"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrl)}&show_text=0&width=560" class="w-full h-full rounded-lg" style="border:none;overflow:hidden; pointer-events: none;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+                } else {
+                    messageBody += `<a href="${fbUrl}" target="_blank" onclick="event.stopPropagation()" class="mt-3 flex items-center gap-2 p-2.5 rounded-xl border border-[#1877f2]/30 bg-[#1877f2]/5 hover:bg-[#1877f2]/15 transition-all no-underline cursor-pointer">
+                        <div class="w-8 h-8 rounded-lg bg-[#1877f2] flex items-center justify-center shrink-0">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] font-bold text-[#1877f2] uppercase">Facebook</p>
+                            <p class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">منشور على فيسبوك</p>
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>`;
+                }
+            }
             if (igId) messageBody += `<div class="mt-3 rounded-xl overflow-hidden shadow-sm flex justify-center bg-black/10 dark:bg-slate-800 p-2" onclick="event.stopPropagation()"><iframe src="https://www.instagram.com/p/${igId}/embed" class="w-full max-w-[250px] h-[350px] rounded-lg" frameborder="0" scrolling="no" allowtransparency="true" style="pointer-events: none;"></iframe></div>`;
 
             innerBubble = `<div class="relative cursor-pointer select-none msg-bubble-container w-fit max-w-[85%]" ${clickAction}>${msgPickerHtml}<div class="${isMe ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-600 rounded-tl-sm'} ${bubblePadding} rounded-2xl text-sm md:text-base shadow-sm break-words whitespace-pre-wrap">${repliedMsgHtml}${messageBody}</div>${reactsHtml}</div><div class="flex items-center mt-1">${delBtn}<span class="text-[10px] text-slate-400 px-1 font-medium" dir="ltr">${timeStr}</span>${readIcon}</div>`;
@@ -5969,7 +6378,9 @@ window.sendMessage = async (type, content = null) => {
         window.sendPushNotification(
             activeChatFriendId,
             `رسالة من ${userData.displayName}`,
-            msgType === 'text' ? text : 'أرسل لك مرفقاً جديداً'
+            msgType === 'text' ? text : 'أرسل لك مرفقاً جديداً',
+            'message',
+            currentUser.uid
         );
 
         setTimeout(() => {
@@ -6063,17 +6474,29 @@ window.renderCommunitiesTab = () => {
             if (!cPosts.length) {
                 communityPostsHtml = '<p class="text-center text-slate-500 dark:text-slate-400 py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">لا توجد منشورات في هذا المجتمع بعد.</p>';
             } else if (activeArchiveDate) {
-                const archPosts = cPosts.filter(p => getSafeYMD(p.createdAt) === activeArchiveDate);
+                const targetPost = cPosts.find(p => getSafeYMD(p.createdAt) === activeArchiveDate);
                 communityPostsHtml = `
-                            <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800">
+                            <div class="sticky top-0 z-30 flex items-center justify-between bg-emerald-50/95 dark:bg-emerald-900/95 backdrop-blur-md p-4 rounded-2xl mb-6 border border-emerald-100 dark:border-emerald-800 shadow-sm">
                                 <div class="flex items-center gap-3">
-                                    <i data-lucide="calendar" class="w-6 h-6 text-emerald-600"></i>
-                                    <span class="font-bold text-emerald-800 dark:text-emerald-300">أرشيف يوم: ${activeArchiveDate}</span>
+                                    <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
+                                    <span class="font-bold text-sm text-emerald-800 dark:text-emerald-300">تصفح الأرشيف: ${activeArchiveDate}</span>
                                 </div>
-                                <button onclick="window.setArchiveLevel('month', '${activeArchiveMonth}')" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">عودة للأيام</button>
+                                <button onclick="window.setArchiveDate(null)" class="text-xs font-bold bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-colors">إغلاق الأرشيف والعودة</button>
                             </div>
-                            ${archPosts.map(p => generatePostHTML(p, 'comm-')).join('')}
+                            ${cPosts.length ? cPosts.map(p => generatePostHTML(p, 'comm-')).join('') : '<div class="text-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700/60 p-6"><p class="text-slate-500 text-sm">لا توجد منشورات في الأرشيف.</p></div>'}
                         `;
+                if (targetPost) {
+                    setTimeout(() => {
+                        const targetEl = document.getElementById(`comm-post-view-${targetPost.id}`);
+                        if (targetEl) {
+                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            targetEl.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                            setTimeout(() => {
+                                targetEl.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                            }, 3000);
+                        }
+                    }, 150);
+                }
             } else {
                 const today = getSafeYMD();
                 const todayPosts = cPosts.filter(p => getSafeYMD(p.createdAt) === today);
@@ -6639,9 +7062,9 @@ window.renderNotificationsTab = () => {
             color = 'emerald';
         let action = '';
 
-        const u = allUsers.find(x => x.uid === (n.from || n.fromId)) || {
-            displayName: n.fromName || 'مستخدم',
-            photoUrl: n.fromAvatar || 'https://ui-avatars.com/api/?name=User'
+        const u = allUsers.find(x => x.uid === (n.from || n.fromId || n.senderId)) || {
+            displayName: n.fromName || n.senderName || 'مستخدم',
+            photoUrl: n.fromAvatar || n.senderAvatar || 'https://ui-avatars.com/api/?name=User'
         };
         const sName = u.displayName;
         const sAvatar = u.photoUrl;
@@ -6881,45 +7304,8 @@ window.closeWhyMyTabModal = () => {
 
 // --- Mobile Menu Logic Fix ---
 window.toggleMobileMenu = () => {
-    let sidebar = document.getElementById('sidebar-nav');
-    if (!sidebar) {
-        sidebar = document.querySelector('nav');
-        if (sidebar) sidebar.id = 'sidebar-nav';
-    }
-
-    let overlay = document.getElementById('mobile-sidebar-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'mobile-sidebar-overlay';
-        overlay.className = 'hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 transition-opacity duration-300 opacity-0';
-        overlay.onclick = window.toggleMobileMenu;
-        const mainLayout = document.getElementById('main-layout');
-        if (mainLayout && sidebar) {
-            mainLayout.insertBefore(overlay, sidebar);
-        }
-    }
-
-    if (sidebar && overlay) {
-        // إجبار القائمة لتكون عائمة على الموبايل
-        sidebar.classList.remove('w-14');
-        sidebar.classList.add('fixed', 'right-0', 'inset-y-0', 'transform', 'md:translate-x-0', 'md:relative', 'z-50', 'transition-transform', 'duration-300', 'shadow-2xl');
-
-        if (!sidebar.classList.contains('translate-x-full') && !sidebar.classList.contains('menu-opened')) {
-            sidebar.classList.add('translate-x-full');
-        }
-
-        if (sidebar.classList.contains('translate-x-full')) {
-            sidebar.classList.remove('translate-x-full');
-            sidebar.classList.add('menu-opened');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-        } else {
-            sidebar.classList.add('translate-x-full');
-            sidebar.classList.remove('menu-opened');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
-        }
-    }
+    // القائمة دلوقتي top bar - مفيش حاجة تتعمل
+    console.log('toggleMobileMenu: nav is now a top bar, no toggle needed');
 };
 
 // إغلاق القائمة تلقائياً عند اختيار تبويب
@@ -6934,16 +7320,169 @@ window.switchTab = (tab, preserveState = false) => {
     }
 };
 
-// إعداد مبدئي للقائمة عند تحميل الموقع في الموبايل
+// إعداد مبدئي - القائمة دلوقتي top bar دايماً ظاهرة على كل الشاشات
 setTimeout(() => {
-    if (window.innerWidth < 768) {
-        const sidebar = document.querySelector('nav');
-        if (sidebar) {
-            sidebar.classList.add('transform', 'translate-x-full', 'fixed', 'right-0', 'z-50');
-            sidebar.classList.remove('w-14');
-        }
+    const sidebar = document.getElementById('sidebar-nav');
+    if (sidebar) {
+        // إزالة أي كلاسات قديمة كانت بتخبي الـ nav كـ sidebar
+        sidebar.classList.remove('translate-x-full', 'fixed', 'right-0', 'z-50', 'transform', 'w-14', 'w-64', 'md:w-64', 'inset-y-0');
+        sidebar.style.removeProperty('transform');
     }
 }, 100);
+
+// ===== قائمة المزيد المنبثقة =====
+window.toggleMoreMenu = () => {
+    const dropdown = document.getElementById('more-menu-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+        // animation
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.style.opacity = '0';
+            dropdown.style.transform = 'translateY(-8px)';
+            requestAnimationFrame(() => {
+                dropdown.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+                dropdown.style.opacity = '1';
+                dropdown.style.transform = 'translateY(0)';
+            });
+        }
+    }
+};
+
+window.closeMoreMenu = () => {
+    const dropdown = document.getElementById('more-menu-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+};
+
+// إغلاق قائمة المزيد عند الضغط خارجها
+document.addEventListener('click', (e) => {
+    // إغلاق قائمة المزيد عند الضغط خارجها
+    const moreContainer = document.getElementById('more-menu-container');
+    if (moreContainer && !moreContainer.contains(e.target)) {
+        window.closeMoreMenu();
+    }
+    // إغلاق dropdown الإشعارات عند الضغط خارجه
+    // (لا نتحقق من notif-dropdown-container لأن الزر يستخدم stopPropagation)
+    const notifDropdown = document.getElementById('notif-dropdown');
+    if (notifDropdown && !notifDropdown.classList.contains('hidden')) {
+        const notifContainer = document.getElementById('notif-dropdown-container');
+        if (notifContainer && !notifContainer.contains(e.target)) {
+            window.closeNotifDropdown();
+        }
+    }
+});
+
+// ===== Notifications Dropdown (زي فيسبوك) =====
+let _notifToggleLastTime = 0;
+window.toggleNotifDropdown = (e) => {
+    if (e) e.stopPropagation(); // منع الـ event من الوصول لـ document listener
+    const now = Date.now();
+    if (now - _notifToggleLastTime < 300) return; // debounce 300ms
+    _notifToggleLastTime = now;
+
+    const dropdown = document.getElementById('notif-dropdown');
+    if (!dropdown) return;
+    const isHidden = dropdown.classList.contains('hidden');
+    // إغلاق باقي القوائم
+    window.closeMoreMenu();
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        dropdown.style.opacity = '0';
+        dropdown.style.transform = 'translateY(-10px) scale(0.97)';
+        requestAnimationFrame(() => {
+            dropdown.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0) scale(1)';
+        });
+        window.renderNotifDropdown();
+    } else {
+        window.closeNotifDropdown();
+    }
+};
+
+window.closeNotifDropdown = () => {
+    const dropdown = document.getElementById('notif-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+};
+
+window.renderNotifDropdown = () => {
+    const list = document.getElementById('notif-dropdown-list');
+    if (!list || !currentUser) return;
+
+    const combined = [
+        ...allNotifications.filter(n => n.to === currentUser.uid),
+        ...friendRequests.filter(r => r.to === currentUser.uid && r.status === 'pending').map(r => ({
+            id: r.id, type: 'friend_request',
+            fromId: r.from, fromName: r.fromName, fromAvatar: r.fromAvatar,
+            createdAt: r.createdAt, read: false
+        }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 15);
+
+    if (combined.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-12 opacity-50">
+                <i data-lucide="bell-off" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                <p class="text-sm text-slate-500 font-bold">لا توجد إشعارات</p>
+            </div>`;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+    }
+
+    list.innerHTML = combined.map(n => {
+        let icon = 'bell', text = n.text || '', color = 'emerald';
+        const userLookup = allUsers.find(x => x.uid === (n.from || n.fromId || n.senderId));
+        const senderName = userLookup ? userLookup.displayName : (n.fromName || n.senderName || 'مستخدم');
+        const senderAvatar = userLookup ? userLookup.photoUrl : (n.fromAvatar || n.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=059669&color=fff`);
+        const action = `window.handleNotificationClick('${n.type}','${n.id}','${n.fromId||n.senderId||''}','${n.postId||''}','${n.commentId||''}'); window.closeNotifDropdown();`;
+
+        if (n.type === 'like' || n.type === 'react_post') { icon = 'heart'; text = `تفاعل <b>${senderName}</b> مع منشورك`; color = 'rose'; }
+        else if (n.type === 'react_comment') { icon = 'heart'; text = `تفاعل <b>${senderName}</b> مع تعليقك`; color = 'rose'; }
+        else if (n.type === 'comment' || n.type === 'reply') { icon = 'message-circle'; text = `علّق <b>${senderName}</b> على منشورك`; color = 'blue'; }
+        else if (n.type === 'mention') { icon = 'at-sign'; text = n.text || `ذكرك <b>${senderName}</b> في منشور`; color = 'emerald'; }
+        else if (n.type === 'friend_request') { icon = 'user-plus'; text = `طلب صداقة جديد من <b>${senderName}</b>`; color = 'indigo'; }
+        else if (n.type === 'message') { icon = 'mail'; text = `رسالة جديدة من <b>${senderName}</b>`; color = 'emerald'; }
+
+        const timeStr = n.createdAt ? new Date(n.createdAt).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
+        const unreadDot = !n.read ? '<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>' : '';
+
+        return `
+        <div onclick="${action}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-700/50 ${!n.read ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}">
+            <div class="relative shrink-0">
+                <img src="${senderAvatar}" class="w-11 h-11 rounded-full object-cover border-2 border-slate-100 dark:border-slate-700">
+                <div class="absolute -bottom-0.5 -right-0.5 bg-${color}-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800">
+                    <i data-lucide="${icon}" class="w-2.5 h-2.5"></i>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-slate-700 dark:text-slate-200 leading-snug">${text}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">${timeStr}</p>
+            </div>
+            ${unreadDot}
+        </div>`;
+    }).join('');
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+window.markAllNotifsRead = async () => {
+    if (!currentUser) return;
+    // تحديد كل الإشعارات كمقروءة
+    allNotifications.forEach(n => { if (n.to === currentUser.uid) n.read = true; });
+    window.renderNotifDropdown();
+    // تحديث الـ badge
+    const badge = document.getElementById('notif-badge');
+    if (badge) badge.classList.add('hidden');
+    // حفظ في Firestore لو متاح
+    if (typeof db !== 'undefined' && typeof firebase !== 'undefined') {
+        try {
+            const batch = db.batch();
+            allNotifications.filter(n => n.to === currentUser.uid && n.id).forEach(n => {
+                const ref = db.collection('notifications').doc(n.id);
+                batch.update(ref, { read: true });
+            });
+            await batch.commit();
+        } catch(e) { console.log('markAllRead error', e); }
+    }
+};
 
 // --- حماية المحادثات من التصوير والنسخ ---
 window.addEventListener('blur', () => {
@@ -7117,6 +7656,13 @@ window.receiveSharedText = function(text) {
             } else {
                 postInput.value = text;
             }
+            
+            // تحفيز حدث الإدخال وتوليد المعاينة تلقائياً للروابط المشتركة
+            postInput.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof window.handlePostInput === 'function') {
+                window.handlePostInput(postInput, 'link-preview-container');
+            }
+
             postInput.focus();
             window.scrollTo({
                 top: 0,
@@ -7324,8 +7870,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // تسجيل الصفحة الرئيسية كأول خطوة لمنع الخروج الفوري
-    window.history.replaceState({ action: 'base' }, '', window.location.pathname);
+    // تسجيل الصفحة الرئيسية كأول خطوة لمنع الخروج الفوري مع الحفاظ على المعلمات والهاش
+    window.history.replaceState({ action: 'base' }, '', window.location.pathname + window.location.search + window.location.hash);
     connectOldHooks();
 
     // --- معالجة أمر الرجوع بنفس طريقتك الأصلية الذكية --- //
@@ -7392,7 +7938,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!content || !annId) return;
                 
                 // التأكد إن المستخدم مشافش الإعلان ده قبل كدة (عن طريق الـ ID)
-                const seenId = localStorage.getItem('seen_ann_id');
+                const seenId = localStorage.getItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'));
                 if (seenId === annId.toString()) return;
 
                 // إنشاء نافذة الإعلان
@@ -7419,7 +7965,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // دالة الإغلاق (مع تسجيل إن المستخدم شاف الإعلان)
                 const closeModal = () => {
-                    localStorage.setItem('seen_ann_id', annId.toString());
+                    localStorage.setItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'), annId.toString());
                     modal.classList.add('opacity-0');
                     setTimeout(() => modal.remove(), 300);
                 };
@@ -7500,7 +8046,7 @@ document.addEventListener('DOMContentLoaded', () => {
             function showAnnouncement(content, annId) {
                 if (!content || !annId) return;
                 try {
-                    const seenId = localStorage.getItem('seen_ann_id');
+                    const seenId = localStorage.getItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'));
                     if (seenId === String(annId)) return;
 
                     // إزالة أي نافذة قديمة معلقة من الذاكرة
@@ -7529,7 +8075,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
                     const closeModal = () => {
-                        localStorage.setItem('seen_ann_id', String(annId));
+                        localStorage.setItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'), String(annId));
                         modal.classList.add('opacity-0');
                         setTimeout(() => modal.remove(), 300);
                     };
@@ -7617,7 +8163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             function showAnnouncement(content, annId) {
                 if (!content || !annId) return;
                 try {
-                    const seenId = localStorage.getItem('seen_ann_id');
+                    const seenId = localStorage.getItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'));
                     if (seenId === String(annId)) return;
                     const oldModal = document.getElementById('smart-announcement-modal');
                     if (oldModal) oldModal.remove();
@@ -7642,7 +8188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => modal.classList.remove('opacity-0'), 50);
 
                     const closeModal = () => {
-                        localStorage.setItem('seen_ann_id', String(annId));
+                        localStorage.setItem('seen_ann_id_' + (typeof currentUser !== 'undefined' && currentUser ? currentUser.uid : 'guest'), String(annId));
                         modal.classList.add('opacity-0');
                         setTimeout(() => modal.remove(), 300);
                     };
@@ -7766,39 +8312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('mouseleave', cancelPress);
         })();
 
-        window.togglePinPost = async (postId) => {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post || post.authorId !== currentUser.uid) return;
-            
-            const newPinnedState = !post.isPinned;
-            
-            try {
-                // 1. تحديث البيانات محلياً فوراً
-                if (newPinnedState) {
-                    allPosts.forEach(p => {
-                        if (p.authorId === currentUser.uid && p.isPinned) p.isPinned = false;
-                    });
-                }
-                post.isPinned = newPinnedState;
-                
-                // 2. تحديث الشاشة فوراً ليتغير لون الدبوس ويقفز المنشور للأعلى
-                if (typeof renderAll === 'function') renderAll();
-                
-                // 3. الحفظ في قاعدة البيانات في الخلفية بدون انتظار الواجهة
-                if (newPinnedState) {
-                    const pinnedQuery = allPosts.filter(p => p.authorId === currentUser.uid && p.id !== postId);
-                    for (const p of pinnedQuery) {
-                        try { window.setDoc(window.doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', p.id), { isPinned: false }, { merge: true }); } catch(e){}
-                    }
-                }
-                await window.setDoc(window.doc(db, 'artifacts', appIdStr, 'public', 'data', 'posts', postId), { isPinned: newPinnedState }, { merge: true });
-                
-                showToast(newPinnedState ? 'تم تثبيت المنشور بنجاح' : 'تم إلغاء التثبيت', 'success');
-            } catch (e) {
-                console.error(e);
-                showToast('حدث خطأ أثناء التثبيت', 'error');
-            }
-        };
+        // تم الاعتماد على دالة togglePinPost المكتوبة بالأعلى والتي تدعم Firestore Batch Write لضمان إلغاء التثبيت وتحديث البروفايل فوراً وبكفاءة.
     
 
         (function initMentions() {
@@ -7922,3 +8436,501 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+// Trend Bot Settings
+window.loadTrendBotSettings = async () => {
+    try {
+        const docRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'trendbot');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if(document.getElementById('tb-enabled')) document.getElementById('tb-enabled').checked = data.enabled || false;
+            if(document.getElementById('tb-time')) document.getElementById('tb-time').value = data.time || '18:00';
+            if(document.getElementById('tb-country')) document.getElementById('tb-country').value = data.country || 'SA';
+            if(document.getElementById('tb-email')) document.getElementById('tb-email').value = data.email || '';
+            if(document.getElementById('tb-password')) document.getElementById('tb-password').value = data.password || '';
+            if(document.getElementById('tb-name')) document.getElementById('tb-name').value = data.name || '';
+            if(document.getElementById('tb-avatar')) document.getElementById('tb-avatar').value = data.avatar || '';
+            if(document.getElementById('tb-apikey')) document.getElementById('tb-apikey').value = data.apikey || '';
+            if(document.getElementById('tb-prompt')) document.getElementById('tb-prompt').value = data.prompt || '';
+            if(document.getElementById('tb-fb-pageid')) document.getElementById('tb-fb-pageid').value = data.facebookPageId || '';
+            if(document.getElementById('tb-fb-token')) document.getElementById('tb-fb-token').value = data.facebookAccessToken || '';
+        }
+
+
+    } catch(e) {
+        console.error("Error loading Trend Bot settings", e);
+    }
+};
+
+window.saveTrendBotSettings = async (btn) => {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> جاري الحفظ...';
+    try {
+        const data = {
+            enabled: document.getElementById('tb-enabled').checked,
+            time: document.getElementById('tb-time').value,
+            country: document.getElementById('tb-country').value,
+            email: document.getElementById('tb-email').value,
+            password: document.getElementById('tb-password').value,
+            name: document.getElementById('tb-name').value,
+            avatar: document.getElementById('tb-avatar').value,
+            apikey: document.getElementById('tb-apikey').value,
+            prompt: document.getElementById('tb-prompt').value,
+            facebookPageId: document.getElementById('tb-fb-pageid').value,
+            facebookAccessToken: document.getElementById('tb-fb-token').value,
+            updatedAt: new Date().toISOString()
+        };
+        const docRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'settings', 'trendbot');
+        await setDoc(docRef, data);
+        
+        // Update the backend Next.js API running on localhost if it's available (optional sync)
+        try {
+            await fetch('https://trend-bot-nine.vercel.app/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    botEnabled: data.enabled,
+                    botName: data.name,
+                    botAvatar: data.avatar,
+                    aiProvider: 'openai',
+                    aiApiKey: data.apikey,
+                    botEmail: data.email,
+                    botPassword: data.password,
+                    trendCountry: data.country,
+                    postTime: data.time,
+                    customPrompt: data.prompt,
+                    facebookPageId: data.facebookPageId,
+                    facebookAccessToken: data.facebookAccessToken
+                })
+            });
+        } catch(e) { console.log('Backend not running locally, saved to Firebase only.'); }
+
+        if (window.showToast) window.showToast('تم حفظ إعدادات البوت بنجاح', 'success');
+        else alert('تم حفظ إعدادات البوت بنجاح');
+        
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم الحفظ بنجاح';
+        setTimeout(() => btn.innerHTML = originalText, 2000);
+    } catch(e) {
+        console.error("Error saving Trend Bot settings", e);
+        if (window.showToast) window.showToast('حدث خطأ أثناء الحفظ', 'error');
+        else alert('حدث خطأ أثناء الحفظ');
+        
+        btn.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4"></i> حدث خطأ أثناء الحفظ';
+        setTimeout(() => btn.innerHTML = originalText, 3000);
+    }
+};
+
+
+
+window.testTrendBotNow = async (btn) => {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> جاري النشر...';
+    try {
+        const res = await fetch('https://trend-bot-nine.vercel.app/api/cron');
+        const data = await res.json();
+        
+        if (data.error) {
+            alert('خطأ من البوت: ' + data.error);
+            btn.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4"></i> ' + data.error;
+        } else {
+            if (window.showToast) window.showToast('تم نشر التريند بنجاح!', 'success');
+            else alert('تم نشر التريند بنجاح!');
+            btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم النشر';
+        }
+        setTimeout(() => btn.innerHTML = originalText, 4000);
+    } catch(e) {
+        console.error("Error testing bot", e);
+        if (window.showToast) window.showToast('فشل الاتصال بالخادم المحلي للتريند بوت', 'error');
+        else alert('فشل الاتصال بخادم التريند بوت المحلي!');
+        btn.innerHTML = '<i data-lucide="x" class="w-4 h-4"></i> فشل الاتصال';
+        setTimeout(() => btn.innerHTML = originalText, 4000);
+    }
+};
+
+
+
+// Load settings when admin tab is opened
+const originalSwitchTab = window.switchTab;
+if (originalSwitchTab) {
+    window.switchTab = (...args) => {
+        originalSwitchTab(...args);
+        if (args[0] === 'admin') {
+            window.loadTrendBotSettings();
+        }
+    };
+} else {
+    setTimeout(() => {
+        if (window.switchTab) {
+            const os = window.switchTab;
+            window.switchTab = (...args) => {
+                os(...args);
+                if (args[0] === 'admin') window.loadTrendBotSettings();
+            };
+        }
+    }, 2000);
+}
+
+// Android Notification Handler
+window.handleAndroidNotification = (type, targetId) => {
+    if (type === 'post' && targetId) {
+        if (typeof window.openSinglePost === 'function') window.openSinglePost(targetId, null, null);
+        else window.switchTab('singlepost');
+    } else if (type === 'message' && targetId) {
+        if (typeof window.goToChat === 'function') window.goToChat(targetId);
+        else window.switchTab('messages');
+    }
+};
+
+// ====== VDTAB REELS SYSTEM IMPLEMENTATION ======
+
+// Helper to check if a post has YouTube or TikTok videos
+window.getPostVideoInfo = (post) => {
+    if (!post) return null;
+    
+    // Extract video links from all possible post properties (content, linkPreview, originalContent for reposts, etc.)
+    const lpUrl = post.linkPreview ? (post.linkPreview.resolvedUrl || post.linkPreview.originalUrl) : '';
+    const olpUrl = post.originalLinkPreview ? (post.originalLinkPreview.resolvedUrl || post.originalLinkPreview.originalUrl) : '';
+    const textForEmbeds = (post.content || '') + ' ' + lpUrl + ' ' + (post.originalContent || '') + ' ' + olpUrl;
+    
+    const embeds = extractEmbeds(textForEmbeds);
+    if (embeds.ytId) {
+        return { type: 'youtube', id: embeds.ytId };
+    }
+    if (embeds.tkId) {
+        return { type: 'tiktok', id: embeds.tkId };
+    }
+    if (embeds.tkShortUrl) {
+        return { type: 'tiktok-short', url: embeds.tkShortUrl };
+    }
+    return null;
+};
+
+// Render the vdtab tab content
+function renderVdtabTab() {
+    const container = document.getElementById('vdtab-container');
+    if (!container) return;
+
+    const isVisitor = !currentUser || (currentUser && currentUser.isAnonymous);
+
+    // Filter public posts with video links (complying with community privacy rules)
+    const videoPosts = allPosts.filter(p => {
+        if (p.communityId) {
+            const comm = (typeof allCommunities !== 'undefined') ? allCommunities.find(c => c.id === p.communityId) : null;
+            if (!comm) return false;
+            if (comm.isPrivate) {
+                if (isVisitor) return false;
+                const members = comm.members || [];
+                return members.includes(currentUser.uid) || comm.creatorId === currentUser.uid;
+            }
+        }
+        const videoInfo = window.getPostVideoInfo(p);
+        return videoInfo !== null;
+    });
+
+    if (videoPosts.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 p-6 text-center">
+                <i data-lucide="clapperboard" class="w-16 h-16 mb-4 opacity-40 text-emerald-500"></i>
+                <h3 class="text-lg font-bold text-slate-300">لا توجد فيديوهات بعد</h3>
+                <p class="text-xs text-slate-400 mt-2 max-w-xs leading-relaxed">انشر منشوراً يحتوي على رابط فيديو يوتيوب أو تيك توك على صفحتك الشخصية أو في الرئيسية ليظهر هنا تلقائياً!</p>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+    }
+
+    let html = '';
+    videoPosts.forEach(post => {
+        const videoInfo = window.getPostVideoInfo(post);
+        const reactions = post.reactions || {};
+        const isLiked = currentUser ? !!reactions[currentUser.uid] : false;
+        const likeCount = Object.keys(reactions).length;
+        const commentCount = post.comments ? post.comments.length : 0;
+        
+        let playerHTML = '';
+        const uniqueId = `vdtab-player-${post.id}`;
+        
+        // Add sandbox to prevent links from redirecting the parent tab
+        const sandboxAttr = 'sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"';
+        
+        if (videoInfo.type === 'youtube') {
+            const autoplaySrc = `https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&enablejsapi=1&rel=0&playsinline=1`;
+            const normalSrc = `https://www.youtube.com/embed/${videoInfo.id}?autoplay=0&enablejsapi=1&rel=0&playsinline=1`;
+            playerHTML = `<iframe id="${uniqueId}" src="${normalSrc}" class="w-full h-full aspect-[9/16]" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen ${sandboxAttr} data-src="${autoplaySrc}" data-original-src="${normalSrc}"></iframe>`;
+        } else if (videoInfo.type === 'tiktok') {
+            const autoplaySrc = `https://www.tiktok.com/player/v1/${videoInfo.id}?music_info=1&description=0&autoplay=1`;
+            const normalSrc = `https://www.tiktok.com/player/v1/${videoInfo.id}?music_info=0&description=0`;
+            playerHTML = `<iframe id="${uniqueId}" src="${normalSrc}" class="w-full h-full border-none" frameborder="0" allowfullscreen ${sandboxAttr} data-src="${autoplaySrc}" data-original-src="${normalSrc}"></iframe>`;
+        } else if (videoInfo.type === 'tiktok-short') {
+            playerHTML = `
+                <div id="${uniqueId}" class="w-full h-full flex items-center justify-center bg-black">
+                    <div class="text-center text-slate-500 p-4">
+                        <i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin mb-2 text-emerald-500"></i>
+                        <p class="text-xs">جاري تحميل فيديو TikTok...</p>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                if (typeof window.resolveTikTokShortUrl === 'function') {
+                    window.resolveTikTokShortUrl(uniqueId, videoInfo.url);
+                }
+            }, 100);
+        }
+
+        const authorPhoto = post.authorPhoto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.authorName || 'User');
+        const authorName = post.authorName || 'مستخدم مجهول';
+        const authorId = post.authorId;
+        const title = post.title || '';
+        const content = post.content || '';
+        
+        // Clean description to show in video text overlay (removing the video url itself for clean look)
+        let cleanDesc = content.replace(/(https?:\/\/[^\s]+)/g, '').trim();
+        if (title) {
+            cleanDesc = `<b>${title}</b>` + (cleanDesc ? `<br>${cleanDesc}` : '');
+        }
+        if (!cleanDesc) {
+            cleanDesc = 'فيديو من ' + authorName;
+        }
+
+        html += `
+            <div class="vdtab-item w-full h-full shrink-0 snap-start snap-always relative flex items-center justify-center bg-black" data-post-id="${post.id}">
+                <!-- Player -->
+                <div class="w-full h-full flex items-center justify-center relative bg-black">
+                    ${playerHTML}
+                </div>
+
+                <!-- Right Overlay: Publisher Info -->
+                <div class="absolute right-4 bottom-12 flex flex-row-reverse items-center gap-3 text-white z-20 pointer-events-auto">
+                    <img src="${authorPhoto}" class="w-11 h-11 rounded-full object-cover border border-white/20 cursor-pointer hover:scale-105 transition-transform" onclick="window.viewProfile('${authorId}')">
+                    <div class="flex flex-col items-end">
+                        <span class="font-black text-sm text-shadow cursor-pointer hover:underline" onclick="window.viewProfile('${authorId}')">${authorName}</span>
+                        <span class="text-[11px] text-white/80 line-clamp-2 text-right mt-1 max-w-[200px]" title="${title || content}">${cleanDesc}</span>
+                    </div>
+                </div>
+
+                <!-- Left Overlay: Interaction Buttons -->
+                <div class="absolute left-4 bottom-12 flex flex-col items-center gap-5 text-white z-20">
+                    <!-- Like -->
+                    <button onclick="window.handleVdtabLike('${post.id}')" class="flex flex-col items-center group">
+                        <div class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10">
+                            <i data-lucide="heart" class="w-6 h-6 ${isLiked ? 'text-rose-500 fill-current' : 'text-white'}"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-1 shadow-sm">${likeCount}</span>
+                    </button>
+                    
+                    <!-- Comment -->
+                    <button onclick="window.openVdtabComments('${post.id}')" class="flex flex-col items-center group">
+                        <div class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10">
+                            <i data-lucide="message-circle" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-1 shadow-sm">${commentCount}</span>
+                    </button>
+                    
+                    <!-- Share -->
+                    <button onclick="window.openShareModal('${post.id}')" class="flex flex-col items-center group">
+                        <div class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10">
+                            <i data-lucide="share-2" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-1 shadow-sm">مشاركة</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Trigger IntersectionObserver setup for play/stop control on scroll
+    setupVdtabObserver();
+}
+
+// Helper to unmute YouTube and TikTok iframes programmatically
+function unmuteVdtabIframe(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+        const src = iframe.src || '';
+        if (src.includes('youtube.com')) {
+            // Unmute YouTube
+            iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'unMute',
+                args: []
+            }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setVolume',
+                args: [100]
+            }), '*');
+        } else if (src.includes('tiktok.com')) {
+            // Unmute TikTok
+            iframe.contentWindow.postMessage({
+                "x-tiktok-player": true,
+                "type": "unMute"
+            }, "*");
+            iframe.contentWindow.postMessage({
+                "x-tiktok-player": true,
+                "type": "changeVolume",
+                "value": 100
+            }, "*");
+        }
+    } catch (e) {
+        console.warn("Failed to unmute iframe:", e);
+    }
+}
+
+// Setup IntersectionObserver for auto-play and stop control
+function setupVdtabObserver() {
+    if (window.vdtabObserverInstance) {
+        window.vdtabObserverInstance.disconnect();
+    }
+
+    const container = document.getElementById('vdtab-container');
+    if (!container) return;
+
+    const items = container.querySelectorAll('.vdtab-item');
+    const observerOptions = {
+        root: container,
+        rootMargin: '0px',
+        threshold: 0.6 // active when 60% of the slide is visible
+    };
+
+    const callback = (entries) => {
+        entries.forEach(entry => {
+            const iframe = entry.target.querySelector('iframe');
+            if (!iframe) return;
+
+            if (entry.isIntersecting) {
+                // Active video: load and autoplay
+                const autoplaySrc = iframe.getAttribute('data-src');
+                if (autoplaySrc && iframe.src !== autoplaySrc) {
+                    iframe.src = autoplaySrc;
+                    
+                    // Trigger unmuting multiple times as the player loads asynchronously
+                    const unmuteDelays = [300, 800, 1500, 2500, 3500];
+                    unmuteDelays.forEach(delay => {
+                        setTimeout(() => {
+                            if (entry.isIntersecting) {
+                                unmuteVdtabIframe(iframe);
+                            }
+                        }, delay);
+                    });
+                }
+            } else {
+                // Inactive video: stop immediately by loading the original non-autoplay source
+                const originalSrc = iframe.getAttribute('data-original-src');
+                if (originalSrc && iframe.src !== originalSrc) {
+                    iframe.src = originalSrc;
+                } else if (iframe.src) {
+                    iframe.src = iframe.src; // Force reload to kill sound
+                }
+            }
+        });
+    };
+
+    window.vdtabObserverInstance = new IntersectionObserver(callback, observerOptions);
+    items.forEach(item => {
+        window.vdtabObserverInstance.observe(item);
+    });
+}
+
+// Attach renderer to window for global access
+window.renderVdtabTab = renderVdtabTab;
+
+// Like button handler in vdtab
+window.handleVdtabLike = async (postId) => {
+    if (!currentUser) {
+        showToast('يرجى تسجيل الدخول أولاً للتفاعل مع الفيديوهات.', 'error');
+        return;
+    }
+    await window.handleReact(postId, 'heart', 'vdtab-');
+};
+
+// Open the comments slide-up drawer for vdtab
+window.openVdtabComments = (postId) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    
+    const commentsList = document.getElementById('vdtab-comments-list');
+    const commentsInputArea = document.getElementById('vdtab-comments-input-area');
+    
+    if (commentsList && commentsInputArea) {
+        const comments = post.comments || [];
+        const topComments = comments.filter(c => !c.parentId);
+        
+        if (topComments.length === 0) {
+            commentsList.innerHTML = `
+                <div class="text-center py-10 text-slate-400">
+                    <i data-lucide="message-circle" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                    <p class="text-sm font-bold">لا توجد تعليقات بعد</p>
+                    <p class="text-xs mt-1">كن أول من يعلق على هذا الفيديو!</p>
+                </div>
+            `;
+        } else {
+            commentsList.innerHTML = topComments.map(c => {
+                const commenter = allUsers.find(u => u.uid === c.authorId);
+                const name = commenter ? commenter.displayName : 'مستخدم مجهول';
+                const photo = commenter ? commenter.photoUrl : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name);
+                return `
+                    <div class="flex gap-3 items-start border-b border-slate-100 dark:border-slate-700/40 pb-3 last:border-0">
+                        <img src="${photo}" class="w-8 h-8 rounded-full object-cover shrink-0 bg-slate-100 dark:bg-slate-800">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-xs text-slate-700 dark:text-slate-200">${name}</span>
+                                <span class="text-[10px] text-slate-400" dir="ltr">${new Date(c.createdAt).toLocaleDateString('ar-EG')}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 break-words leading-relaxed">${c.text}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        commentsInputArea.innerHTML = `
+            <div class="flex gap-2 items-center w-full">
+                <input type="text" id="vdtab-c-input-${postId}" placeholder="اكتب تعليقاً..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 transition-colors" onkeydown="if(event.key==='Enter') { window.addVdtabComment('${postId}'); }">
+                <button onclick="window.addVdtabComment('${postId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 transition-colors shadow-sm">
+                    <i data-lucide="send" class="w-4 h-4 rtl:-scale-x-100"></i>
+                </button>
+            </div>
+        `;
+        
+        const drawer = document.getElementById('vdtab-comments-drawer');
+        if (drawer) {
+            drawer.classList.remove('translate-y-full');
+            drawer.classList.add('translate-y-0');
+        }
+        
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+};
+
+// Close comments drawer
+window.closeVdtabComments = () => {
+    const drawer = document.getElementById('vdtab-comments-drawer');
+    if (drawer) {
+        drawer.classList.remove('translate-y-0');
+        drawer.classList.add('translate-y-full');
+    }
+};
+
+// Add comment handler in vdtab
+window.addVdtabComment = async (postId) => {
+    if (!currentUser) {
+        showToast('يرجى تسجيل الدخول أولاً لإضافة تعليق.', 'error');
+        return;
+    }
+    const input = document.getElementById(`vdtab-c-input-${postId}`);
+    if (!input || !input.value.trim()) return;
+    
+    await window.addComment(postId, 'vdtab-');
+    
+    // Refresh drawer comments list
+    setTimeout(() => {
+        window.openVdtabComments(postId);
+    }, 500);
+};
+
+
+

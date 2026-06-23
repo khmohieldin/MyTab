@@ -3,6 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- إعدادات الآيفون (iOS PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyTab">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png">
+    
     <link rel="manifest" href="manifest.json">
     <script>
       if ('serviceWorker' in navigator) {
@@ -22,7 +28,7 @@
     
 
     
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260530015028">
 </head>
 
 <body dir="rtl" class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
@@ -567,40 +573,164 @@
             <form id="reg-form" class="hidden"></form>
         </div>
     </div>
-    <div id="main-layout" class="hidden flex h-screen w-full bg-slate-50 dark:bg-slate-900 relative">
+    <div id="main-layout" class="hidden flex flex-col h-screen w-full bg-slate-50 dark:bg-slate-900 relative">
         <div id="maintenance-view" class="hidden absolute inset-0 z-[999] bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
             <div class="bg-amber-100 dark:bg-amber-900/30 p-6 rounded-full mb-6 animate-pulse"><i data-lucide="settings-2" class="w-16 h-16 text-amber-600 dark:text-amber-400"></i></div>
             <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-4">عفواً، الموقع مغلق للصيانة</h1>
             <p class="text-slate-600 dark:text-slate-400 text-lg max-w-md leading-relaxed">نحن نقوم ببعض التحديثات لتحسين تجربتك.<br>يرجى المعاودة في وقت لاحق.</p><button onclick="window.handleLogout()" class="mt-12 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-xl font-bold hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/40 dark:hover:text-rose-400 transition-colors flex items-center gap-2 shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
         </div>
-        <nav class="w-14 md:w-64 bg-white dark:bg-slate-800 border-l border-emerald-100 dark:border-slate-700 flex flex-col justify-between py-4 md:py-6 shrink-0 z-10 shadow-sm overflow-y-auto transition-colors">
-            <div class="flex flex-col items-center md:items-start px-0 md:px-6 gap-4 md:gap-8">
-                <div class="flex items-center gap-2 md:gap-3 text-emerald-600 dark:text-emerald-400 font-bold text-xl md:text-2xl w-full justify-center md:justify-start"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img h-7 w-7 md:h-9 md:w-9 object-contain drop-shadow-sm" alt="Logo"> <span class="hidden md:block tracking-wide">MyTab</span></div>
-                <div class="flex flex-col w-full gap-1 md:gap-2 px-1.5 md:px-0"><button onclick='window.switchTab("feed")' id="nav-feed" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 font-medium"><i data-lucide="home" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المساحات</span></button>
-                    <div class="relative w-full"><button onclick="window.copyMyId()" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold bg-emerald-50/50 dark:bg-transparent"><i data-lucide="fingerprint" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span id="mobile-myid" class="hidden md:block font-mono tracking-wider"></span></button></div><button onclick='window.switchTab("communities")' id="nav-communities" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="layers" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المجتمعات</span></button> <button onclick='window.switchTab("friends")' id="nav-friends" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="users" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الأصدقاء</span></button> <button onclick="window.viewMyProfile()" id="nav-profile" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ملفي الشخصي</span></button> <button onclick='window.switchTab("search")' id="nav-search" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="search" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">بحث واستكشاف</span></button> <button onclick='window.switchTab("favorites")' id="nav-favorites" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="star" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">المفضلة</span></button>
-                    <div class="relative w-full"><button onclick='window.switchTab("notifications")' id="nav-notifications" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="bell-ring" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الإشعارات</span></button> <span id="notif-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div>
-                    <div class="relative w-full"><button onclick='window.switchTab("requests")' id="nav-requests" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="user-plus" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الطلبات</span></button> <span id="req-badge" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div>
-                    <div class="relative w-full hidden md:block"><button onclick='window.switchTab("messages")' id="nav-messages-desktop" class="nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="message-circle" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">الرسائل</span></button> <span id="msg-badge-desktop" class="hidden absolute top-0.5 right-1 md:top-2 md:right-auto md:left-4 bg-rose-500 text-white text-[9px] md:text-xs font-bold w-3.5 h-3.5 md:w-5 md:h-5 flex items-center justify-center rounded-full">0</span></div><button onclick='window.switchTab("admin")' id="nav-admin" class="hidden nav-btn flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30"><i data-lucide="shield-alert" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">لوحة الإدارة</span></button>
-                    <div class="mt-auto w-full flex flex-col gap-1"><button onclick="window.toggleFontSize()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="type" id="font-size-icon" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block" id="font-size-text">حجم الخط</span></button> <button onclick="window.toggleTheme()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="moon" id="theme-icon" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block" id="theme-text">الوضع الداكن</span></button> <button onclick="window.showCharterModal()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400"><i data-lucide="scroll-text" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">ميثاق المساحة</span></button> <button onclick="window.handleLogout()" class="flex items-center justify-center md:justify-start gap-3 md:gap-4 p-2 md:px-4 md:py-3 w-full rounded-2xl transition-all text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30"><i data-lucide="log-out" class="w-[18px] h-[18px] md:w-6 md:h-6"></i><span class="hidden md:block">خروج</span></button></div>
+        <!-- ====== TOP NAV BAR احترافي ====== -->
+        <nav id="sidebar-nav" class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex flex-row items-center shrink-0 z-20 shadow-sm transition-colors px-2 md:px-4 gap-1" style="height:56px;min-height:56px;">
+
+            <!-- شعار -->
+            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                <img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img h-8 w-8 object-contain drop-shadow-sm" alt="Logo">
+                <span class="hidden lg:block tracking-wide text-base">MyTab</span>
+            </div>
+
+            <!-- أزرار رئيسية -->
+            <div class="flex flex-row flex-1 items-stretch justify-center h-full">
+
+                <button onclick='window.switchTab("feed")' id="nav-feed" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold transition-all min-w-[48px]">
+                    <i data-lucide="home" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden md:block text-[10px] mt-0.5">المساحات</span>
+                </button>
+
+                <button onclick='window.switchTab("communities")' id="nav-communities" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-all min-w-[48px]">
+                    <i data-lucide="layers" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden md:block text-[10px] mt-0.5">المجتمعات</span>
+                </button>
+
+                <button onclick='window.switchTab("search")' id="nav-search" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-all min-w-[48px]">
+                    <i data-lucide="search" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden md:block text-[10px] mt-0.5">بحث</span>
+                </button>
+
+                <button onclick='window.switchTab("vdtab")' id="nav-vdtab" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-all min-w-[48px]">
+                    <i data-lucide="clapperboard" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden md:block text-[10px] mt-0.5">vdtab</span>
+                </button>
+
+                <!-- زر الإشعارات مع Dropdown منبثق -->
+                <div class="relative flex items-stretch" id="notif-dropdown-container">
+                    <button onclick="window.toggleNotifDropdown(event)" id="nav-notifications" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-all min-w-[48px]">
+                        <i data-lucide="bell" class="w-5 h-5 md:w-6 md:h-6"></i>
+                        <span class="hidden md:block text-[10px] mt-0.5">الإشعارات</span>
+                    </button>
+                    <span id="notif-badge" class="hidden absolute top-2 right-2 bg-rose-500 text-white text-[9px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow">0</span>
+
+                    <!-- Notifications Dropdown Panel -->
+                    <div id="notif-dropdown" class="hidden absolute top-full mt-1 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-[200] overflow-hidden" style="width:380px;max-width:95vw;right:0;">
+
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-base">الإشعارات</h3>
+                            <button onclick="window.markAllNotifsRead()" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-bold">تحديد الكل كمقروء</button>
+                        </div>
+
+                        <!-- قائمة الإشعارات -->
+                        <div id="notif-dropdown-list" class="overflow-y-auto" style="max-height:420px;">
+                            <div class="text-center py-10 text-slate-400">
+                                <i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin mb-2"></i>
+                                <p class="text-sm">جاري التحميل...</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="border-t border-slate-100 dark:border-slate-700">
+                            <button onclick="window.switchTab('notifications'); window.closeNotifDropdown()" class="w-full py-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors">عرض كل الإشعارات</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative flex items-stretch">
+                    <button onclick='window.switchTab("messages")' id="nav-messages-desktop" class="nav-btn flex flex-col items-center justify-center px-3 md:px-6 h-full border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-all min-w-[48px]">
+                        <i data-lucide="message-circle" class="w-5 h-5 md:w-6 md:h-6"></i>
+                        <span class="hidden md:block text-[10px] mt-0.5">الرسائل</span>
+                    </button>
+                    <span id="msg-badge-desktop" class="hidden absolute top-2 right-2 bg-rose-500 text-white text-[9px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow">0</span>
+                </div>
+
+            </div>
+
+            <!-- اليمين: زر المزيد فقط -->
+            <div class="flex items-center gap-1.5 shrink-0">
+
+                <div class="relative" id="more-menu-container">
+                    <button onclick="window.toggleMoreMenu()" class="flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-600 transition-all">
+                        <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                    </button>
+
+                    <div id="more-menu-dropdown" class="hidden absolute left-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 py-1.5 z-[100] overflow-hidden" style="min-width:220px;">
+
+                        <div class="relative">
+                            <button onclick='window.switchTab("requests"); window.closeMoreMenu()' id="nav-requests" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="user-plus" class="w-4 h-4"></i></span>
+                                <span>طلبات الصداقة</span>
+                                <span id="req-badge" class="hidden mr-auto bg-rose-500 text-white text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
+                            </button>
+                        </div>
+
+                        <button onclick='window.switchTab("friends"); window.closeMoreMenu()' id="nav-friends" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="users" class="w-4 h-4"></i></span>
+                            <span>الأصدقاء</span>
+                        </button>
+
+                        <button onclick='window.switchTab("favorites"); window.closeMoreMenu()' id="nav-favorites" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="star" class="w-4 h-4"></i></span>
+                            <span>المفضلة</span>
+                        </button>
+
+                        <button onclick="window.viewMyProfile(); window.closeMoreMenu()" id="nav-profile" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
+                            <span>ملفي الشخصي</span>
+                        </button>
+
+                        <button onclick="window.copyMyId(); window.closeMoreMenu()" class="flex items-center gap-3 w-full px-4 py-2.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-sm font-bold">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 shrink-0"><i data-lucide="fingerprint" class="w-4 h-4"></i></span>
+                            <span>نسخ المعرف</span>
+                        </button>
+
+                        <button onclick='window.switchTab("admin"); window.closeMoreMenu()' id="nav-admin" class="hidden nav-btn flex items-center gap-3 w-full px-4 py-2.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
+                            <span>لوحة الإدارة</span>
+                        </button>
+
+                        <div class="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-3"></div>
+
+                        <button onclick="window.toggleFontSize()" class="flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="type" id="font-size-icon" class="w-4 h-4"></i></span>
+                            <span id="font-size-text">حجم الخط</span>
+                        </button>
+
+                        <button onclick="window.toggleTheme()" class="flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="moon" id="theme-icon" class="w-4 h-4"></i></span>
+                            <span id="theme-text">الوضع الداكن</span>
+                        </button>
+
+                        <button onclick="window.showCharterModal(); window.closeMoreMenu()" class="flex items-center gap-3 w-full px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 shrink-0"><i data-lucide="scroll-text" class="w-4 h-4"></i></span>
+                            <span>ميثاق المساحة</span>
+                        </button>
+
+                        <div class="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-3"></div>
+
+                        <button onclick="window.handleLogout()" class="flex items-center gap-3 w-full px-4 py-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-sm">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30 shrink-0"><i data-lucide="log-out" class="w-4 h-4"></i></span>
+                            <span>تسجيل الخروج</span>
+                        </button>
+
+                    </div>
                 </div>
             </div>
-            <div class="px-1.5 md:px-6 flex flex-col items-center md:items-start gap-2 mt-4 pb-4">
-                <div class="hidden md:flex flex-col text-xs text-slate-500 dark:text-slate-400 mb-2 bg-slate-100 dark:bg-slate-700 px-3 py-3 rounded-xl w-full group relative"><span class="font-semibold text-slate-700 dark:text-slate-300 mb-1">المعرف الخاص بك:</span> <button onclick="window.copyMyId()" class="flex items-center justify-between w-full bg-white dark:bg-slate-800 px-2 py-1.5 rounded border border-slate-200 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"><span id="sidebar-myid" class="font-mono text-emerald-600 dark:text-emerald-400 tracking-wider text-sm"></span> <i data-lucide="copy" class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors"></i></button></div>
-                <div class="flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-slate-700 p-1.5 md:p-2 rounded-xl transition-colors w-full cursor-pointer justify-center md:justify-start" onclick="window.handleUserAvatarClick(currentUser.uid,userData.photoUrl,event)"><img id="sidebar-avatar" src="" alt="profile" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-emerald-200 dark:border-emerald-700 object-cover bg-white dark:bg-slate-800 mx-auto md:mx-0">
-                    <div class="hidden md:flex flex-col items-start overflow-hidden"><span id="sidebar-name" class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate w-32"></span> <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> مساحة خاصة</span></div>
-                </div>
-            </div>
+
+            <!-- عناصر مخفية -->
+            <span id="sidebar-myid" class="hidden"></span>
+            <span id="sidebar-name" class="hidden"></span>
+            <span id="mobile-myid" class="hidden"></span>
+            <img id="sidebar-avatar" src="" alt="" class="hidden">
         </nav>
-        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors h-full">
-            <div class="md:hidden flex justify-between items-center bg-white dark:bg-slate-800 p-3 shadow-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-20">
-                <div class="flex items-center gap-3"><button onclick="window.toggleMobileMenu()" class="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                    <h1 class="text-emerald-600 dark:text-emerald-400 font-extrabold text-2xl flex items-center gap-1.5 tracking-wide"><img src="https://i.ibb.co/93y8GcxZ/Picsart-26-05-09-16-59-08-419.png" class="global-logo-img w-7 h-7 object-contain drop-shadow-sm" alt="Logo"> MyTab</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="mobile-bell-container" onclick='window.switchTab("notifications")' class="relative p-2 bg-slate-100 dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="bell" class="w-5 h-5"></i> <span id="mobile-bell-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow-sm">0</span></button>
-                    <button onclick='window.switchTab("messages")' id="nav-messages" class="relative p-2 bg-slate-100 dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="message-circle" class="w-5 h-5"></i> <span id="msg-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow-sm">0</span></button>
-                </div>
-            </div>
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/80 relative transition-colors">
             <div class="max-w-2xl mx-auto w-full min-h-full p-4 md:p-8">
                 <div id="tab-content-feed" class="tab-content space-y-6">
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4 px-1 relative z-10">
@@ -790,6 +920,87 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- إعدادات تريند بوت (الذكاء الاصطناعي) -->
+                    <div class="mt-8 border-t border-slate-200 dark:border-slate-700 pt-8 relative">
+                        <div class="absolute -top-3 right-8 bg-slate-50 dark:bg-slate-900 px-3 flex items-center gap-2">
+                            <i data-lucide="bot" class="w-5 h-5 text-emerald-500"></i>
+                            <h3 class="text-sm font-black text-slate-800 dark:text-slate-100 tracking-wide">إعدادات تريند بوت (الذكاء الاصطناعي)</h3>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                            
+                            <div class="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="tb-enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+                                </label>
+                                <span class="text-sm font-bold text-emerald-800 dark:text-emerald-400">تفعيل البوت للعمل تلقائياً (نشر يومي)</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">وقت النشر (مثال 18:00)</label>
+                                    <input type="time" id="tb-time" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">الدولة المستهدفة (مثال SA, EG)</label>
+                                    <input type="text" id="tb-country" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="SA">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">بريد البوت الإلكتروني</label>
+                                    <input type="email" id="tb-email" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="bot@mytab.com">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">كلمة سر البوت</label>
+                                    <input type="password" id="tb-password" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="******">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">اسم البوت</label>
+                                    <input type="text" id="tb-name" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="تريند بوت">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">رابط صورة البروفايل</label>
+                                    <input type="url" id="tb-avatar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="https://...">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">مفتاح الذكاء الاصطناعي (API Key)</label>
+                                <input type="password" id="tb-apikey" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="sk-...">
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">تعليمات الذكاء الاصطناعي (Prompt)</label>
+                                <textarea id="tb-prompt" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 resize-none" placeholder="أنت بوت محايد..."></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-700/50 pt-4">
+                                <div class="md:col-span-2">
+                                    <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i data-lucide="facebook" class="w-3.5 h-3.5 text-blue-500"></i> ربط النشر بصفحة فيسبوك (Facebook Auto-Post)</h4>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">معرّف الصفحة (Facebook Page ID)</label>
+                                    <input type="text" id="tb-fb-pageid" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="مثال: 1234567890">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">رمز الوصول للصفحة (Page Access Token)</label>
+                                    <input type="password" id="tb-fb-token" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500" placeholder="EAAG...">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button onclick="window.saveTrendBotSettings(this)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="save" class="w-4 h-4"></i> حفظ الإعدادات
+                                </button>
+                                <button onclick="window.testTrendBotNow(this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                                    <i data-lucide="play" class="w-4 h-4"></i> تجربة النشر الآن
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
                 <div id="tab-content-messages" class="tab-content hidden h-[85vh] flex-col relative">
                     <div id="chat-lock-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
@@ -836,6 +1047,41 @@
                     </div>
                 </div>
                 <div id="tab-content-communities" class="tab-content hidden pb-10"></div>
+
+                <!-- ====== VDTAB REELS TAB ====== -->
+                <div id="tab-content-vdtab" class="tab-content hidden h-[85vh] w-full bg-slate-900/10 dark:bg-slate-900/50 flex justify-center items-center relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700">
+                    <!-- Player Mockup Wrapper -->
+                    <div class="w-full h-full max-w-[420px] bg-black relative flex flex-col overflow-hidden">
+                        
+                        <!-- Scroll Snap Video Container -->
+                        <div id="vdtab-container" class="flex-1 w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black divide-y divide-slate-900/50">
+                            <!-- Dynamically populated video slides -->
+                        </div>
+
+                        <!-- Comments Bottom Drawer -->
+                        <div id="vdtab-comments-drawer" class="absolute inset-x-0 bottom-0 h-[70%] bg-white dark:bg-slate-800 rounded-t-3xl border-t border-slate-200 dark:border-slate-700 transform translate-y-full transition-transform duration-300 z-40 flex flex-col shadow-2xl">
+                            <!-- Header -->
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-500"></i> التعليقات
+                                </h3>
+                                <button onclick="window.closeVdtabComments()" class="text-slate-400 hover:text-rose-500 p-1">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Comments List -->
+                            <div id="vdtab-comments-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50 dark:bg-slate-900/50">
+                                <!-- Comments will be populated here -->
+                            </div>
+                            
+                            <!-- Comment Input Area -->
+                            <div id="vdtab-comments-input-area" class="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
+                                <!-- Input element populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="tab-content-friends" class="tab-content hidden space-y-6">
                     <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-4 flex items-center gap-2"><i data-lucide="users" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i> أصدقائي بالمساحة</h2>
                     <div id="friends-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -908,14 +1154,12 @@
             </div>
         </main>
     </div>
-    <div id="floating-chat-bubble" class="hidden fixed bottom-24 left-6 z-[999] cursor-pointer transition-all duration-500 transform translate-y-32 opacity-0 scale-50 hover:scale-110 active:scale-95 drop-shadow-2xl" onclick='window.switchTab("messages")'>
-        <div class="relative bg-emerald-600 rounded-full p-4 border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-emerald-500/50 shadow-lg"><i data-lucide="message-circle" class="w-8 h-8 text-white animate-bounce" style="animation-duration:2s"></i> <span id="floating-bubble-count" class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-slate-800 animate-pulse">0</span></div>
-    </div>
+
 
 
     
     
-<script type="module" src="script.js"></script>
+<script type="module" src="script.js?v=20260604035200"></script>
 <div id="mentions-dropdown" class="hidden fixed z-[9999] bg-white dark:bg-slate-800 border border-emerald-100 dark:border-slate-700 shadow-2xl rounded-xl w-56 max-h-60 overflow-y-auto"></div>
 <script>
     // --- تحديث دالة استقبال المشاركات (Share Target) ---
@@ -995,6 +1239,8 @@
         }
     });
 </script>
+
+
 </body>
 
 </html>
